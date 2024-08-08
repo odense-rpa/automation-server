@@ -5,3 +5,5 @@ sqlmodel==0.0.16
 croniter
 pytest
 httpx
+pydantic_settings
+requests
