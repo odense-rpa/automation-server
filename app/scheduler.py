@@ -20,49 +20,50 @@ last_run = None
 
 
 async def schedule():
-    session = next(get_session())
 
-    global last_run
+    with next(get_session()) as session:
+        global last_run
 
-    trigger_repository = TriggerRepository(session)
-    session_repository = SessionRepository(session)
-    resource_repository = ResourceRepository(session)
-    resource_service = ResourceService(resource_repository, session_repository)
+        trigger_repository = TriggerRepository(session)
+        session_repository = SessionRepository(session)
+        resource_repository = ResourceRepository(session)
+        resource_service = ResourceService(resource_repository, session_repository)
 
-    # We dispatch first to get any old sessions a chance to get a resource before the triggers are checked
-    dispatch(session_repository, resource_repository, resource_service)
+        # We dispatch first to get any old sessions a chance to get a resource before the triggers are checked
+        dispatch(session_repository, resource_repository, resource_service)
 
-    now = datetime.now()
-    if last_run and now - last_run < timedelta(minutes=1):
-        return
+        now = datetime.now()
+        if last_run and now - last_run < timedelta(minutes=1):
+            return
 
-    last_run = now
+        last_run = now
 
-    triggers = trigger_repository.get_all(include_deleted=False)
+        triggers = trigger_repository.get_all(include_deleted=False)
 
-    sessions = session_repository.get_active_sessions()
+        sessions = session_repository.get_active_sessions()
 
-    for trigger in triggers:
-        if trigger.enabled is False:
-            continue
+        for trigger in triggers:
+            if trigger.enabled is False:
+                continue
 
-        if trigger.type == "cron":
-            if croniter.match(trigger.cron, now):
-                logger.info(f"Triggering cron trigger {trigger.id}")
-                new_session(trigger.process_id, session_repository)
+            if trigger.type == "cron":
+                if croniter.match(trigger.cron, now):
+                    logger.info(f"Triggering cron trigger {trigger.id}")
+                    new_session(trigger.process_id, session_repository)
 
-        if trigger.type == "date":
-            if trigger.date <= now:
-                logger.info(f"Triggering date trigger {trigger.id}")
-                new_session(trigger.process_id, session_repository)
-                trigger_repository.update(trigger, {"enabled": False, "deleted": True})
+            if trigger.type == "date":
+                if trigger.date <= now:
+                    logger.info(f"Triggering date trigger {trigger.id}")
+                    new_session(trigger.process_id, session_repository)
+                    trigger_repository.update(trigger, {"enabled": False, "deleted": True})
 
-        if trigger.type == "workqueue":
-            if trigger.workqueue_id not in sessions:
-                logger.info(f"Triggering workqueue trigger {trigger.id}")
+            if trigger.type == "workqueue":
+                if trigger.workqueue_id not in sessions:
+                    logger.info(f"Triggering workqueue trigger {trigger.id}")
 
-    # Dispatch again to assign resources to the new sessions
-    dispatch(session_repository, resource_repository, resource_service)
+        # Dispatch again to assign resources to the new sessions
+        dispatch(session_repository, resource_repository, resource_service)
+
 
 
 def new_session(process_id: int, session_repository: SessionRepository):
