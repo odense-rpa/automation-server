@@ -154,7 +154,7 @@ class WorkqueueRepository(DatabaseRepository[models.Workqueue]):
                     models.WorkItem.status.contains(search),
                 )
             )
-
+        query = query.order_by(models.WorkItem.updated_at.desc())
         return [
             self.session.exec(query.offset(skip).limit(limit)).all(),
             self.session.exec(select(func.count()).select_from(query)).first(),

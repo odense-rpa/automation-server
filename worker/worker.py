@@ -54,10 +54,11 @@ if __name__ == "__main__":
                         process["target_source"],
                         None,
                         environment={
-                            "automationserver_url": settings.url,
-                            "session_id": f"{session['id']}",
-                            "resource_id": f"{resource['id']}",
-                            "process_id": f"{process['id']}",
+                            "ATS_URL": settings.url,
+                            "ATS_TOKEN": "",
+                            "ATS_SESSION": f"{session['id']}",
+                            "ATS_RESOURCE": f"{resource['id']}",
+                            "ATS_PROCESS": f"{process['id']}",
                         },
                     )
                     continue

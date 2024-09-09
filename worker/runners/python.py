@@ -74,7 +74,7 @@ def run_python(repo_url, pat, environment=None):
             pip_install_command = (
                 f"{get_venv_pip(venv_path)} install -r requirements.txt"
             )
-            stdout, stderr = run_command(
+            stdout, stderr, returncode = run_command(
                 pip_install_command, cwd=temp_dir
             )
             logger.info(f"Pip install stdout: {stdout}")
