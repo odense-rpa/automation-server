@@ -74,11 +74,13 @@ def run_python(repo_url, pat, environment=None):
             pip_install_command = (
                 f"{get_venv_pip(venv_path)} install -r requirements.txt"
             )
+            logger.info(f"Installing dependencies: {pip_install_command}")
             stdout, stderr, returncode = run_command(
                 pip_install_command, cwd=temp_dir
             )
-            logger.info(f"Pip install stdout: {stdout}")
-            logger.error(f"Pip install stderr: {stderr}")
+            #logger.info(f"Pip install stdout: {stdout}")
+            if returncode != 0:
+                logger.error(f"Pip install stderr: {stderr}")
         else:
             logger.info("No requirements.txt found, skipping dependency installation.")
 
@@ -104,13 +106,15 @@ def run_python(repo_url, pat, environment=None):
                 run_script_command, cwd=temp_dir, env=current_env
             )
             
-            if stdout:        
-                logger.info(f"Script execution stdout: {stdout}")
+            if returncode == 0:
+                logger.info(f"Script execution successful. return code: {returncode}")
 
-            if stderr:
-                logger.error(f"Script execution stderr: {stderr}")
-            
             if returncode != 0:
+                #if stdout:        
+                #    logger.info(f"Script execution stdout: {stdout}")
+                if stderr:
+                    logger.error(f"Script execution stderr: {stderr}")
+
                 raise RuntimeError(f"Script execution failed. Return code: {returncode}")
     
         else:
