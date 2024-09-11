@@ -77,7 +77,7 @@ def run_python(repo_url, pat, environment=None):
             stdout, stderr, returncode = run_command(
                 pip_install_command, cwd=temp_dir
             )
-            logger.info(f"Pip install stdout: {stdout}")
+            #logger.info(f"Pip install stdout: {stdout}")
             logger.error(f"Pip install stderr: {stderr}")
         else:
             logger.info("No requirements.txt found, skipping dependency installation.")
