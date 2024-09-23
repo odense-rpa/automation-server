@@ -123,3 +123,18 @@ def get_current_user_from_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return pat.id  # or return the user object if you prefer
+
+
+# FastAPI Dependency to get the current user from a token
+# def get_current_user(token: str = Depends(oauth2_scheme), repo: AccessTokenRepository = Depends(get_session)):
+#     try:
+#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#         user_id: int = payload.get("sub")
+#         if user_id is None:
+#             raise HTTPException(status_code=401, detail="Invalid credentials")
+#         token_data = repo.get_token_by_access_token(token)
+#         if token_data is None or token_data.revoked:
+#             raise HTTPException(status_code=401, detail="Token has been revoked or invalid")
+#     except JWTError:
+#         raise HTTPException(status_code=401, detail="Invalid credentials")
+#     return user_id

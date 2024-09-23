@@ -6,7 +6,6 @@ from passlib.context import CryptContext
 
 from app.config import settings
 
-
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
