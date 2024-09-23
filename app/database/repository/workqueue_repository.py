@@ -1,5 +1,4 @@
 from typing import List, Optional
-from datetime import datetime, timedelta
 
 from sqlalchemy import or_
 from sqlalchemy.sql import func
