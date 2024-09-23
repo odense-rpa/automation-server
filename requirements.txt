@@ -7,3 +7,8 @@ pytest
 httpx
 pydantic_settings
 requests
+cryptography
+bcrypt
+python-multipart
+python-jose[cryptography]
+passlib

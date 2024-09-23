@@ -9,6 +9,8 @@ from sqlmodel import Session, select
 from app.database import models
 import app.enums as enums
 
+import secrets
+
 Model = TypeVar("Model", bound=models.Base)
 
 
@@ -69,6 +71,21 @@ class DatabaseRepository(Generic[Model]):
         if expressions:
             query = query.where(*expressions)
         return list(self.session.scalars(query))
+
+class AccessTokenRepository(DatabaseRepository[models.AccessToken]):
+    def __init__(self, session: Session) -> None:
+        super().__init__(models.AccessToken, session)
+
+    def generate_access_token(self) -> models.AccessToken:
+        # Create a new access token
+        token = models.AccessToken(
+            token=secrets.token_urlsafe(32),
+            expires_at=datetime.now() + timedelta(days=365),
+        )
+
+        return self.create(token.model_dump())
+        
+        
 
 
 class CredentialRepository(DatabaseRepository[models.Credential]):
@@ -347,3 +364,17 @@ class SessionLogRepository(DatabaseRepository[models.SessionLog]):
             .where(models.SessionLog.workitem_id == workitem_id)
             .order_by(models.SessionLog.created_at)
         ).all()
+
+
+class ClientCredentialRepository(DatabaseRepository[models.ClientCredential]):
+    def __init__(self, session: Session) -> None:
+        super().__init__(models.ClientCredential, session)
+
+    def get_by_client_id(self, client_id: str) -> models.ClientCredential | None:
+        return self.session.scalars(
+            select(models.ClientCredential).where(
+                models.ClientCredential.client_id == client_id
+            )
+        ).first()
+        
+    

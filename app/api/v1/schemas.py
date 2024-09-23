@@ -130,6 +130,12 @@ class SessionLogCreate(BaseModel):
     workitem_id: Optional[int] = None
     message: str
 
+class AccessTokenRead(BaseModel):
+    id: int = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
+    expires_at: Optional[datetime] = None
+
+
 
 # Schemas for the API
 class PaginationParams(BaseModel):
@@ -152,3 +158,5 @@ class PaginatedResponse(GenericModel, Generic[T]):
     total_items: int
     total_pages: int
     items: List[T]
+    
+    

@@ -1,6 +1,7 @@
 from typing import Optional
-
-from fastapi import Depends, Query
+import datetime
+from fastapi import Depends, Query, HTTPException, status, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.database.session import get_session
 
@@ -13,6 +14,7 @@ from app.services import (
     SessionService,
     ResourceService,
     WorkqueueService,
+    ClientCredentialService
 )
 
 
@@ -43,6 +45,12 @@ def get_repository(model):
         if model == models.SessionLog:
             return repositories.SessionLogRepository(session)
 
+        if model == models.AccessToken:
+            return repositories.AccessTokenRepository(session)
+        
+        if model == models.ClientCredential:
+            return repositories.ClientCredentialRepository(session)
+        
         # Add more repositories here
 
     return get
@@ -82,6 +90,12 @@ def get_resource_service(
 ) -> ResourceService:
     return ResourceService(repository, session_repository)
 
+def get_client_credential_service(
+    repository: repositories.ClientCredentialRepository = Depends(
+        get_repository(models.ClientCredential)
+    )):
+    return ClientCredentialService(repository)
+
 
 def get_paginated_search_params(
     page: int = Query(1, ge=1, description="Page number, starting from 1"),
@@ -90,3 +104,22 @@ def get_paginated_search_params(
 ) -> schemas.PaginatedSearchParams:
     pagination = schemas.PaginationParams(page=page, size=size)
     return schemas.PaginatedSearchParams(pagination=pagination, search=search)
+
+
+bearer_scheme = HTTPBearer()
+
+def get_current_user_from_token(
+    credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
+    repository = Depends(get_repository(models.AccessToken)),
+):
+    token = credentials.credentials
+
+    pat = repository.get_by_token(token)
+
+    if not pat or (pat.expires_at and pat.expires_at < datetime.now()):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return pat.id  # or return the user object if you prefer

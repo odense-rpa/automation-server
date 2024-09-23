@@ -194,3 +194,40 @@ class SessionLog(SQLModel, table=True):
     workitem: typing.Optional[WorkItem] = Relationship()
     message: str
     created_at: datetime = Field(default_factory=lambda: datetime.now())
+
+
+class AccessToken(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    access_token: str = Field(index=True, unique=True)
+    refresh_token: str = Field(index=True, unique=True)
+
+    expires_at: typing.Optional[datetime] = None
+    refresh_expires_at: datetime = Field(nullable=False)
+
+    revoked: bool = Field(default=False)
+
+    user_id: typing.Optional[int] = Field(foreign_key="user.id")
+    user: typing.Optional["User"] = Relationship()
+
+    client_credentials_id: typing.Optional[int] = Field(foreign_key="clientcredential.id")
+    client_credentials: typing.Optional["ClientCredential"] = Relationship()
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
+
+
+
+class User(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    username: str = Field()
+    password: str = Field()
+    salt: str = Field()
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
+    updated_at: datetime = Field(default_factory=lambda: datetime.now())
+
+class ClientCredential(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    client_id: str = Field(index=True, unique=True)
+    client_secret: str = Field()
+    salt: str = Field()
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
+    updated_at: datetime = Field(default_factory=lambda: datetime.now())
