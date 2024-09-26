@@ -1,5 +1,5 @@
 from typing import Optional
-import datetime
+from datetime import datetime, timedelta
 from fastapi import Depends, Query, HTTPException, status, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -9,12 +9,13 @@ import app.database.repository as repositories
 import app.database.models as models
 import app.api.v1.schemas as schemas
 
+from app.security import oauth2_scheme
+
 from app.services import (
     SessionLogService,
     SessionService,
     ResourceService,
     WorkqueueService,
-    ClientCredentialService
 )
 
 
@@ -47,10 +48,10 @@ def get_repository(model):
 
         if model == models.AccessToken:
             return repositories.AccessTokenRepository(session)
-        
+
         if model == models.ClientCredential:
             return repositories.ClientCredentialRepository(session)
-        
+
         # Add more repositories here
 
     return get
@@ -90,12 +91,6 @@ def get_resource_service(
 ) -> ResourceService:
     return ResourceService(repository, session_repository)
 
-def get_client_credential_service(
-    repository: repositories.ClientCredentialRepository = Depends(
-        get_repository(models.ClientCredential)
-    )):
-    return ClientCredentialService(repository)
-
 
 def get_paginated_search_params(
     page: int = Query(1, ge=1, description="Page number, starting from 1"),
@@ -108,9 +103,10 @@ def get_paginated_search_params(
 
 bearer_scheme = HTTPBearer()
 
+
 def get_current_user_from_token(
     credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
-    repository = Depends(get_repository(models.AccessToken)),
+    repository=Depends(get_repository(models.AccessToken)),
 ):
     token = credentials.credentials
 
@@ -138,3 +134,29 @@ def get_current_user_from_token(
 #     except JWTError:
 #         raise HTTPException(status_code=401, detail="Invalid credentials")
 #     return user_id
+
+
+def resolve_access_token(
+    token: str = Depends(oauth2_scheme),
+    repository: repositories.AccessTokenRepository = Depends(
+        get_repository(models.AccessToken)
+    ),
+) -> models.AccessToken:
+    tokens = repository.get_all()
+
+    # If there are no tokens in the system, we assume that we are in either install or development mode.
+    if len(tokens) == 0:
+        return models.AccessToken(
+            id=0, token="", expires_at=datetime.now() + timedelta(weeks=52), revoked=False
+        )
+
+    # Check if the token is in the tokens
+    for t in tokens:
+        if t.token == token and not t.deleted and t.expires_at > datetime.now():
+            return t
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

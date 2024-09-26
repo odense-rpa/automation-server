@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, Response
 from fastapi.exceptions import HTTPException
 
 from app.database.repository import ProcessRepository, TriggerRepository
-from app.database.models import Process, Trigger
+from app.database.models import Process, Trigger, AccessToken
 
 from .schemas import ProcessCreate, ProcessUpdate, TriggerCreate
-from .dependencies import get_repository
+from .dependencies import get_repository, resolve_access_token
 
 import app.enums as enums
 from app.security import oauth2_scheme
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/processes", tags=["Processes"])
 def get_processes(
     include_deleted: bool = False,
     repository: ProcessRepository = Depends(get_repository(Process)),
-    token: str = Depends(oauth2_scheme),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> list[Process]:
     return repository.get_all(include_deleted)
 

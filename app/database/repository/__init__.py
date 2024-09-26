@@ -1,6 +1,5 @@
 from .access_token_repository import AccessTokenRepository as AccessTokenRepository
 from .credential_repository import CredentialRepository as CredentialRepository
-from .client_credential_repository import ClientCredentialRepository as ClientCredentialRepository
 from .process_repository import ProcessRepository as ProcessRepository
 from .resource_repository import ResourceRepository as ResourceRepository
 from .session_repository import SessionRepository as SessionRepository
