@@ -101,41 +101,6 @@ def get_paginated_search_params(
     return schemas.PaginatedSearchParams(pagination=pagination, search=search)
 
 
-bearer_scheme = HTTPBearer()
-
-
-def get_current_user_from_token(
-    credentials: HTTPAuthorizationCredentials = Security(bearer_scheme),
-    repository=Depends(get_repository(models.AccessToken)),
-):
-    token = credentials.credentials
-
-    pat = repository.get_by_token(token)
-
-    if not pat or (pat.expires_at and pat.expires_at < datetime.now()):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return pat.id  # or return the user object if you prefer
-
-
-# FastAPI Dependency to get the current user from a token
-# def get_current_user(token: str = Depends(oauth2_scheme), repo: AccessTokenRepository = Depends(get_session)):
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         user_id: int = payload.get("sub")
-#         if user_id is None:
-#             raise HTTPException(status_code=401, detail="Invalid credentials")
-#         token_data = repo.get_token_by_access_token(token)
-#         if token_data is None or token_data.revoked:
-#             raise HTTPException(status_code=401, detail="Token has been revoked or invalid")
-#     except JWTError:
-#         raise HTTPException(status_code=401, detail="Invalid credentials")
-#     return user_id
-
-
 def resolve_access_token(
     token: str = Depends(oauth2_scheme),
     repository: repositories.AccessTokenRepository = Depends(
@@ -147,12 +112,23 @@ def resolve_access_token(
     # If there are no tokens in the system, we assume that we are in either install or development mode.
     if len(tokens) == 0:
         return models.AccessToken(
-            id=0, token="", expires_at=datetime.now() + timedelta(weeks=52), revoked=False
+            id=0,
+            token="development-token",
+            identifier="development-token",
+            expires_at=datetime.now() + timedelta(weeks=52),
+            revoked=False,
+        )
+
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is required",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Check if the token is in the tokens
     for t in tokens:
-        if t.token == token and not t.deleted and t.expires_at > datetime.now():
+        if t.access_token == token and not t.deleted and t.expires_at > datetime.now():
             return t
 
     raise HTTPException(

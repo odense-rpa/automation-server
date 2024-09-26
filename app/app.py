@@ -13,6 +13,7 @@ from app.api.v1.resource import router as v1_resource_router
 from app.api.v1.session import router as v1_session_router
 from app.api.v1.trigger import router as v1_trigger_router
 from app.api.v1.sessionlog import router as v1_sessionlog_router
+from app.api.v1.accesstoken_router import router as v1_accesstoken_router
 
 from app.database.session import create_db_and_tables
 
@@ -54,6 +55,7 @@ app.include_router(v1_resource_router, prefix="/api")
 app.include_router(v1_session_router, prefix="/api")
 app.include_router(v1_sessionlog_router, prefix="/api")
 app.include_router(v1_trigger_router, prefix="/api")
+app.include_router(v1_accesstoken_router, prefix="/api")
 
 
 async def background_task():

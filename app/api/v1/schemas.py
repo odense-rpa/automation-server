@@ -132,8 +132,14 @@ class SessionLogCreate(BaseModel):
 
 class AccessTokenRead(BaseModel):
     id: int = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.utcnow())
-    expires_at: Optional[datetime] = None
+    identifier: str = Field(index=True, unique=True)
+
+    expires_at: datetime = None
+
+    deleted: bool = Field(default=False)
+
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
+
 
 
 
