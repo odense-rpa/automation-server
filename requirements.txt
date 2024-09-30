@@ -7,3 +7,4 @@ pytest
 pydantic_settings
 requests
 python-multipart
+httpx
