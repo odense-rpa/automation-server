@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.models import SecuritySchemeType, APIKey
 
 from app.api.v1.workqueue import router as v1_workqueue_router
 from app.api.v1.workitem import router as v1_workitem_router
@@ -56,6 +57,7 @@ app.include_router(v1_session_router, prefix="/api")
 app.include_router(v1_sessionlog_router, prefix="/api")
 app.include_router(v1_trigger_router, prefix="/api")
 app.include_router(v1_accesstoken_router, prefix="/api")
+
 
 
 async def background_task():

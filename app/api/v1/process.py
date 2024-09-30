@@ -17,7 +17,7 @@ router = APIRouter(prefix="/processes", tags=["Processes"])
 def get_processes(
     include_deleted: bool = False,
     repository: ProcessRepository = Depends(get_repository(Process)),
-    token: AccessToken = Depends(resolve_access_token),
+#    token: AccessToken = Depends(resolve_access_token),
 ) -> list[Process]:
     return repository.get_all(include_deleted)
 
