@@ -3,8 +3,7 @@ from fastapi import Form, Depends, HTTPException, APIRouter
 from app.database.repository import AccessTokenRepository
 from app.database.models import AccessToken
 
-# from .schemas import CredentialCreate, CredentialUpdate
-from .dependencies import get_repository
+from .dependencies import get_repository, resolve_access_token
 from .schemas import AccessTokenRead
 
 router = APIRouter(prefix="/accesstokens", tags=["Access Tokens"])
@@ -14,6 +13,7 @@ router = APIRouter(prefix="/accesstokens", tags=["Access Tokens"])
 def get_access_tokens(
     include_deleted: bool = False,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> list[AccessTokenRead]:
     list = repository.get_all(include_deleted)
 
@@ -25,6 +25,7 @@ def get_access_tokens(
 def get_access_token(
     access_token_id: str,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> AccessTokenRead:
     access_token = repository.get(access_token_id)
 
@@ -41,5 +42,6 @@ def get_access_token(
 def create_access_token(
     identifier: str = Form(),
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> AccessToken:
     return repository.create(identifier)

@@ -1,13 +1,11 @@
-from datetime import datetime, timedelta
-
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.database.models import Resource
+from app.database.models import Resource, AccessToken
 from app.database.repository import ResourceRepository
 from app.services import ResourceService
 
 from .schemas import ResourceCreate, ResourceUpdate
-from .dependencies import get_repository,get_resource_service
+from .dependencies import get_repository, get_resource_service, resolve_access_token
 
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
@@ -18,6 +16,7 @@ def get_resources(
     include_expired: bool = False,
     repository: ResourceRepository = Depends(get_repository(Resource)),
     service: ResourceService = Depends(get_resource_service),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> list[Resource]:
     service.update_availability()
 
@@ -34,6 +33,7 @@ def get_resources(
 def get_resource(
     resource_id: str,
     repository: ResourceRepository = Depends(get_repository(Resource)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Resource:
     resource = repository.get(resource_id)
 
@@ -49,6 +49,7 @@ def update_resource(
     update: ResourceUpdate,
     repository: ResourceRepository = Depends(get_repository(Resource)),
     service: ResourceService = Depends(get_resource_service),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Resource:
     resource = repository.get(resource_id)
     if resource is None:
@@ -59,11 +60,13 @@ def update_resource(
 
     return service.enroll(update.fqdn, update.name, update.capabilities)
 
+
 @router.put("/{resource_id}/ping")
 def ping_resource(
     resource_id: str,
     repository: ResourceRepository = Depends(get_repository(Resource)),
     service: ResourceService = Depends(get_resource_service),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> bool:
     resource = repository.get(resource_id)
     if resource is None:
@@ -74,10 +77,10 @@ def ping_resource(
     return True
 
 
-
 @router.post("")
 def create_resource(
     resource: ResourceCreate,
     service: ResourceService = Depends(get_resource_service),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Resource:
     return service.enroll(resource.fqdn, resource.name, resource.capabilities)

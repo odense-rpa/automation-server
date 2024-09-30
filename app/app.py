@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.models import SecuritySchemeType, APIKey
 
 from app.api.v1.workqueue import router as v1_workqueue_router
 from app.api.v1.workitem import router as v1_workitem_router
@@ -15,6 +14,8 @@ from app.api.v1.session import router as v1_session_router
 from app.api.v1.trigger import router as v1_trigger_router
 from app.api.v1.sessionlog import router as v1_sessionlog_router
 from app.api.v1.accesstoken_router import router as v1_accesstoken_router
+
+from app.api.token_router import router as token_router
 
 from app.database.session import create_db_and_tables
 
@@ -57,7 +58,7 @@ app.include_router(v1_session_router, prefix="/api")
 app.include_router(v1_sessionlog_router, prefix="/api")
 app.include_router(v1_trigger_router, prefix="/api")
 app.include_router(v1_accesstoken_router, prefix="/api")
-
+app.include_router(token_router, prefix="")
 
 
 async def background_task():

@@ -8,7 +8,8 @@ from .schemas import ProcessCreate, ProcessUpdate, TriggerCreate
 from .dependencies import get_repository, resolve_access_token
 
 import app.enums as enums
-from app.security import oauth2_scheme
+
+#from app.security import oauth2_scheme
 
 router = APIRouter(prefix="/processes", tags=["Processes"])
 
@@ -17,7 +18,7 @@ router = APIRouter(prefix="/processes", tags=["Processes"])
 def get_processes(
     include_deleted: bool = False,
     repository: ProcessRepository = Depends(get_repository(Process)),
-#    token: AccessToken = Depends(resolve_access_token),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> list[Process]:
     return repository.get_all(include_deleted)
 
@@ -26,6 +27,7 @@ def get_processes(
 def get_process(
     process_id: str,
     repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Process:
     process = repository.get(process_id)
 
@@ -43,6 +45,7 @@ def update_process(
     process_id: str,
     update: ProcessUpdate,
     repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Process:
     process = repository.get(process_id)
 
@@ -59,6 +62,7 @@ def update_process(
 def create_process(
     process: ProcessCreate,
     repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Process:
     data = process.model_dump()
     data["deleted"] = False
@@ -70,6 +74,7 @@ def create_process(
 def delete_process(
     process_id: str,
     repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Response:
     process = repository.get(process_id)
 
@@ -84,6 +89,7 @@ def create_trigger(
     trigger: TriggerCreate,
     repository: TriggerRepository = Depends(get_repository(Trigger)),
     process_repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Trigger:
     
     data = trigger.model_dump()
@@ -121,6 +127,7 @@ def get_triggers(
     process_id: int,
     include_deleted: bool = False,
     repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> list[Trigger]:
    
     # Check if the process exists
