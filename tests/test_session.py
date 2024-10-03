@@ -16,7 +16,7 @@ def test_get_sessions(session: Session, client: TestClient):
     assert data["items"][1]["process_id"] == 1
     assert data["items"][1]["resource_id"] is None
     assert data["items"][1]["deleted"] is False
-    assert data["items"][1]["status"] == enums.SessionStatus.COMPLETED
+    assert data["items"][1]["status"] == enums.SessionStatus.NEW
 
     response = client.get("/api/sessions/?include_deleted=true")
     data = response.json()
