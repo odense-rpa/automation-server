@@ -65,6 +65,8 @@ def run_python(repo_url, pat, environment=None):
 
         stdout, stderr, returncode = run_command(venv_command)
 
+        logger.info(f"Venv creation stdout: {stdout}")
+
         if returncode != 0:
             logger.error(f"Venv creation stderr: {stderr}")
 
@@ -109,11 +111,8 @@ def run_python(repo_url, pat, environment=None):
             if returncode == 0:
                 logger.info(f"Script execution successful. return code: {returncode}")
 
-            if returncode != 0:
-                #if stdout:        
-                #    logger.info(f"Script execution stdout: {stdout}")
-                if stderr:
-                    logger.error(f"Script execution stderr: {stderr}")
+            if returncode != 0 and stderr:
+                logger.error(f"Script execution stderr: {stderr}")
 
                 raise RuntimeError(f"Script execution failed. Return code: {returncode}")
     
