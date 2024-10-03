@@ -2,12 +2,10 @@ from fastapi import APIRouter, Depends, Response
 from fastapi.exceptions import HTTPException
 
 from app.database.repository import TriggerRepository
-from app.database.models import Trigger
+from app.database.models import Trigger, AccessToken
 
-from .schemas import TriggerCreate, TriggerUpdate
-from .dependencies import get_repository
-
-import app.enums as enums
+from .schemas import TriggerUpdate
+from .dependencies import get_repository, resolve_access_token
 
 router = APIRouter(prefix="/triggers", tags=["Triggers"])
 
@@ -17,6 +15,7 @@ router = APIRouter(prefix="/triggers", tags=["Triggers"])
 async def get_triggers(
     include_deleted: bool = False,
     repository: TriggerRepository = Depends(get_repository(Trigger)),
+    token: AccessToken = Depends(resolve_access_token),
 ):
     return repository.get_all(include_deleted=include_deleted)
 
@@ -26,6 +25,7 @@ async def update_trigger(
     trigger_id: int,
     trigger: TriggerUpdate,
     repository: TriggerRepository = Depends(get_repository(Trigger)),
+    token: AccessToken = Depends(resolve_access_token),
 ):
     db_trigger = repository.get(trigger_id)
     if not db_trigger:
@@ -40,6 +40,7 @@ async def update_trigger(
 async def delete_trigger(
     trigger_id: int,
     repository: TriggerRepository = Depends(get_repository(Trigger)),
+    token: AccessToken = Depends(resolve_access_token),
 ):
     # Does trigger exist?¨
     db_trigger = repository.get(trigger_id)

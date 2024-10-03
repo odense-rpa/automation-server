@@ -1,12 +1,15 @@
 from typing import Optional
-
-from fastapi import Depends, Query
+from datetime import datetime, timedelta
+from fastapi import Depends, Query, HTTPException, status, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.database.session import get_session
 
 import app.database.repository as repositories
 import app.database.models as models
 import app.api.v1.schemas as schemas
+
+from app.security import oauth2_scheme
 
 from app.services import (
     SessionLogService,
@@ -42,6 +45,12 @@ def get_repository(model):
 
         if model == models.SessionLog:
             return repositories.SessionLogRepository(session)
+
+        if model == models.AccessToken:
+            return repositories.AccessTokenRepository(session)
+
+        if model == models.ClientCredential:
+            return repositories.ClientCredentialRepository(session)
 
         # Add more repositories here
 
@@ -90,3 +99,40 @@ def get_paginated_search_params(
 ) -> schemas.PaginatedSearchParams:
     pagination = schemas.PaginationParams(page=page, size=size)
     return schemas.PaginatedSearchParams(pagination=pagination, search=search)
+
+
+def resolve_access_token(
+    token: str = Depends(oauth2_scheme),
+    repository: repositories.AccessTokenRepository = Depends(
+        get_repository(models.AccessToken)
+    ),
+) -> models.AccessToken:
+    tokens = repository.get_all()
+
+    # If there are no tokens in the system, we assume that we are in either install or development mode.
+    if len(tokens) == 0:
+        return models.AccessToken(
+            id=0,
+            token="development-token",
+            identifier="development-token",
+            expires_at=datetime.now() + timedelta(weeks=52),
+            revoked=False,
+        )
+
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check if the token is in the tokens
+    for t in tokens:
+        if t.access_token == token and not t.deleted and t.expires_at > datetime.now():
+            return t
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

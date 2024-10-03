@@ -4,6 +4,7 @@ pydantic==2.6.4
 sqlmodel==0.0.16
 croniter
 pytest
-httpx
 pydantic_settings
 requests
+python-multipart
+httpx

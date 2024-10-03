@@ -10,7 +10,7 @@ from app.database.repository import (
     SessionLogRepository,
 )
 
-from app.database.models import Session, Process, Resource, SessionLog
+from app.database.models import Session, Process, Resource, SessionLog, AccessToken
 import app.enums as enums
 
 from .schemas import (
@@ -23,7 +23,12 @@ from .schemas import (
 from app.api.v1.schemas import PaginatedResponse, PaginatedSearchParams
 from app.services import SessionService
 
-from .dependencies import get_repository, get_session_service, get_paginated_search_params
+from .dependencies import (
+    get_repository,
+    get_session_service,
+    get_paginated_search_params,
+    resolve_access_token,
+)
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
@@ -33,13 +38,20 @@ def get_sessions(
     include_deleted: bool = False,
     paginated_search: PaginatedSearchParams = Depends(get_paginated_search_params),
     service: SessionService = Depends(get_session_service),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> PaginatedResponse[Session]:
-    return service.search_sessions(paginated_search.pagination.page, paginated_search.pagination.size, paginated_search.search, include_deleted)
+    return service.search_sessions(
+        paginated_search.pagination.page,
+        paginated_search.pagination.size,
+        paginated_search.search,
+        include_deleted,
+    )
 
 
 @router.get("/new")
 def get_new_sessions(
     repository: SessionRepository = Depends(get_repository(Session)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> list[Session]:
     return repository.get_new_sessions()
 
@@ -48,6 +60,7 @@ def get_new_sessions(
 def get_session(
     session_id: int,
     repository: SessionRepository = Depends(get_repository(Session)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
     session = repository.get(session_id)
 
@@ -59,6 +72,7 @@ def get_session(
 
     return session
 
+
 # The status update function handles the transition to from new to in_progress and to completed and failed
 @router.put("/{session_id}/status")
 def update_session_status(
@@ -66,6 +80,7 @@ def update_session_status(
     update: SessionStatusUpdate,
     repository: SessionRepository = Depends(get_repository(Session)),
     resource_repository: ResourceRepository = Depends(get_repository(Resource)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
     session = repository.get(session_id)
 
@@ -99,6 +114,7 @@ def create_session(
     session: SessionCreate,
     repository: SessionRepository = Depends(get_repository(Session)),
     process_repository: ProcessRepository = Depends(get_repository(Process)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
     # Check if the process exists
     process = process_repository.get(session.process_id)
@@ -120,15 +136,13 @@ def get_active_sessions_by_resource(
     resource_id: int,
     repository: SessionRepository = Depends(get_repository(Session)),
     resource_repository: ResourceRepository = Depends(get_repository(Resource)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
-    
     resource = resource_repository.get(resource_id)
-    
+
     if resource is None:
         raise HTTPException(status_code=404, detail="Resource not found")
-    
-    
-    
+
     session = repository.get_by_resource_id(resource_id)
 
     if session is None:
@@ -143,6 +157,7 @@ def add_session_log(
     log: SessionLogCreate,
     session_repository: SessionRepository = Depends(get_repository(Session)),
     log_repository: SessionLogRepository = Depends(get_repository(SessionLog)),
+    token: AccessToken = Depends(resolve_access_token),
 ) -> None:
     session = session_repository.get(session_id)
 
