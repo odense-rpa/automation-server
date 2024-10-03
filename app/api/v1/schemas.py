@@ -140,6 +140,8 @@ class AccessTokenRead(BaseModel):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
+class AccessTokenCreate(BaseModel):
+    identifier: str
 
 
 

@@ -4,7 +4,7 @@ from app.database.repository import AccessTokenRepository
 from app.database.models import AccessToken
 
 from .dependencies import get_repository, resolve_access_token
-from .schemas import AccessTokenRead
+from .schemas import AccessTokenRead, AccessTokenCreate
 
 router = APIRouter(prefix="/accesstokens", tags=["Access Tokens"])
 
@@ -40,8 +40,8 @@ def get_access_token(
 
 @router.post("")
 def create_access_token(
-    identifier: str = Form(),
+    identifier: AccessTokenCreate,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> AccessToken:
-    return repository.create(identifier)
+    return repository.create(identifier.identifier)
