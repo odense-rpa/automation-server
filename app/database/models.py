@@ -207,5 +207,5 @@ class AccessToken(SQLModel, table=True):
     deleted: bool = Field(default=False)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
-
+    updated_at: datetime = Field(default_factory=lambda: datetime.now())
 

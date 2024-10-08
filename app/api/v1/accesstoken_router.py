@@ -45,3 +45,21 @@ def create_access_token(
     token: AccessToken = Depends(resolve_access_token),
 ) -> AccessToken:
     return repository.create(identifier.identifier)
+
+@router.delete("/{access_token_id}")
+def delete_access_token(
+    access_token_id: str,
+    repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
+    token: AccessToken = Depends(resolve_access_token),
+) -> None:
+    access_token = repository.get(access_token_id)
+
+    if access_token is None:
+        raise HTTPException(status_code=404, detail="Access Token not found")
+
+    if access_token.deleted:
+        raise HTTPException(status_code=403, detail="Access Token is deleted")
+
+    repository.delete(access_token)
+    
+    return None

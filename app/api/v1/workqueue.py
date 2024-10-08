@@ -10,6 +10,7 @@ import app.enums as enums
 
 from .schemas import (
     WorkqueueUpdate,
+    WorkqueueCreate,
     WorkItemCreate,
     WorkqueueInformation,
     PaginatedSearchParams,
@@ -106,7 +107,7 @@ def update_workqueue(
 
 @router.post("")
 def create_workqueue(
-    workqueue: Workqueue,
+    workqueue: WorkqueueCreate,
     repository: WorkqueueRepository = Depends(get_repository(Workqueue)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
