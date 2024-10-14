@@ -32,7 +32,7 @@ RUN mkdir /data
 
 # Set environment variables
 ENV DEBUG=False
-ENV DATABASE_URL="sqlite:///data/automationserver.db"
+ENV DATABASE_URL="sqlite:////data/automationserver.db"
 
 # Expose the port FastAPI runs on
 EXPOSE 8000
