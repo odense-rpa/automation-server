@@ -5,7 +5,10 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-
+# Install sqlite3 and clean up afterwards
+RUN apt-get update && \
+    apt-get install -y sqlite3 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
@@ -25,7 +28,7 @@ RUN mkdir /data
 
 # Set environment variables
 ENV DEBUG=False
-ENV DATABASE_URL="sqlite:///data/automationserver.db"
+ENV DATABASE_URL="sqlite:////data/automationserver.db"
 
 # Expose the port FastAPI runs on
 EXPOSE 8000
