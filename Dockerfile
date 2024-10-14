@@ -19,20 +19,23 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the FastAPI app code
+# Copy the FastAPI app code and entry-point script
 COPY . /app
 COPY ./alembic.ini.docker /app/alembic.ini
+COPY scripts/entry-point.sh /app/entry-point.sh
+
+# Make the entry-point script executable
+RUN chmod +x /app/entry-point.sh
 
 # Create a directory for the SQLite database
 RUN mkdir /data
 
 # Set environment variables
 ENV DEBUG=False
-ENV DATABASE_URL="sqlite:////data/automationserver.db"
+ENV DATABASE_URL="sqlite:///data/automationserver.db"
 
 # Expose the port FastAPI runs on
 EXPOSE 8000
 
-# Command to run the FastAPI app with uvicorn
-#CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
-CMD alembic upgrade head && uvicorn app.app:app --host 0.0.0.0 --port 8000
+# Use the entry-point script to run the app
+ENTRYPOINT ["/app/entry-point.sh"]
