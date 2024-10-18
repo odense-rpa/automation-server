@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from sqlalchemy import or_
 from sqlalchemy.sql import func
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 
 from app.database.models import Workqueue, WorkItem
 
@@ -47,3 +48,22 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             self.session.exec(query.offset(skip).limit(limit)).all(),
             self.session.exec(select(func.count()).select_from(query)).first(),
         ]
+    
+    def clear(
+            self, workqueue_id: int, 
+            workitem_status: enums.WorkItemStatus | None, 
+            days_older_than: int | None
+        ) -> Workqueue | None:
+        query = delete(WorkItem).where(WorkItem.workqueue_id == workqueue_id)
+        
+        if workitem_status is not None:
+            query = query.where(WorkItem.status == workitem_status)        
+
+        if days_older_than is not None:
+            cutoff_date = datetime.now() - timedelta(days=days_older_than)
+            query = query.where(WorkItem.created_at < cutoff_date)
+
+        self.session.exec(query)
+        self.session.commit()       
+
+        return self.get(workqueue_id)

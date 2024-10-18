@@ -15,7 +15,6 @@ class WorkqueueUpdate(BaseModel):
     description: str
     enabled: bool
 
-
 class WorkqueueCreate(BaseModel):
     name: str = Field(min_length=1)
     description: str
@@ -32,22 +31,16 @@ class WorkqueueInformation(BaseModel):
     failed: int
     pending_user_action: int
     
-
-
-
 class WorkItemCreate(BaseModel):
     data: str
     reference: Optional[str] = ""
-
 
 class WorkItemUpdate(BaseModel):
     data: str
     reference: Optional[str] = ""
 
-
 class WorkItemStatusUpdate(BaseModel):
     status: enums.WorkItemStatus
-
 
 class ProcessCreate(BaseModel):
     name: str
@@ -60,21 +53,16 @@ class ProcessCreate(BaseModel):
     workqueue_id: int
     requirements: Optional[str] = ""
 
-
 class ProcessUpdate(ProcessCreate):
     pass
-
 
 class TriggerCreate(BaseModel):
     type: enums.TriggerType
     cron: Optional[str] = ""
-
     date: Optional[datetime] = None
-
     workqueue_id: int | None = None
     workqueue_resource_limit: int = 0
     workqueue_scale_up_threshold: int = 0
-
     enabled: bool = False
 
     @model_validator(mode='after')
@@ -94,31 +82,24 @@ class TriggerCreate(BaseModel):
 class TriggerUpdate(TriggerCreate):
     pass
 
-
-
 class CredentialCreate(BaseModel):
     name: str
     username: Optional[str] = ""
     password: Optional[str] = ""
 
-
 class CredentialUpdate(CredentialCreate):
     pass
-
 
 class ResourceCreate(BaseModel):
     name: str
     fqdn: str
     capabilities: str
 
-
 class ResourceUpdate(ResourceCreate):
     pass
 
-
 class SessionCreate(BaseModel):
     process_id: int
-
 
 class SessionStatusUpdate(BaseModel):
     status: Optional[enums.SessionStatus] = None
@@ -133,17 +114,12 @@ class SessionLogCreate(BaseModel):
 class AccessTokenRead(BaseModel):
     id: int = Field(default=None, primary_key=True)
     identifier: str = Field(index=True, unique=True)
-
     expires_at: datetime = None
-
     deleted: bool = Field(default=False)
-
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
 class AccessTokenCreate(BaseModel):
     identifier: str
-
-
 
 # Schemas for the API
 class PaginationParams(BaseModel):
@@ -157,7 +133,6 @@ class PaginatedSearchParams(BaseModel):
     pagination: PaginationParams
     search: Optional[str]
 
-
 T = TypeVar('T')
 
 class PaginatedResponse(GenericModel, Generic[T]):
@@ -166,5 +141,7 @@ class PaginatedResponse(GenericModel, Generic[T]):
     total_items: int
     total_pages: int
     items: List[T]
-    
-    
+
+class WorkqueueClear(BaseModel):
+    workitem_status: Optional[enums.WorkItemStatus] = None
+    days_older_than: Optional[int] = None

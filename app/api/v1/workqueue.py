@@ -9,6 +9,7 @@ from app.database.models import Workqueue, WorkItem, AccessToken
 import app.enums as enums
 
 from .schemas import (
+    WorkqueueClear,
     WorkqueueUpdate,
     WorkqueueCreate,
     WorkItemCreate,
@@ -130,7 +131,15 @@ def delete_workqueue(
 
     return repository.delete(workqueue)
 
-
+@router.post("/{queue_id}/clear")
+def clear_workqueue(
+    workqueue_id: int,
+    model: WorkqueueClear,
+    repository: WorkqueueRepository = Depends(get_repository(Workqueue)),
+    token: AccessToken = Depends(resolve_access_token)
+) -> Workqueue | None:
+        return repository.clear(workqueue_id, model.workitem_status, model.days_older_than)
+    
 @router.post("/{queue_id}/add")
 def adds_workitem(
     queue_id: str,
@@ -151,7 +160,6 @@ def adds_workitem(
     data["deleted"] = False
 
     return item_repository.create(data)
-
 
 @router.get("/{queue_id}/next_item")
 def gets_next_workitem(
