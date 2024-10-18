@@ -137,8 +137,14 @@ def clear_workqueue(
     model: WorkqueueClear,
     repository: WorkqueueRepository = Depends(get_repository(Workqueue)),
     token: AccessToken = Depends(resolve_access_token)
-) -> Workqueue | None:
-        return repository.clear(workqueue_id, model.workitem_status, model.days_older_than)
+) -> Response:
+        queue = repository.get(workqueue_id)
+
+        if queue is None:
+            raise HTTPException(status_code=404, detail="Queue not found")        
+
+        repository.clear(workqueue_id, model.workitem_status, model.days_older_than)
+        return Response(status_code=204)
     
 @router.post("/{queue_id}/add")
 def adds_workitem(

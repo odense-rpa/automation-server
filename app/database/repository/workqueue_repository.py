@@ -53,7 +53,7 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             self, workqueue_id: int, 
             workitem_status: enums.WorkItemStatus | None, 
             days_older_than: int | None
-        ) -> Workqueue | None:
+        ):
         query = delete(WorkItem).where(WorkItem.workqueue_id == workqueue_id)
         
         if workitem_status is not None:
@@ -64,6 +64,4 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             query = query.where(WorkItem.created_at < cutoff_date)
 
         self.session.exec(query)
-        self.session.commit()       
-
-        return self.get(workqueue_id)
+        self.session.commit()
