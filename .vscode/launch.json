@@ -13,7 +13,8 @@
                 "app.main:app",
                 "--reload"
             ],
-            "jinja": true
+            "jinja": true,
+            "cwd": "${workspaceFolder}/backend"
         },
         {
             "name": "Python: worker.py",
@@ -22,9 +23,9 @@
             "program": "${workspaceFolder}/worker/worker.py",
             "console": "integratedTerminal",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/worker"
             },
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/worker"
         }        
     ]
 }

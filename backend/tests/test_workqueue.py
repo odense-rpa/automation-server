@@ -100,22 +100,22 @@ def test_add_workitem(session: Session, client: TestClient):
 
     response = client.post(
         "/api/workqueues/1/add",
-        json={"data": "test", "reference": "My reference"},
+        json={"data": "{}", "reference": "My reference"},
     )
 
     assert response.status_code == 200
 
     data = response.json()
-    assert data["data"] == "test"
+    assert data["data"] == "{}"
     assert data["reference"] == "My reference"
     assert data["status"] == WorkItemStatus.NEW
     assert data["locked"] is False
 
     data = session.get(WorkItem, 2)
 
-    assert data.data == "test"
-    assert data.reference == "My reference"
-    assert data.status == WorkItemStatus.NEW
+    assert data.data == "{}"
+    assert data.reference == "Embedded workitem"
+    assert data.status == WorkItemStatus.IN_PROGRESS
     assert data.locked is False
 
 
