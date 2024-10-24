@@ -4,7 +4,7 @@ from app.database.repository import AccessTokenRepository
 from app.database.models import AccessToken
 
 from .dependencies import get_repository, resolve_access_token
-from .schemas import AccessTokenRead
+from .schemas import AccessTokenRead, AccessTokenCreate
 
 router = APIRouter(prefix="/accesstokens", tags=["Access Tokens"])
 
@@ -40,8 +40,24 @@ def get_access_token(
 
 @router.post("")
 def create_access_token(
-    identifier: str = Form(),
+    identifier: AccessTokenCreate,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> AccessToken:
-    return repository.create(identifier)
+    return repository.create(identifier.identifier)
+
+@router.delete("/{access_token_id}")
+def delete_access_token(
+    access_token_id: str,
+    repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
+    token: AccessToken = Depends(resolve_access_token),
+) -> AccessToken:
+    access_token = repository.get(access_token_id)
+
+    if access_token is None:
+        raise HTTPException(status_code=404, detail="Access Token not found")
+    
+    if access_token.deleted:
+        raise HTTPException(status_code=403, detail="Access Token is deleted")
+    
+    return repository.delete(access_token)
