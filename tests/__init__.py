@@ -7,7 +7,7 @@ from app.database.session import get_session
 import app.database.models as models
 import app.enums as enums
 
-from app.app import app
+from app.main import app
 
 import pytest
 
