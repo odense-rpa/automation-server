@@ -44,7 +44,7 @@ def generate_basic_data(session: Session):
             username="Secret username",
             password="My secret password",
             description="Test credential",
-            deleted=False,
+            deleted=False
         )
     )
 
@@ -54,7 +54,7 @@ def generate_basic_data(session: Session):
             username="Secret deleted username",
             password="My secret password",
             description="Test credential",
-            deleted=True,
+            deleted=True
         )
     )
 
@@ -63,7 +63,7 @@ def generate_basic_data(session: Session):
             name="Workqueue",
             description="Queue for unittest",
             enabled=True,
-            deleted=False,
+            deleted=False
         )
     )
     session.add(
@@ -71,7 +71,7 @@ def generate_basic_data(session: Session):
             name="Deleted workqueue",
             description="Queue for unittest",
             enabled=True,
-            deleted=True,
+            deleted=True
         )
     )
     session.commit()
@@ -82,9 +82,50 @@ def generate_basic_data(session: Session):
             data="{}",
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1,
+            workqueue_id=1
         )
     )
+
+    session.add(
+        models.WorkItem(
+            status=enums.WorkItemStatus.IN_PROGRESS,
+            data="{}",
+            reference="Embedded workitem",
+            locked=False,
+            workqueue_id=1
+        )
+    )
+
+    session.add(
+        models.WorkItem(
+            status=enums.WorkItemStatus.COMPLETED,
+            data="{}",
+            reference="Embedded workitem",
+            locked=False,
+            workqueue_id=1
+        )
+    )
+
+    session.add(
+        models.WorkItem(
+            status=enums.WorkItemStatus.FAILED,
+            data="{}",
+            reference="Embedded workitem",
+            locked=False,
+            workqueue_id=1
+        )
+    )
+
+    session.add(
+        models.WorkItem(
+            status=enums.WorkItemStatus.PENDING_USER_ACTION,
+            data="{}",
+            reference="Embedded workitem",
+            locked=False,
+            workqueue_id=1
+        )
+    )
+
     session.commit()
 
     session.add(
