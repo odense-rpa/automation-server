@@ -20,7 +20,7 @@
             "name": "Python: worker.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/worker/worker.py",
+            "program": "${workspaceFolder}/worker/main.py",
             "console": "integratedTerminal",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/worker"

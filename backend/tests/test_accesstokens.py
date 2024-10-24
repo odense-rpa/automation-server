@@ -53,9 +53,7 @@ def test_delete_accesstoken(session: Session, client: TestClient):
     response = client.delete(
         "/api/accesstokens/1",
         headers={"Authorization": f"Bearer {access_token}"},)
-    data = response.json()
     
-    assert response.status_code == 200
-    assert data["deleted"] is True
+    assert response.status_code == 204
 
 

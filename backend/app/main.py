@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
-    #asyncio.create_task(background_task())
+    asyncio.create_task(background_task())
 
     yield
 
