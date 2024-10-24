@@ -133,17 +133,17 @@ def delete_workqueue(
 
 @router.post("/{queue_id}/clear")
 def clear_workqueue(
-    workqueue_id: int,
+    queue_id: int,
     model: WorkqueueClear,
     repository: WorkqueueRepository = Depends(get_repository(Workqueue)),
     token: AccessToken = Depends(resolve_access_token)
 ) -> Response:
-        queue = repository.get(workqueue_id)
+        queue = repository.get(queue_id)
 
         if queue is None:
             raise HTTPException(status_code=404, detail="Queue not found")        
 
-        repository.clear(workqueue_id, model.workitem_status, model.days_older_than)
+        repository.clear(queue_id, model.workitem_status, model.days_older_than)
         return Response(status_code=204)
     
 @router.post("/{queue_id}/add")

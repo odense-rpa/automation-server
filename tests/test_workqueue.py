@@ -142,3 +142,48 @@ def test_next_item(session: Session, client: TestClient):
     response = client.get("/api/workqueues/1/next_item")
 
     assert response.status_code == 204
+
+def test_clear_queue_enums(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+
+
+    # clear queue with id 1 workitem status new
+    # assert count
+    # clear queue with id 1 workitem status in progress
+    # assert count
+    # clear queue with id 1 workitem status completed
+    # assert count
+    # clear queue with id 1 workitem status failed
+    # assert count
+
+def test_clear_queue_dates(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # test clear queue with id 1 workitem days older than 1
+    # assert zero removals
+    # test clear queue with id 1 workitem days older than 0
+    # assert removals
+
+def test_clear_queue_all_parameters(session: Session, client: TestClient):
+    generate_basic_data(session)
+    # test clear queue with id 1 all parameters
+    # assert removals and non removals
+    
+
+def test_clear_queue_no_parameters(session: Session, client: TestClient):
+    generate_basic_data(session)
+    # test clear queue with id 1 no parameters
+    # assert queue is empty
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {}
+    )
+
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+
+    data = response.json()
+    assert data["total_items"] == 0
