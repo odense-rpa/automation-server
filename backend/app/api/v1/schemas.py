@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field, model_validator
 from croniter import croniter
 from app import enums
 
+class AccessTokenCreate(BaseModel):
+    identifier: str
 
 class WorkqueueUpdate(BaseModel):
     name: str = Field(min_length=1)

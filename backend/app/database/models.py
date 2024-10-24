@@ -208,4 +208,8 @@ class AccessToken(Base, table=True):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
+<<<<<<< HEAD
+
+=======
+>>>>>>> c548f9b5f22156044b636abefa57f9408d98f4fa
 
