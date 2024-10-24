@@ -142,3 +142,97 @@ def test_next_item(session: Session, client: TestClient):
     response = client.get("/api/workqueues/1/next_item")
 
     assert response.status_code == 204
+
+def test_clear_queue_dates(session: Session, client: TestClient):
+    # test clear queue with id 1 workitem days older than 1
+    # assert zero removals
+    # test clear queue with id 1 workitem days older than 0
+    # assert removals
+
+    generate_basic_data(session)
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {            
+            "days_older_than": 1
+        }
+    )
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+    data = response.json()
+    assert data["total_items"] == 5
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {            
+            "days_older_than": 0
+        }
+    )
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+    data = response.json()    
+    assert data["total_items"] == 0
+
+def test_clear_queue_all_parameters(session: Session, client: TestClient):
+    # test clear queue with id 1 all parameters
+    # assert removals and non removals
+
+    generate_basic_data(session)
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {
+            "workitem_status": "new",
+            "days_older_than": 0
+        }
+    )
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+    data = response.json()
+    assert data["total_items"] == 4
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {
+            "workitem_status": "failed",
+            "days_older_than": 0
+        }
+    )
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+    data = response.json()    
+    assert data["total_items"] == 3
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {
+            "workitem_status": "completed",
+            "days_older_than": 1
+        }
+    )
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+    data = response.json()    
+    assert data["total_items"] == 3
+    
+
+def test_clear_queue_no_parameters(session: Session, client: TestClient):
+    # test clear queue with id 1 no parameters
+    # assert queue is empty
+
+    generate_basic_data(session)    
+
+    response = client.post(
+        "/api/workqueues/1/clear",
+        json = {}
+    )
+    assert response.status_code == 204
+
+    response = client.get("/api/workqueues/1/items")
+    data = response.json()
+    assert data["total_items"] == 0

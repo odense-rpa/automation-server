@@ -9,7 +9,9 @@ from app.database.models import Workqueue, WorkItem, AccessToken
 import app.enums as enums
 
 from .schemas import (
+    WorkqueueClear,
     WorkqueueUpdate,
+    WorkqueueCreate,
     WorkItemCreate,
     WorkqueueInformation,
     PaginatedSearchParams,
@@ -106,7 +108,7 @@ def update_workqueue(
 
 @router.post("")
 def create_workqueue(
-    workqueue: Workqueue,
+    workqueue: WorkqueueCreate,
     repository: WorkqueueRepository = Depends(get_repository(Workqueue)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
@@ -129,7 +131,21 @@ def delete_workqueue(
 
     return repository.delete(workqueue)
 
+@router.post("/{queue_id}/clear")
+def clear_workqueue(
+    queue_id: int,
+    model: WorkqueueClear,
+    repository: WorkqueueRepository = Depends(get_repository(Workqueue)),
+    token: AccessToken = Depends(resolve_access_token)
+) -> Response:
+        queue = repository.get(queue_id)
 
+        if queue is None:
+            raise HTTPException(status_code=404, detail="Queue not found")        
+
+        repository.clear(queue_id, model.workitem_status, model.days_older_than)
+        return Response(status_code=204)
+    
 @router.post("/{queue_id}/add")
 def adds_workitem(
     queue_id: str,
@@ -150,7 +166,6 @@ def adds_workitem(
     data["deleted"] = False
 
     return item_repository.create(data)
-
 
 @router.get("/{queue_id}/next_item")
 def gets_next_workitem(

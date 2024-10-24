@@ -51,13 +51,27 @@ def delete_access_token(
     access_token_id: str,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
+<<<<<<< HEAD
 ) -> AccessToken:
+=======
+) -> None:
+>>>>>>> c548f9b5f22156044b636abefa57f9408d98f4fa
     access_token = repository.get(access_token_id)
 
     if access_token is None:
         raise HTTPException(status_code=404, detail="Access Token not found")
+<<<<<<< HEAD
     
     if access_token.deleted:
         raise HTTPException(status_code=403, detail="Access Token is deleted")
     
     return repository.delete(access_token)
+=======
+
+    if access_token.deleted:
+        raise HTTPException(status_code=403, detail="Access Token is deleted")
+
+    repository.delete(access_token)
+    
+    return None
+>>>>>>> c548f9b5f22156044b636abefa57f9408d98f4fa

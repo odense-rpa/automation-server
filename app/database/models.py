@@ -179,14 +179,14 @@ class Session(Base, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
-class SystemLog(SQLModel, table=True):
+class SystemLog(Base, table=True):
     id: typing.Optional[int] = Field(default=None, primary_key=True)
     message: str
     level: str
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
-class SessionLog(SQLModel, table=True):
+class SessionLog(Base, table=True):
     id: typing.Optional[int] = Field(default=None, primary_key=True)
     session_id: int = Field(foreign_key="session.id")
     session: Session = Relationship()
@@ -197,7 +197,7 @@ class SessionLog(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
-class AccessToken(SQLModel, table=True):
+class AccessToken(Base, table=True):
     id: int = Field(default=None, primary_key=True)
     identifier: str = Field(index=True, unique=True)
     access_token: str = Field(index=True, unique=True)
@@ -208,5 +208,8 @@ class AccessToken(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
+<<<<<<< HEAD
 
+=======
+>>>>>>> c548f9b5f22156044b636abefa57f9408d98f4fa
 
