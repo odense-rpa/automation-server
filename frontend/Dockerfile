@@ -25,7 +25,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy custom Nginx configuration, if you have one
 # COPY nginx.conf /etc/nginx/nginx.conf
 
-ENV ATS_API_BASE_URL=http://localhost:8000
+ENV VITE_ATS_API_BASE_URL=http://localhost:8000
 
 # Expose port 80
 EXPOSE 80
