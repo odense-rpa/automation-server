@@ -47,7 +47,7 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
         return (
             list(self.session.exec(query.offset(skip).limit(limit)).all()),
             self.session.exec(select(func.count()).select_from(query)).first(),
-        ]
+        )
     
     def clear(
             self, workqueue_id: int, 
@@ -65,4 +65,4 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
 
         self.session.exec(query)
         self.session.commit()
-        )
+        
