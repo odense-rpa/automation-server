@@ -43,7 +43,7 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
                 )
             )
         query = query.order_by(WorkItem.updated_at.desc())
-        return [
-            self.session.exec(query.offset(skip).limit(limit)).all(),
+        return (
+            list(self.session.exec(query.offset(skip).limit(limit)).all()),
             self.session.exec(select(func.count()).select_from(query)).first(),
-        ]
+        )
