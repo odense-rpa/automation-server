@@ -76,7 +76,20 @@ def test_update_credential(session: Session, client: TestClient):
 
     assert response.status_code == 403
 
+def test_create_credential(session: Session, client: TestClient):
+    generate_basic_data(session)   
 
+    response = client.post(
+        "/api/credentials/",
+        json={
+            "name": "New credential",
+            "username": "New username",
+            "password": "New password",
+        },
+    )
+
+    assert response.status_code == 200
+    
 def test_delete_credential(session: Session, client: TestClient):
     generate_basic_data(session)
 
