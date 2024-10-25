@@ -22,28 +22,6 @@ def test_get_processes(session: Session, client: TestClient):
     data = response.json()
     assert len(data) == 2
 
-def test_create_process(session: Session, client: TestClient):
-    generate_basic_data(session)
-
-    response = client.post(
-        "/api/processes/",
-        json={
-            "name": "Process",
-            "description": "New description",
-            "workqueue_id": 1,
-            "target_type": "python",
-            "target_source": "Test url",
-            "target_credentials_id": 0,
-            "credentials_id": 0
-
-        },
-    )
-
-    assert response.status_code == 200
-
-    data = response.json()
-    assert data["name"] == "Process"
-    assert data["description"] == "New description"
 
 def test_get_process(session: Session, client: TestClient):
     generate_basic_data(session)
@@ -93,6 +71,30 @@ def test_update_process(session: Session, client: TestClient):
     assert data.target_credentials_id == 1
     assert data.credentials_id == 1
 
+def test_create_process(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.post(
+        "/api/processes/",
+        json={
+            "name": "Process",
+            "description": "New description",
+            "workqueue_id": 1,
+            "target_type": "python",
+            "target_source": "Test url",
+            "target_credentials_id": 0,
+            "credentials_id": 0
+
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "Process"
+    assert data["description"] == "New description"
+
+
 def test_delete_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
@@ -106,3 +108,43 @@ def test_delete_process(session: Session, client: TestClient):
     response = client.get("/api/processes/1")
     assert response.status_code == 403
 
+def test_create_trigger_on_process(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.post(
+        "/api/processes/1/trigger",
+        json={
+            "type": "cron",
+            "cron": "15 4 * * *",
+            "enabled": False,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["type"] == "cron"
+    assert data["cron"] == "15 4 * * *"
+    assert data["enabled"] is False
+
+def test_get_triggers_on_process(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.post(
+        "/api/processes/1/trigger",
+        json={
+            "type": "cron",
+            "cron": "15 4 * * *",
+            "enabled": False,
+        },
+    )
+
+    response = client.get("/api/processes/1/trigger")
+
+    assert response.status_code == 200
+
+    # 3 triggers are created in generate_basic_data and we want number 4
+    data = response.json()
+    assert data[3]["type"] == "cron"
+    assert data[3]["cron"] == "15 4 * * *"
+    assert data[3]["enabled"] is False
