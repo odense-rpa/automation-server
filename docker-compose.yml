@@ -6,16 +6,17 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000"
     networks:
       - app-network
-
+    volumes:
+      - api-data:/data  # Mount named volume to /data
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5731:5731"
+      - "80"
     networks:
       - app-network
 
@@ -35,3 +36,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  api-data:
