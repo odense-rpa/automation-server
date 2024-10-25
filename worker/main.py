@@ -1,18 +1,11 @@
-import pydantic_settings
 import logging
 import socket
 import time
 import platform
 
-from automationclient import resources, sessions
+from automationclient import resources, sessions, automationserver_url, automationserver_token
 from runners import python
 
-
-class Settings(pydantic_settings.BaseSettings):
-    url: str = "http://localhost:8000/api"
-
-
-settings = Settings()
 
 
 logging.basicConfig(level=logging.INFO)
@@ -54,8 +47,8 @@ if __name__ == "__main__":
                         process["target_source"],
                         None,
                         environment={
-                            "ATS_URL": settings.url,
-                            "ATS_TOKEN": "",
+                            "ATS_URL": automationserver_url,
+                            "ATS_TOKEN": automationserver_token,
                             "ATS_SESSION": f"{session['id']}",
                             "ATS_RESOURCE": f"{resource['id']}",
                             "ATS_PROCESS": f"{process['id']}",
