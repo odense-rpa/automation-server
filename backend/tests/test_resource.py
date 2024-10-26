@@ -21,6 +21,16 @@ def test_get_resources(session: Session, client: TestClient):
     data = response.json()
     assert len(data) == 2
 
+def test_get_resource(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/api/resources/1")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["name"] == "resource"
+    assert data["fqdn"] == "resource.example.com"
+    assert data["deleted"] is False
 
 def test_create_resource(session: Session, client: TestClient):
     generate_basic_data(session)
