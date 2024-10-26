@@ -46,7 +46,7 @@ def acquire_session(resource_id: int):
             update_session_status(session_id=session["id"], status="completed")
 
     except Exception as e:
-        # update_session_status(session_id=session["id"], status="failed")
+        update_session_status(session_id=session["id"], status="failed")
         logger.error(e)
     finally:
         if handler is not None:

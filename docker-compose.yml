@@ -20,6 +20,8 @@ services:
       - "80"
     networks:
       - app-network
+    environment:
+      - VITE_ATS_API_BASE_URL=/api  # Set environment variable
 
   proxy:
     image: nginx:latest
@@ -40,7 +42,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - ATS_URL=http://api:8000/api  # Set environment variable
-    hostname: worker-service
+    hostname: worker-01
     networks:
       - app-network
     depends_on:
