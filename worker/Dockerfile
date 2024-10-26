@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     libgtk-3-0 \
     libxshmfence1 \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Playwright and dependencies
