@@ -5,6 +5,7 @@ from app.database.models import Session, Resource
 
 from app.enums import SessionStatus
 
+
 class ResourceService:
     def __init__(
         self,
@@ -44,7 +45,9 @@ class ResourceService:
         }
 
         if previous is not None:
-            return self.repository.update(previous, data)
+            resource = self.repository.update(previous, data)
+            self.flush_sessions(resource)
+            return resource
 
         return self.repository.create(data)
 
@@ -62,14 +65,27 @@ class ResourceService:
 
         data["available"] = False
 
-        # Here we need to remove any allocated sessions
-        sessions = self.session_repository.get_new_sessions()
-        for session in (s for s in sessions if s.resource_id == resource.id):
-            self.session_repository.update(
-                session, {"resource_id": None, "dispatched_at": None}
-            )
+        self.flush_sessions(resource)
 
         return self.repository.update(resource, data)
+
+    def flush_sessions(self, resource: Resource):
+        """
+        Detaches all sessions from the specified resource. 
+        If any session is in progress, it will be marked as failed. If any session is new, it will be detached from the resource.
+        """
+        sessions = self.session_repository.get_active_sessions()
+        for session in (s for s in sessions if s.resource_id == resource.id):
+            if session.status == SessionStatus.IN_PROGRESS:
+                self.session_repository.update(
+                    session, {"status": SessionStatus.FAILED, "resource_id": None}
+                )
+
+            # Detach the session from the resource
+            if session.status == SessionStatus.NEW:
+                self.session_repository.update(
+                    session, {"resource_id": None, "dispatched_at": None}
+                )
 
     def assign_session_to_resource(self, session: Session, resource: Resource):
         data = session.model_dump()

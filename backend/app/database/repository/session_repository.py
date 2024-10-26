@@ -1,13 +1,12 @@
 from typing import List, Optional
 
 from sqlalchemy.sql import func
-from sqlmodel import Session as SqlSession, select
+from sqlmodel import Session as SqlSession, select, or_
 
 from app.database.models import Process, Session, SessionLog
 import app.enums as enums
 
 from .database_repository import DatabaseRepository
-
 
 
 class SessionRepository(DatabaseRepository[Session]):
@@ -61,8 +60,12 @@ class SessionRepository(DatabaseRepository[Session]):
         """
         return self.session.scalars(
             select(Session)
-            .where(Session.status == enums.SessionStatus.NEW)
-            .where(Session.status == enums.SessionStatus.IN_PROGRESS)
+            .where(
+                or_(
+                    Session.status == enums.SessionStatus.NEW,
+                    Session.status == enums.SessionStatus.IN_PROGRESS,
+                )
+            )
             .where(Session.deleted == False)  # noqa: E712
             .order_by(Session.created_at)
         ).all()
@@ -99,9 +102,7 @@ class SessionRepository(DatabaseRepository[Session]):
             query = query.filter(Session.deleted == False)  # noqa: E712
 
         if search:
-            query = query.join(Session.process).filter(
-                Process.name.contains(search)
-            )
+            query = query.join(Session.process).filter(Process.name.contains(search))
 
         # Sort in descending order by default
         query = query.order_by(Session.created_at.desc())

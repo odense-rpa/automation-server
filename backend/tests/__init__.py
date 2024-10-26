@@ -223,6 +223,18 @@ def generate_basic_data(session: Session):
         )
     )
 
+    session.add(
+        models.Resource(
+            name="resource-should-expire",
+            fqdn="resource-expire.example.com",
+            capabilities="linux python",
+            available=True,
+            last_seen=datetime.now() - timedelta(minutes=11),
+            deleted=False,
+        )
+    )
+
+
     session.add(models.Session(process_id=1, status=enums.SessionStatus.NEW))
 
     session.add(
@@ -231,6 +243,10 @@ def generate_basic_data(session: Session):
 
     session.add(
         models.Session(process_id=1, status=enums.SessionStatus.COMPLETED, deleted=False)
+    )
+
+    session.add(
+        models.Session(process_id=1, status=enums.SessionStatus.NEW, deleted=False,resource_id=3, dispatched_at=datetime.now())
     )
 
     session.add(

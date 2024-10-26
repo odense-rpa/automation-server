@@ -12,15 +12,19 @@ def test_get_sessions(session: Session, client: TestClient):
     data = response.json()
 
     assert response.status_code == 200
-    assert len(data["items"]) == 2
-    assert data["items"][0]["process_id"] == 1
-    assert data["items"][0]["resource_id"] is None
-    assert data["items"][0]["deleted"] is False
-    assert data["items"][0]["status"] == enums.SessionStatus.NEW
+    assert len(data["items"]) == 3
+
+    item = data["items"][2]
+
+    assert item["id"] == 1
+    assert item["process_id"] == 1
+    assert item["resource_id"] is None
+    assert item["deleted"] is False
+    assert item["status"] == enums.SessionStatus.NEW
 
     response = client.get("/api/sessions/?include_deleted=true")
     data = response.json()
-    assert len(data["items"]) == 3
+    assert len(data["items"]) == 4
 
 def test_get_session(session: Session, client: TestClient):
     generate_basic_data(session)
@@ -74,7 +78,30 @@ def test_get_new_sessions(session: Session, client: TestClient):
     data = response.json()
 
     assert response.status_code == 200
-    assert len(data) == 1
+    assert len(data) == 2
     assert data[0]["process_id"] == 1
     assert data[0]["resource_id"] is None
     assert data[0]["status"] == enums.SessionStatus.NEW
+
+
+def test_session_reset_on_resource_detach(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/api/sessions/4")
+    data = response.json()
+
+    assert data["resource_id"] is not None
+    assert data["status"] == enums.SessionStatus.NEW
+    assert data["dispatched_at"] is not None
+
+    # Now trigger a detach on the resource
+    response = client.get("/api/resources")
+    assert response.status_code == 200
+
+    response = client.get("/api/sessions/4")
+    data = response.json()
+
+    assert data["resource_id"] is None
+    assert data["status"] == enums.SessionStatus.NEW
+    assert data["dispatched_at"] is None
+

@@ -19,7 +19,7 @@ def test_get_resources(session: Session, client: TestClient):
 
     response = client.get("/api/resources/?include_expired=true")
     data = response.json()
-    assert len(data) == 2
+    assert len(data) == 3
 
 def test_get_resource(session: Session, client: TestClient):
     generate_basic_data(session)
@@ -51,6 +51,29 @@ def test_create_resource(session: Session, client: TestClient):
     assert data["fqdn"] == "resource3.example.com"
     assert data["available"] is True
     assert data["last_seen"] is not None
+
+def test_resource_should_expire(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/api/resources/3")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "resource-should-expire"
+    assert data["available"] is True
+
+    # This will trigger a full available resource update
+    response = client.get("/api/resources")
+    assert response.status_code == 200
+
+    response = client.get("/api/resources/3")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "resource-should-expire"
+    assert data["available"] is False
+
+
 
 
 # def test_create_and_revive_resource(session: Session, client: TestClient):
