@@ -48,6 +48,19 @@ services:
     depends_on:
       - api
 
+  worker02:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    environment:
+      - ATS_URL=http://api:8000/api  # Set environment variable
+    hostname: worker-02
+    networks:
+      - app-network
+    depends_on:
+      - api
+
+
 networks:
   app-network:
     driver: bridge

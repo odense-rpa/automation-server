@@ -179,6 +179,9 @@ def gets_next_workitem(
     if queue is None:
         raise HTTPException(status_code=404, detail="Queue not found")
 
+    if not queue.enabled:
+        return Response(status_code=204)
+
     for retry_count in range(6):
         try:
             item = item_repository.get_next_item(queue_id)

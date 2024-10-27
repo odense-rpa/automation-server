@@ -58,6 +58,15 @@ async def schedule():
                     trigger_repository.update(trigger, {"enabled": False, "deleted": True})
 
             if trigger.type == "workqueue":
+                workqueue = trigger.workqueue
+
+                if workqueue is None:
+                    logger.error(f"Workqueue {trigger.workqueue_id} does not exist")
+                    continue
+
+                if workqueue.enabled is False:
+                    continue
+
                 if trigger.workqueue_id not in sessions:
                     logger.info(f"Triggering workqueue trigger {trigger.id}")
 

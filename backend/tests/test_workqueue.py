@@ -143,6 +143,26 @@ def test_next_item(session: Session, client: TestClient):
 
     assert response.status_code == 204
 
+def test_next_item_disabled_queue(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.put(
+        "/api/workqueues/1",
+        json={
+            "name": "Workqueue",
+            "description": "New description",
+            "enabled": False,
+        },
+    )
+    assert response.status_code == 200
+
+
+    response = client.get("/api/workqueues/1/next_item")
+
+    assert response.status_code == 204
+
+
+
 def test_clear_queue_dates(session: Session, client: TestClient):
     # test clear queue with id 1 workitem days older than 1
     # assert zero removals
