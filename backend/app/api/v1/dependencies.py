@@ -77,8 +77,11 @@ def get_session_service(
     repository: repositories.SessionRepository = Depends(
         get_repository(models.Session)
     ),
+    resource_repository: repositories.ResourceRepository = Depends(
+        get_repository(models.Resource)
+    ),
 ) -> SessionService:
-    return SessionService(repository)
+    return SessionService(repository, resource_repository)
 
 
 def get_resource_service(
