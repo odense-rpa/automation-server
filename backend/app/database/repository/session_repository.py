@@ -105,7 +105,7 @@ class SessionRepository(DatabaseRepository[Session]):
             query = query.join(Session.process).filter(Process.name.contains(search))
 
         # Sort in descending order by default
-        query = query.order_by(Session.created_at.desc())
+        query = query.order_by(Session.id.desc())
 
         return [
             self.session.exec(query.offset(skip).limit(limit)).all(),
