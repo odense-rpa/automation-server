@@ -45,7 +45,7 @@ class SessionService:
             if session.resource_id is None:
                 continue
 
-            resource = self.repository.get_resource(session.resource_id)
+            resource = self.resource_repository.get(session.resource_id)
 
             if resource is None or not resource.available:
                 self.repository.update(

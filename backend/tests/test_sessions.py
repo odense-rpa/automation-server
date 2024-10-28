@@ -44,4 +44,7 @@ def test_get_sessionlog_by_workitem(session: Session, client: TestClient):
     
     data = response.json()
     assert len(data) == 1
-    
+
+
+
+

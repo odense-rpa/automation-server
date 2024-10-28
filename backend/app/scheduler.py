@@ -9,7 +9,7 @@ from app.database.repository import (
     SessionRepository,
     ResourceRepository,
 )
-from app.services import ResourceService
+from app.services import ResourceService, SessionService
 from app.enums import SessionStatus
 
 from fastapi import Depends
@@ -20,7 +20,6 @@ last_run = None
 
 
 async def schedule():
-
     with next(get_session()) as session:
         global last_run
 
@@ -28,6 +27,11 @@ async def schedule():
         session_repository = SessionRepository(session)
         resource_repository = ResourceRepository(session)
         resource_service = ResourceService(resource_repository, session_repository)
+        session_service = SessionService(session_repository, resource_repository)
+
+        # Do some housekeeping
+        session_service.reschedule_orphaned_sessions()
+        session_service.flush_dangling_sessions()
 
         # We dispatch first to get any old sessions a chance to get a resource before the triggers are checked
         dispatch(session_repository, resource_repository, resource_service)
@@ -55,7 +59,9 @@ async def schedule():
                 if trigger.date <= now:
                     logger.info(f"Triggering date trigger {trigger.id}")
                     new_session(trigger.process_id, session_repository)
-                    trigger_repository.update(trigger, {"enabled": False, "deleted": True})
+                    trigger_repository.update(
+                        trigger, {"enabled": False, "deleted": True}
+                    )
 
             if trigger.type == "workqueue":
                 workqueue = trigger.workqueue
@@ -72,7 +78,6 @@ async def schedule():
 
         # Dispatch again to assign resources to the new sessions
         dispatch(session_repository, resource_repository, resource_service)
-
 
 
 def new_session(process_id: int, session_repository: SessionRepository):
