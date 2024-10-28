@@ -58,10 +58,11 @@ class SessionService:
         The sessions needs to have been dispatched at least 4 hours ago."""
         sessions = self.repository.get_active_sessions()
 
+        sessions = [session for session in sessions if session.status == SessionStatus.IN_PROGRESS]
+
         for session in sessions:
             if (
                 session.dispatched_at < datetime.now() - timedelta(hours=4)
-                and session.status == SessionStatus.IN_PROGRESS
             ):
                 resource = self.resource_repository.get(session.resource_id)
 
