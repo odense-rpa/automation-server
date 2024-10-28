@@ -24,6 +24,8 @@ COPY . /app
 COPY ./alembic.ini.docker /app/alembic.ini
 COPY scripts/entry-point.sh /app/entry-point.sh
 
+RUN rm .env
+
 # Make the entry-point script executable
 RUN chmod +x /app/entry-point.sh
 
