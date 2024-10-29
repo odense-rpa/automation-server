@@ -48,6 +48,7 @@ export default {
     }
   },
   async mounted() {
+    await this.refresh()
     this.timer = setInterval(() => {
       this.refresh()
     }, 5000)
