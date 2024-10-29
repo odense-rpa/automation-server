@@ -1,16 +1,9 @@
 <template>
-  <div>
-    <div class="row">
-      <div class="col-sm-7">
-        <content-card title="Create workqueue">
-          <div class="card-body">
-            <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancel" start-editable="true" />
-          </div>
-        </content-card>
-      </div>
-      <div class="col-sm-5"></div>
+  <content-card title="Create workqueue" class="mb-4">
+    <div class="card-body">
+      <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancel" start-editable="true" />
     </div>
-  </div>
+  </content-card>
 </template>
 
 <script>

@@ -1,26 +1,38 @@
 <template>
     <tr>
-        <td class="align-middle" v-if="!isEdit">{{ $capitalizeFirstLetter(trigger.type) }}</td>
+        <!-- Trigger Type Display -->
         <td class="align-middle" v-if="!isEdit">
-            <span v-if="trigger.type == 'cron'">{{ trigger.cron }}</span>
-            <span v-if="trigger.type == 'date'">{{ $formatDateTime(trigger.date) }}</span>
-            <span v-if="trigger.type == 'workqueue'"><workqueue-label :workqueue-id="trigger.workqueue_id" /></span>
+            {{ $capitalizeFirstLetter(trigger.type) }}
         </td>
-        <td class="align-middle" v-if="!isEdit"><i class="bi"
-                :class="{ 'bi-x-circle': !trigger.enabled, 'text-warning': !trigger.enabled, 'bi-check': trigger.enabled }"></i>
-        </td>
-        <td class="text-end align-middle" v-if="!isEdit">
 
+        <!-- Trigger Value Display based on Type -->
+        <td class="align-middle" v-if="!isEdit">
+            <span v-if="trigger.type === 'cron'">{{ trigger.cron }}</span>
+            <span v-if="trigger.type === 'date'">{{ $formatDateTime(trigger.date) }}</span>
+            <span v-if="trigger.type === 'workqueue'">
+                <workqueue-label :workqueue-id="trigger.workqueue_id" />
+            </span>
+        </td>
+
+        <!-- Enabled Status Icon -->
+        <td class="align-middle" v-if="!isEdit">
+            <font-awesome-icon :icon="trigger.enabled ? 'check' : 'xmark-circle'"
+                :class="{ 'text-green-500': trigger.enabled, 'text-yellow-500': !trigger.enabled }" />
+        </td>
+
+        <!-- Actions Dropdown -->
+        <td class="text-end align-middle" v-if="!isEdit">
             <dropdown-button :label="'Actions'" :items="[
-                { text: 'Edit', icon: 'bi bi-pencil', action: 'edit' },
-                { text: 'Delete', icon: 'bi bi-trash', action: 'delete' }
+                { text: 'Edit', icon: 'fas fa-pencil-alt', action: 'edit' },
+                { text: 'Delete', icon: 'fas fa-trash-alt', action: 'delete' }
             ]" @item-clicked="triggerAction" />
         </td>
+
+        <!-- Edit Mode: Trigger Form -->
         <td colspan="4" v-if="isEdit">
             <trigger-form :trigger="trigger" @cancel="propagateCancel" @save="propagateSave" />
         </td>
     </tr>
-
 </template>
 <script>
 import TriggerForm from '@/components/TriggerForm.vue'
@@ -51,7 +63,7 @@ export default {
             }
         },
         propagateSave(editedTrigger) {
-            console.log("Row save: ",editedTrigger);
+            console.log("Row save: ", editedTrigger);
 
             this.isEdit = false;
             this.$emit('save-trigger', editedTrigger)
@@ -64,7 +76,7 @@ export default {
     mounted() {
         console.log("TriggerRow mounted");
         if (this.trigger.id === 0)
-                this.isEdit = true;
+            this.isEdit = true;
     }
 };
 

@@ -1,16 +1,17 @@
 <template>
   <div>
-    <content-card :title="!isEditing ? 'Workqueue' : 'Edit workqueue'">
+    <content-card :title="!isEditing ? 'Workqueue' : 'Edit workqueue'"  class="mb-3">
       <template v-slot:header-right>
-        <button @click="isEditing = true" class="btn btn-primary btn-sm" v-if="!isEditing"><i
-            class="bi bi-pencil"></i></button>
+        <button @click="isEditing = true" class="btn btn-primary btn-sm" v-if="!isEditing">
+          <font-awesome-icon :icon="['fas', 'pencil-alt']" />
+        </button>
       </template>
       <div class="card-body">
         <workqueue-info :workqueue="workqueue" v-if="workqueue && !isEditing" />
-        <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit" v-if="workqueue && isEditing" />
+        <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit"
+          v-if="workqueue && isEditing" />
       </div>
     </content-card>
-    <hr />
     <workitems-table :workqueue-id="workqueue.id" :size="50" v-if="workqueue" />
   </div>
 </template>

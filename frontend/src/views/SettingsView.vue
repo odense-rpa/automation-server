@@ -1,38 +1,33 @@
 <template>
-    <div class="row">
-        <div class="col-12">
-            <content-card title="Settings">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-sm-5">
-                            Api url:
-                        </div>
-                        <div class="col-sm-7">
-                            <input type="text" class="form-control" v-model="apiUrl">
-                        </div>
-                    </div>
-                    <div class="row mt-1">
-                        <div class="col-sm-5">
-                            Token:
-                        </div>
-                        <div class="col-sm-7">
-                            <textarea class="form-control" v-model="token"></textarea>
-                        </div>
-                    </div>
-                    <div class="row mt-1">
-                        <div class="col-sm-5">&nbsp;
-                        </div>
-                        <div class="col-sm-7">
-                            <button class="btn btn-primary" @click="saveSettings">Save</button> &nbsp;
-                            <router-link :to="{ name: 'administration' }" class="btn btn-secondary">Cancel</router-link>
-                        </div>
-                    </div>
-                </div>
-            </content-card>
-
+    <div class="max-w-4xl mx-auto">
+      <content-card title="Settings">
+        <div class="p-4 space-y-4">
+          <!-- API URL Input -->
+          <div class="flex items-center">
+            <label class="w-1/3 font-semibold">API URL:</label>
+            <div class="w-full">
+              <input type="text" class="input input-bordered w-full" v-model="apiUrl" />
+            </div>
+          </div>
+  
+          <!-- Token Textarea -->
+          <div class="flex items-center">
+            <label class="w-1/3 font-semibold">Token:</label>
+            <div class="w-full">
+              <textarea class="textarea textarea-bordered w-full" v-model="token"></textarea>
+            </div>
+          </div>
+  
+          <!-- Save and Cancel Buttons -->
+          <div class="flex justify-end space-x-2 mt-4">
+            <button class="btn btn-primary" @click="saveSettings">Save</button>
+            <router-link :to="{ name: 'administration' }" class="btn">Cancel</router-link>
+          </div>
         </div>
+      </content-card>
     </div>
-</template>
+  </template>
+  
 <script>
 import ContentCard from '@/components/ContentCard.vue'
 import { useSettingsStore } from '@/stores/settingsStore';

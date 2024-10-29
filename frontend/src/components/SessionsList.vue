@@ -1,14 +1,23 @@
 <template>
     <content-card title="Sessions">
         <template v-slot:header-right>
-            <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-search" /></span>
-                <input type="text" v-model="searchTerm" class="form-control" placeholder="Search sessions..." />
+            <div class="join">
+                <!-- Font Awesome Icon Button (Small) -->
+                <button class="join-item btn btn-square btn-sm">
+                    <font-awesome-icon :icon="['fas', 'search']" />
+                </button>
+
+                <!-- Input Field (Small) -->
+                <input type="text" v-model="searchTerm" placeholder="Search sessions..."
+                    class="join-item input input-bordered input-sm w-full max-w-xs" />
             </div>
         </template>
+        <div v-if="sessions.length === 0" class="text-center mb-4">
+            <p class="secondary-content font-semibold">No sessions found matching search.</p>
+        </div>
         <div v-if="sessions.length > 0">
-
-            <table class="table table-striped table-hover mb-3 rounded-bottom">
+            <!-- Table -->
+            <table class="table w-full mb-3">
                 <thead>
                     <tr>
                         <th class="text-center">Id</th>
@@ -20,18 +29,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="session in sessions" :key="session.id">
+                    <tr v-for="session in sessions" :key="session.id" class="hover:bg-base-300 cursor-pointer">
                         <td @click="edit(session.id)" class="text-center">{{ session.id }}</td>
                         <td @click="edit(session.id)"><process-label :process-id="session.process_id" /></td>
                         <td @click="edit(session.id)" class="text-center">{{ session.status }}</td>
                         <td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.created_at) }}</td>
-                        <td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.dispatched_at) }}</td>
+                        <td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.dispatched_at) }}
+                        </td>
                         <td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.updated_at) }}</td>
                     </tr>
                 </tbody>
             </table>
+
+            <!-- Pagination Wrapper -->
             <div class="pr-4">
-                    <page-navigation :currentPage="page" :totalPages="totalPages" @change-page="handlePageChange"></page-navigation>
+                <page-navigation :currentPage="page" :totalPages="totalPages"
+                    @change-page="handlePageChange"></page-navigation>
             </div>
         </div>
     </content-card>
@@ -91,8 +104,12 @@ export default {
                 this.searchTerm
             );
 
-            if (response.total_pages === 0)
+            if (response.total_pages === 0) {
+                this.sessions = [];
+                this.totalPages = 0;
+                this.page = 0;
                 return;
+            }
 
             this.sessions = response.items;
             this.totalPages = response.total_pages;

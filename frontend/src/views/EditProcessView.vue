@@ -1,21 +1,22 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-7">
-        <content-card title="Process information">
-          <div class="card-body">
-            <process-form :process="process" @save="saveProcess"></process-form>
-          </div>
-        </content-card>
-      </div>
-      <div class="col-sm-5">
-        <trigger-card :process-id="process.id" v-if="process"></trigger-card>
+  <div class="grid grid-cols-1 lg:grid-cols-[60%,40%] gap-4">
+    <!-- Left Column: 70% width -->
+    <div>
+      <content-card title="Process Information">
+        <div class="p-4">
+          <process-form :process="process" @save="saveProcess" v-if="process" />
+        </div>
+      </content-card>
+    </div>
 
-        <content-card title="Recent sessions"></content-card>
-      </div>
+    <!-- Right Column: 30% width -->
+    <div class="space-y-4">
+      <trigger-card :process-id="process.id" v-if="process" />
+      <content-card title="Recent Sessions"></content-card>
     </div>
   </div>
 </template>
+
 
 <script>
 import { processesAPI } from '@/services/automationserver.js'

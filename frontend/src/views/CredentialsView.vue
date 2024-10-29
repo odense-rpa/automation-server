@@ -1,19 +1,22 @@
 <template>
   <content-card title="Credentials">
     <template v-slot:header-right>
-      <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search" /></span>
-        <input
-          type="text"
-          v-model="searchTerm"
-          class="form-control"
-          placeholder="Search credentials..."
-        />
-        <button @click="showCreateForm = true" class="btn btn-success">+</button>
+      <div class="join">
+        <!-- Search Icon Button (Small) -->
+        <button class="join-item btn btn-square btn-sm">
+          <font-awesome-icon :icon="['fas', 'search']" />
+        </button>
+
+        <!-- Input Field (Small) -->
+        <input type="text" v-model="searchTerm" placeholder="Search credentials..."
+          class="join-item input input-bordered input-sm w-full max-w-xs" />
+
+        <!-- Create New Credential Button -->
+        <button @click="showCreateForm = true" class="join-item btn btn-success btn-sm">+</button>
       </div>
     </template>
     <div v-if="filteredCredentials.length > 0">
-      <table class="table table-striped table-hover mb-3 rounded-bottom">
+      <table class="table w-full mb-3">
         <thead>
           <tr>
             <th class="text-center">ID</th>
@@ -23,23 +26,25 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="credential in filteredCredentials" :key="credential.id">
+          <tr v-for="credential in filteredCredentials" :key="credential.id" class="hover:bg-base-300 cursor-pointer">
             <td class="text-center">{{ credential.id }}</td>
             <td>{{ credential.name }}</td>
             <td>{{ credential.username }}</td>
-            <td class="text-end">
+            <td class="text-right">
               <dropdown-button :label="'Actions'" :items="[
-                { text: 'Edit', icon: 'bi bi-pencil', action: 'edit', id: credential.id },
-                { text: 'Delete', icon: 'bi bi-trash', action: 'delete', id: credential.id }
+                { text: 'Edit', icon: 'fas fa-pencil-alt', action: 'edit', id: credential.id },
+                { text: 'Delete', icon: 'fas fa-trash-alt', action: 'delete', id: credential.id }
               ]" @item-clicked="triggerAction" />
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div class="text-center mt-3" v-else>
-      No credentials found.
+    <div class="text-center mb-4" v-else>
+      <p class="secondary-content font-semibold">No credentials found.</p>
     </div>
+
+
     <edit-credential v-if="selectedCredential" :credential="selectedCredential" @close="selectedCredential = null"
       @updated="fetchCredentials" />
     <create-credential v-if="showCreateForm" @close="showCreateForm = false" @created="fetchCredentials" />
@@ -109,6 +114,7 @@ export default {
       if (confirm("Are you sure you want to delete this credential?")) {
         try {
           await credentialsAPI.deleteCredential(credentialId);
+          alertStore.addAlert({ type: "succes", message: "Credential deleted successfully" });
           this.fetchCredentials();
         } catch (error) {
           console.error(error);

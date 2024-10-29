@@ -1,14 +1,22 @@
 <template>
-    <div class="input-group">
-        <select v-model="selected" class="form-control">
-            <option value="">Trigger process...</option>
-            <option v-for="process in processes" :key="process.id" :value="process.id">
-                {{ process.name }}
-            </option>
-        </select>
-        <button class="btn btn-success" :class="{ 'disabled-class': selected === '' }" :disabled="selected === ''"
-            @click.prevent="trigger()">+</button>
-    </div>
+<div class="join">
+    <!-- Select Dropdown -->
+    <select v-model="selected" class="select select-sm select-bordered join-item">
+      <option value="">Trigger process...</option>
+      <option v-for="process in processes" :key="process.id" :value="process.id">
+        {{ process.name }}
+      </option>
+    </select>
+
+    <!-- Button -->
+    <button
+      class="btn btn-sm btn-success join-item"
+      :class="{ 'btn-disabled': selected === '' }"
+      :disabled="selected === ''"
+      @click.prevent="trigger()">
+      +
+    </button>
+</div>
 </template>
 <script>
 import { processesAPI, sessionsAPI } from '@/services/automationserver.js'

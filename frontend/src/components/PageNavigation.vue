@@ -1,33 +1,42 @@
 <template>
-  <nav class="d-flex justify-content-end me-2">
-    <ul class="pagination" v-if="totalPages > 1">
-      <li class="page-item" :class="{ disabled: currentPage === 1 }">
-        <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">
-          <i class="bi bi-chevron-left"></i>
-        </a>
-      </li>
-      <li v-if="totalPages > 1" class="page-item" :class="{ disabled: currentPage === 1 }">
-        <a class="page-link" href="#" @click.prevent="changePage(1)">1</a>
-      </li>
-      <li v-if="startPage > 2" class="page-item disabled">
-        <span class="page-link">...</span>
-      </li>
-      <li v-for="page in pages" :key="page" :class="{ active: page === currentPage }" class="page-item">
-        <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-      </li>
-      <li v-if="endPage < totalPages - 1" class="page-item disabled">
-        <span class="page-link">...</span>
-      </li>
-      <li v-if="totalPages > 1" class="page-item" :class="{ disabled: currentPage === totalPages }">
-        <a class="page-link" href="#" @click.prevent="changePage(totalPages)">{{ totalPages }}</a>
-      </li>
-      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-        <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">
-          <i class="bi bi-chevron-right"></i>
-        </a>
-      </li>
-    </ul>
-  </nav>
+  <div class="flex justify-end me-2" v-if="totalPages > 1">
+    <div class="join">
+      <!-- Previous Page Button with Icon (Small) -->
+      <button class="join-item btn btn-sm" :class="{ 'btn-disabled': currentPage === 1 }"
+        @click.prevent="changePage(currentPage - 1)" :disabled="currentPage === 1">
+        <font-awesome-icon :icon="['fas', 'chevron-left']" />
+      </button>
+
+      <!-- First Page Button (Small) -->
+      <button class="join-item btn btn-sm" :class="{ 'btn-active': currentPage === 1 }" @click.prevent="changePage(1)">
+        1
+      </button>
+
+      <!-- Ellipsis for skipped pages before startPage -->
+      <button v-if="startPage > 2" class="join-item btn btn-sm btn-disabled">...</button>
+
+      <!-- Page Buttons (Small) -->
+      <button v-for="page in pages" :key="page" class="join-item btn btn-sm"
+        :class="{ 'btn-active': page === currentPage }" @click.prevent="changePage(page)">
+        {{ page }}
+      </button>
+
+      <!-- Ellipsis for skipped pages after endPage -->
+      <button v-if="endPage < totalPages - 1" class="join-item btn btn-sm btn-disabled">...</button>
+
+      <!-- Last Page Button (Small) -->
+      <button class="join-item btn btn-sm" :class="{ 'btn-active': currentPage === totalPages }"
+        @click.prevent="changePage(totalPages)">
+        {{ totalPages }}
+      </button>
+
+      <!-- Next Page Button with Icon (Small) -->
+      <button class="join-item btn btn-sm" :class="{ 'btn-disabled': currentPage === totalPages }"
+        @click.prevent="changePage(currentPage + 1)" :disabled="currentPage === totalPages">
+        <font-awesome-icon :icon="['fas', 'chevron-right']" />
+      </button>
+    </div>
+  </div>
 </template>
 
 <script>

@@ -1,32 +1,66 @@
 <template>
   <div class="p-3">
-    <hr />
-    <h4>Create Credential</h4>
+    <hr class="mb-4" />
+    <h4 class="text-lg font-semibold mb-4">Create Credential</h4>
     <form @submit.prevent="createCredential">
-      <div class="mb-3">
-        <label for="name" class="form-label">Name</label>
-        <input type="text" class="form-control" v-model="credentialData.name" id="name" required />
+      <!-- Name Field -->
+      <div class="mb-4">
+        <label for="name" class="label font-semibold">Name</label>
+        <input
+          type="text"
+          id="name"
+          v-model="credentialData.name"
+          class="input input-bordered w-full"
+          required
+        />
       </div>
-      <div class="mb-3">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" class="form-control" v-model="credentialData.username" id="username" required />
+
+      <!-- Username Field -->
+      <div class="mb-4">
+        <label for="username" class="label font-semibold">Username</label>
+        <input
+          type="text"
+          id="username"
+          v-model="credentialData.username"
+          class="input input-bordered w-full"
+          required
+        />
       </div>
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" class="form-control" v-model="credentialData.password" id="password" required />
+
+      <!-- Password Field -->
+      <div class="mb-4">
+        <label for="password" class="label font-semibold">Password</label>
+        <input
+          type="password"
+          id="password"
+          v-model="credentialData.password"
+          class="input input-bordered w-full"
+          required
+        />
       </div>
-      <div class="mb-3">
-        <label for="repeatPassword" class="form-label">Repeat Password</label>
-        <input type="password" class="form-control" v-model="repeatPassword" id="repeatPassword" required />
-        <div v-if="passwordMismatch" class="text-danger">Passwords do not match</div>
+
+      <!-- Repeat Password Field -->
+      <div class="mb-4">
+        <label for="repeatPassword" class="label font-semibold">Repeat Password</label>
+        <input
+          type="password"
+          id="repeatPassword"
+          v-model="repeatPassword"
+          class="input input-bordered w-full"
+          required
+        />
+        <div v-if="passwordMismatch" class="text-error mt-2">Passwords do not match</div>
       </div>
-      <div class="text-end">
-        <button type="submit" class="btn btn-primary" :disabled="passwordMismatch">Create</button> &nbsp;
-        <button @click="$emit('close')" class="btn btn-secondary">Cancel</button>
+
+      <!-- Buttons -->
+      <div class="text-right">
+        <button type="submit" class="btn btn-primary" :disabled="passwordMismatch">Create</button>
+        <button @click="$emit('close')" type="button" class="btn ml-2">Cancel</button>
       </div>
     </form>
   </div>
 </template>
+
 
 <script>
 import { credentialsAPI } from "@/services/automationserver";

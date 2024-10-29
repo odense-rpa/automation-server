@@ -1,18 +1,25 @@
 <template>
   <content-card title="Workqueues">
     <template v-slot:header-right>
-      <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search" /></span>
-        <input
-          type="text"
-          v-model="searchTerm"
-          class="form-control"
-          placeholder="Search workqueues..."
-        />
-        <router-link :to="{ name: 'workqueue.create' }" class="btn btn-success">+</router-link>
+      <div class="join">
+        <!-- Search Icon Button (Small) -->
+        <button class="join-item btn btn-square btn-sm">
+          <font-awesome-icon :icon="['fas', 'search']" />
+        </button>
+
+        <!-- Input Field (Small) -->
+        <input type="text" v-model="searchTerm" placeholder="Search workqueues..."
+          class="join-item input input-bordered input-sm w-full max-w-xs" />
+
+        <!-- Create New Workqueue Button -->
+        <router-link :to="{ name: 'workqueue.create' }" class="join-item btn btn-success btn-sm">+</router-link>
       </div>
     </template>
-    <workqueues-table :workqueues="filteredWorkqueues" />
+    <div v-if="filteredWorkqueues.length === 0" class="text-center mb-4">
+      <p class="secondary-content font-semibold">No sessions found matching search.</p>
+    </div>
+
+    <workqueues-table :workqueues="filteredWorkqueues" v-if="filteredWorkqueues.length !== 0"  />
   </content-card>
 </template>
 

@@ -1,14 +1,15 @@
 <template>
-  <div class="card">
-    <div class="card-header">
-      <div class="d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">{{ title }}</h5>
-        <div class="text-nowrap">
+  <div class="card bg-base-100 shadow-xl card-bordered card-compact">
+    <div class="card-body">
+      <!-- Flex container for title and actions on the same row -->
+      <div class="flex items-center justify-between">
+        <h2 class="card-title">{{ title }}</h2>
+        <div class="card-actions">
           <slot name="header-right"></slot>
         </div>
       </div>
+      <slot></slot>
     </div>
-    <slot></slot>
   </div>
 </template>
 

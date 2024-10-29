@@ -2,16 +2,23 @@
 <template>
   <content-card title="Processes">
     <template v-slot:header-right>
-      <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search" /></span>
-        <input
-          type="text"
-          v-model="searchTerm"
-          class="form-control"
-          placeholder="Search processes..."
-        />
-        <router-link :to="{ name: 'process.create' }" class="btn btn-success">+</router-link>
-      </div>
+      <div class="join">
+      <!-- Search Icon Button (Small) -->
+      <button class="join-item btn btn-square btn-sm">
+        <font-awesome-icon :icon="['fas', 'search']" />
+      </button>
+
+      <!-- Input Field (Small) -->
+      <input
+        type="text"
+        v-model="searchTerm"
+        placeholder="Search processes..."
+        class="join-item input input-bordered input-sm w-full max-w-xs"
+      />
+
+      <!-- Create New Process Button -->
+      <router-link :to="{ name: 'process.create' }" class="join-item btn btn-success btn-sm">+</router-link>
+    </div>
     </template>
 
     <ProcessesTable :processes="filteredProcesses" />

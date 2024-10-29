@@ -1,32 +1,49 @@
 <template>
-      <form @submit.prevent="saveWorkqueue">
-        <div class="row mb-3">
-          <label class="col-sm-2" for="name">Name:</label>
-          <div class="col">
-            <input type="text" class="form-control" v-model="editedWorkqueue.name" id="name" required />
-          </div>
-        </div>
-        <div class="row mb-3">
-          <label for="description" class="col-sm-2">Description:</label>
-          <div class="col">
-            <textarea type="text" class="form-control" v-model="editedWorkqueue.description"
-              id="description"></textarea>
-          </div>
-        </div>
-        <div class="row mb-3">
-          <div class="col-sm-2">&nbsp;</div>
-          <div class="col">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" v-model="editedWorkqueue.enabled" id="enabled" />
-              <label class="form-check-label" for="enabled"> Enabled</label>
-            </div>
-          </div>
-        </div>
-        <div class="text-end">
-          <button type="submit" class="btn btn-primary">Save</button>
-          <button @click="cancelEdit" class="btn">Cancel</button>
-        </div>
-      </form>
+  <form @submit.prevent="saveWorkqueue">
+    <!-- Name Field -->
+    <div class="flex items-center mb-3">
+      <label class="w-1/5 lg:w-1/6 font-semibold" for="name">Name:</label>
+      <div class="w-full">
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          v-model="editedWorkqueue.name"
+          id="name"
+          required
+        />
+      </div>
+    </div>
+
+    <!-- Description Field -->
+    <div class="flex items-center mb-3">
+      <label for="description" class="w-1/5 lg:w-1/6 font-semibold">Description:</label>
+      <div class="w-full">
+        <textarea
+          type="text"
+          class="textarea textarea-bordered w-full"
+          v-model="editedWorkqueue.description"
+          id="description"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Enabled Checkbox -->
+    <div class="flex items-center mb-3">
+      <div class="w-1/5 lg:w-1/6"></div>
+      <div class="w-full">
+        <label class="cursor-pointer flex items-center space-x-2">
+          <input type="checkbox" class="checkbox checkbox-primary" v-model="editedWorkqueue.enabled" id="enabled" />
+          <span>Enabled</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end space-x-2 mt-4">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="button" @click="cancelEdit" class="btn">Cancel</button>
+    </div>
+  </form>
 </template>
 
 <script>

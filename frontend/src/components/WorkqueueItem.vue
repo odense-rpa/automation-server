@@ -1,8 +1,8 @@
 <template>
-  <tr>
+  <tr class="hover:bg-base-300 cursor-pointer">
     <td @click="edit()">{{ workqueue.name }}</td>
     <td @click="edit()" class="text-center">
-      <i class="bi bi-check" v-if="workqueue.enabled"></i>
+      <font-awesome-icon :icon="['fas', 'check']" v-if="workqueue.enabled" />
     </td>
     <td @click="edit()" class="text-center">{{ workqueue.in_progress }}</td>
     <td @click="edit()" class="text-center">{{ workqueue.new }}</td>

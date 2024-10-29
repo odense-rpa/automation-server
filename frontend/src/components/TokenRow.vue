@@ -1,12 +1,12 @@
 <template>
-  <tr>
+  <tr class="hover:bg-base-300 cursor-pointer">
     <td class="text-center">{{ token.id }}</td>
     <td>{{ token.identifier }}</td>
     <td class="text-center">{{ $formatDateTime(token.expires_at) }}</td>
     <td class="text-center">{{ $formatDateTime(token.created_at) }}</td>
     <td>
       <dropdown-button :label="'Actions'" :items="[
-        { text: 'Delete', icon: 'bi bi-trash', action: 'delete' }
+        { text: 'Delete', icon: 'fas fa-trash-alt', action: 'delete' }
       ]" @item-clicked="triggerAction" />
     </td>
   </tr>

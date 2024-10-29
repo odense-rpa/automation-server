@@ -3,7 +3,7 @@
         <template v-slot:header-right>
             <button class="btn btn-success btn-sm" @click="createTrigger">+</button>
         </template>
-        <table class="table mb-0 rounded-bottom table-striped table-hover">
+        <table class="table w-full mb-3 rounded-b-lg">
             <tbody>
                 <trigger-row v-for="trigger in triggers" :key="trigger.id" :trigger="trigger"
                     @save-trigger="saveTrigger" @delete-trigger="deleteTrigger"  />

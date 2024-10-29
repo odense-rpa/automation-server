@@ -1,22 +1,23 @@
 <template>
-  <div class="btn-group">
-    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" aria-expanded="false"
-      @click="isOpen = !isOpen">
-      <i class="bi bi-three-dots"></i>
+  <div class="dropdown dropdown-bottom dropdown-end">
+    <!-- Dropdown Toggle Button -->
+    <button ref="dropdownButton" tabindex="0" class="btn btn-sm btn-accent-content m-1">
+      <font-awesome-icon :icon="['fas', 'ellipsis-v']" />
     </button>
-    <ul class="dropdown-menu" :class="{ show: isOpen }"
-      style="position: absolute; transform: translate3d(0px, 35px, 0px); top: 0px; left: 0px; will-change: transform;">
+    
+    <!-- Dropdown Menu -->
+    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
       <li v-for="(item, index) in items" :key="index">
-        <a class="dropdown-item" href="#" @click.prevent="itemClicked(item)"><i :class="item.icon" v-if="item.icon" />
-          {{ item.text }}</a>
+        <a href="#" @click.prevent="itemClicked(item)">
+          <font-awesome-icon :icon="item.icon" v-if="item.icon" />
+          {{ item.text }}
+        </a>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
-//import { onBeforeUnmount, onMounted } from 'vue';
-
 export default {
   name: 'DropdownButton',
   props: {
@@ -25,19 +26,25 @@ export default {
       default: () => [],
     },
   },
-  data: () => ({
-    isOpen: false,
-  }),
+  data() {
+    return {
+      dropdownButton: null,
+    };
+  },
   methods: {
     itemClicked(item) {
-      this.$emit('item-clicked', item.action, item);
-      this.isOpen = false;
-    }
+      this.$emit('item-clicked', item.action, item); // Emit the item clicked event
+      
+      // Remove focus from the dropdown button to close the dropdown
+      if (this.dropdownButton) {
+        this.dropdownButton.focus();
+        this.dropdownButton.blur();
+      }
+    },
   },
-
+  mounted() {
+    // Ensure each instance has its own button reference
+    this.dropdownButton = this.$el.querySelector('button');
+  },
 };
 </script>
-
-<style scoped>
-/* Add any styles for your dropdown button here */
-</style>

@@ -1,30 +1,38 @@
 <template>
-  <form @submit.prevent="saveProcess" v-if="editedProcess">
-    <div class="row mb-3">
-      <label for="name" class="col-sm-2 col-form-label">Name</label>
-      <div class="col-sm-10">
-        <input type="text" class="form-control" v-model="editedProcess.name" id="name" required />
+  <form @submit.prevent="saveProcess" v-if="editedProcess" class="space-y-4">
+    <!-- Name Field -->
+    <div class="flex items-center">
+      <label for="name" class="w-1/5 font-semibold">Name</label>
+      <div class="w-full">
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          v-model="editedProcess.name"
+          id="name"
+          required
+        />
       </div>
     </div>
-    <div class="row mb-3">
-      <label for="description" class="col-sm-2 col-form-label">Description:</label>
-      <div class="col-sm-10">
+
+    <!-- Description Field -->
+    <div class="flex items-center">
+      <label for="description" class="w-1/5 font-semibold">Description</label>
+      <div class="w-full">
         <textarea
-          type="text"
-          class="form-control"
+          class="textarea textarea-bordered w-full"
           v-model="editedProcess.description"
           id="description"
         ></textarea>
       </div>
     </div>
 
-    <div class="row mb-3">
-      <label for="workqueue_id" class="col-sm-2 col-form-label">Workqueue:</label>
-      <div class="col-sm-10">
+    <!-- Workqueue Field -->
+    <div class="flex items-center">
+      <label for="workqueue_id" class="w-1/5 font-semibold">Workqueue</label>
+      <div class="w-full">
         <select
-          name="target_type"
           v-model="editedProcess.workqueue_id"
-          class="form-control"
+          class="select select-bordered w-full"
           required
         >
           <option value="0">None</option>
@@ -35,13 +43,13 @@
       </div>
     </div>
 
-    <div class="row mb-3">
-      <label for="target_type" class="col-sm-2 col-form-label">Platform:</label>
-      <div class="col-sm-10">
+    <!-- Platform Field -->
+    <div class="flex items-center">
+      <label for="target_type" class="w-1/5 font-semibold">Platform</label>
+      <div class="w-full">
         <select
-          name="target_type"
           v-model="editedProcess.target_type"
-          class="form-control"
+          class="select select-bordered w-full"
           required
         >
           <option value="python">Python</option>
@@ -52,12 +60,13 @@
       </div>
     </div>
 
-    <div class="row mb-3" v-if="editedProcess.target_type == 'python'">
-      <label for="target_source" class="col-sm-2 col-form-label">Git repo:</label>
-      <div class="col-sm-10">
+    <!-- Git Repo Field (Python Only) -->
+    <div class="flex items-center" v-if="editedProcess.target_type == 'python'">
+      <label for="target_source" class="w-1/5 font-semibold">Git repo</label>
+      <div class="w-full">
         <input
           type="text"
-          class="form-control"
+          class="input input-bordered w-full"
           v-model="editedProcess.target_source"
           id="target_source"
           required
@@ -65,13 +74,13 @@
       </div>
     </div>
 
-    <div class="row mb-3" v-if="editedProcess.target_type == 'python'">
-      <label for="target_credentials_id" class="col-sm-2 col-form-label">Git credentials:</label>
-      <div class="col-sm-10">
+    <!-- Git Credentials Field (Python Only) -->
+    <div class="flex items-center" v-if="editedProcess.target_type == 'python'">
+      <label for="target_credentials_id" class="w-1/5 font-semibold">Git credentials</label>
+      <div class="w-full">
         <select
-          name="target_credentials_id"
           v-model="editedProcess.target_credentials_id"
-          class="form-control"
+          class="select select-bordered w-full"
           required
         >
           <option value="0">None</option>
@@ -79,29 +88,33 @@
       </div>
     </div>
 
-    <div class="row mb-3" v-if="editedProcess.target_type != 'python'">
-      <div class="col-sm-12">We are sorry but this platform is currently not supported</div>
+    <!-- Unsupported Platform Message -->
+    <div class="text-center text-gray-500" v-if="editedProcess.target_type != 'python'">
+      We are sorry, but this platform is currently not supported.
     </div>
 
-    <div class="row mb-3">
-      <label for="requirements" class="col-sm-2 col-form-label">Requirements</label>
-      <div class="col-sm-10">
+    <!-- Requirements Field -->
+    <div class="flex items-center">
+      <label for="requirements" class="w-1/5 font-semibold">Requirements</label>
+      <div class="w-full">
         <input
           type="text"
-          class="form-control"
+          class="input input-bordered w-full"
           v-model="editedProcess.requirements"
           id="requirements"
         />
-        <small class="form-text text-muted">Space separated list of required features</small>
+        <small class="text-gray-500 block mt-1">Space separated list of required features</small>
       </div>
     </div>
 
-    <div class="text-end">
+    <!-- Action Buttons -->
+    <div class="text-right space-x-2">
       <button type="submit" class="btn btn-primary">Save</button>
       <router-link :to="{ name: 'process' }" class="btn">Cancel</router-link>
     </div>
   </form>
 </template>
+
 <script>
 import { workqueuesAPI } from '@/services/automationserver.js'
 

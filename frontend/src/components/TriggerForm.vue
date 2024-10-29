@@ -1,55 +1,83 @@
 <template>
-    <form @submit.prevent="submitForm">
-        <div class="form-group">
-            <select class="form-select" v-model="editObject.type">
-                <option value="cron">Cron</option>
-                <option value="date">Date</option>
-                <option value="workqueue">Workqueue</option>
-            </select>
+    <form @submit.prevent="submitForm" class="space-y-4">
+      <!-- Type Selector -->
+      <div>
+        <select class="select select-bordered w-full" v-model="editObject.type">
+          <option value="cron">Cron</option>
+          <option value="date">Date</option>
+          <option value="workqueue">Workqueue</option>
+        </select>
+      </div>
+  
+      <!-- Cron Input Field -->
+      <div v-if="editObject.type === 'cron'">
+        <input type="text" class="input input-bordered w-full" id="cron" v-model="editObject.cron" required />
+        <small class="text-gray-500 block mt-1">
+          See <a href="https://crontab.guru/" target="_blank" class="link">crontab.guru</a> for help.
+        </small>
+      </div>
+  
+      <!-- Date Input Field -->
+      <div v-if="editObject.type === 'date'">
+        <input type="datetime-local" class="input input-bordered w-full" v-model="editObject.date" required />
+      </div>
+  
+      <!-- Workqueue Fields -->
+      <div v-if="editObject.type === 'workqueue'" class="space-y-2">
+        <!-- Workqueue Selector -->
+        <div>
+          <select class="select select-bordered w-full" v-model="editObject.workqueue_id" required>
+            <option v-for="workqueue in workqueues" :key="workqueue.id" :value="workqueue.id">
+              {{ workqueue.name }}
+            </option>
+          </select>
         </div>
-
-        <div class="form-group mt-1" v-if="editObject.type == 'cron'">
-            <input type="text" class="form-control" id="cron" v-model="editObject.cron" required />
-            <small class="form-text text-muted">See <a href="https://crontab.guru/" target="_blank">crontabguru</a> for
-                help.</small>
+  
+        <!-- Resource Limit Input -->
+        <div>
+          <small class="text-gray-500 block mb-1">How many resources can this workqueue consume</small>
+          <input
+            type="number"
+            class="input input-bordered w-full"
+            v-model="editObject.workqueue_resource_limit"
+            placeholder="Set the resource limit"
+            required
+          />
         </div>
-
-        <div class="form-group mt-1" v-if="editObject.type == 'date'">
-            <input type="datetime-local" class="form-control" v-model="editObject.date" required />
+  
+        <!-- Scale-up Threshold Input -->
+        <div>
+          <small class="text-gray-500 block mb-1">How many workitems must be present to scale up</small>
+          <input
+            type="number"
+            class="input input-bordered w-full"
+            v-model="editObject.workqueue_scale_up_threshold"
+            placeholder="Set the scaling threshold"
+            required
+          />
         </div>
-
-        <div v-if="editObject.type == 'workqueue'">
-
-            <div class="form-group mt-1">
-                <select class="form-select" v-model="editObject.workqueue_id" required>
-                    <option v-for="workqueue in workqueues" :key="workqueue.id" :value="workqueue.id">{{
-                        workqueue.name }}</option>
-                </select>
-            </div>
-            <div class="form-group mt-1">
-                <small class="form-text text-muted">How many resources can this workqueue consume</small>
-                <input type="number" class="form-control" v-model="editObject.workqueue_resource_limit"
-                    placeholder="Set the resource limit" required />
-            </div>
-            <div class="form-group mt-1">
-                <small class="form-text text-muted">How many workitems must be present to scale up</small>
-                <input type="number" class="form-control" v-model="editObject.workqueue_scale_up_threshold"
-                    placeholder="Set the scaling threshold" required />
-            </div>
-        </div>
-        <div class="form-group mt-1">
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="enabled" v-model="editObject.enabled" />
-                <label class="form-check-label" for="enabled">Enabled</label>
-            </div>
-        </div>
-
-        <div class="text-end mt-1">
-            <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-check" /></button>&nbsp;
-            <button class="btn btn-sm btn-secondary" @click.prevent="$emit('cancel')"><i class="bi bi-x" /></button>
-        </div>
+      </div>
+  
+      <!-- Enabled Checkbox -->
+      <div>
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" class="checkbox checkbox-primary" id="enabled" v-model="editObject.enabled" />
+          <span>Enabled</span>
+        </label>
+      </div>
+  
+      <!-- Action Buttons -->
+      <div class="text-right space-x-2">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <font-awesome-icon :icon="['fas', 'check']" />
+        </button>
+        <button class="btn btn-sm" @click.prevent="$emit('cancel')">
+          <font-awesome-icon :icon="['fas', 'times']" />
+        </button>
+      </div>
     </form>
-</template>
+  </template>
+  
 <script>
 import { workqueuesAPI } from '@/services/automationserver.js'
 

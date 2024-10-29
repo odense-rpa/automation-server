@@ -3,7 +3,7 @@
         <tokens-table :tokens="tokens" @refresh="fetchTokens" />
     </div>
     <div class="mt-4">
-        <router-link :to="{ name: 'settings' }" class="btn btn-primary">Configure the frontend</router-link>
+        <router-link :to="{ name: 'settings' }" class="btn btn-sm btn-primary">Configure the frontend</router-link>
     </div>
 </template>
 <script>

@@ -1,23 +1,27 @@
 <template>
   <tr>
-    <td>
-      <i
-        class="bi bi-circle-fill"
+    <td class="flex items-center space-x-2">
+      <font-awesome-icon
+        :icon="['fas', 'circle']"
         :class="{
-          'text-secondary': status === '',
-          'text-info': status === 'new',
-          'text-success': status === 'in progress'
+          'text-gray-400': status === '',         // Equivalent to 'text-secondary'
+          'text-blue-500': status === 'new',      // Equivalent to 'text-info'
+          'text-green-500': status === 'in progress' // Equivalent to 'text-success'
         }"
-      ></i>
-      {{ resource.name }}
+      />
+      <span>{{ resource.name }}</span>
     </td>
+    
     <td>
       <span v-if="session"><process-label :process-id="session.process_id" /></span>
     </td>
+    
     <td>
       <span v-if="session">{{ $formatDateTime(session?.dispatched_at) }}</span>
     </td>
+    
     <td>{{ session?.status }}</td>
+    
     <td>{{ resource.capabilities }}</td>
   </tr>
 </template>

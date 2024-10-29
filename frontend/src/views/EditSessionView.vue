@@ -1,26 +1,28 @@
 <template>
     <div>
-
         <content-card title="Session" v-if="session" class="mb-3">
-            <div class="row m-1">
-                <div class="col-6">
-                    <dl class="row mb-0">
-                        <dt class="col-5">Id:</dt>
-                        <dd class="col-7">{{ session.id }}</dd>
-                        <dt class="col-5">Process:</dt>
-                        <dd class="col-7"><process-label :process-id="session.process_id" /></dd>
-                        <dt class="col-5">Status:</dt>
-                        <dd class="col-7">{{ session.status }}</dd>
+            <div class="flex flex-wrap m-1">
+                <!-- Left Column -->
+                <div class="w-full lg:w-1/2 p-2">
+                    <dl class="grid grid-cols-5 gap-y-2">
+                        <dt class="col-span-2 font-semibold">Id:</dt>
+                        <dd class="col-span-3">{{ session.id }}</dd>
+                        <dt class="col-span-2 font-semibold">Process:</dt>
+                        <dd class="col-span-3"><process-label :process-id="session.process_id" /></dd>
+                        <dt class="col-span-2 font-semibold">Status:</dt>
+                        <dd class="col-span-3">{{ session.status }}</dd>
                     </dl>
                 </div>
-                <div class="col-6">
-                    <dl class="row mb-0">
-                        <dt class="col-5">Created:</dt>
-                        <dd class="col-7">{{ $formatDateTime(session.created_at) }}</dd>
-                        <dt class="col-5">Dispatched:</dt>
-                        <dd class="col-7">{{ $formatDateTime(session.dispatched_at) }}</dd>
-                        <dt class="col-5">Last updated:</dt>
-                        <dd class="col-7">{{ $formatDateTime(session.updated_at) }}</dd>
+
+                <!-- Right Column -->
+                <div class="w-full lg:w-1/2 p-2">
+                    <dl class="grid grid-cols-5 gap-y-2">
+                        <dt class="col-span-2 font-semibold">Created:</dt>
+                        <dd class="col-span-3">{{ $formatDateTime(session.created_at) }}</dd>
+                        <dt class="col-span-2 font-semibold">Dispatched:</dt>
+                        <dd class="col-span-3">{{ $formatDateTime(session.dispatched_at) }}</dd>
+                        <dt class="col-span-2 font-semibold">Last updated:</dt>
+                        <dd class="col-span-3">{{ $formatDateTime(session.updated_at) }}</dd>
                     </dl>
                 </div>
             </div>
@@ -29,6 +31,7 @@
         <session-log-list :session_id="session.id" v-if="session" />
     </div>
 </template>
+
 <script>
 import ContentCard from '@/components/ContentCard.vue'
 import { sessionsAPI } from "@/services/automationserver";

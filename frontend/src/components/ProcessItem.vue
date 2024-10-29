@@ -1,6 +1,6 @@
 <!-- ProcessItem.vue -->
 <template>
-  <tr>
+  <tr class="hover:bg-base-300 cursor-pointer">
     <td @click="edit()">{{ process.name }}</td>
     <td @click="edit()">{{ process.description }}</td>
     <td @click="edit()">{{ process.target_type }}</td>

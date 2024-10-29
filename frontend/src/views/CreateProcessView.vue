@@ -1,17 +1,9 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-8">
         <content-card title="Create process">
           <div class="card-body">
             <process-form :process="process" @save="saveProcess"></process-form>
           </div>
         </content-card>
-      </div>
-
-      <div class="col-sm-4"></div>
-    </div>
-  </div>
 </template>
 
 <script>

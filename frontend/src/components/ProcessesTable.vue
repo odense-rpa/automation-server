@@ -1,6 +1,6 @@
 <!-- ProcessesTable.vue -->
 <template>
-    <table class="table mb-0 rounded-bottom table-striped table-hover">
+    <table class="table w-full mb-3">
         <thead>
             <tr>
                 <th>Name</th>

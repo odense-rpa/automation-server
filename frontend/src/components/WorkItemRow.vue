@@ -1,5 +1,5 @@
 <template>
-  <tr>
+  <tr class="hover:bg-base-200">
     <td class="text-center">{{ workitem.id }}</td>
     <td>{{ workitem.reference }}</td>
     <td>{{ workitem.message }}</td>
@@ -7,13 +7,13 @@
     <td class="text-center">{{ workitem.status }}</td>
     <td class="text-center">{{ $formatDateTime(workitem.created_at) }}</td>
     <td class="text-center">{{ $formatDateTime(workitem.updated_at) }}</td>
-    <td>
+    <td class="text-center">
       <dropdown-button
         :label="'Actions'"
         :items="[
-          { text: 'Retry', icon: 'bi bi-arrow-clockwise', action: 'retry' },
-          { text: 'Fail', icon: 'bi bi-trash', action: 'fail' },
-          { text: 'Complete', icon: 'bi bi-check', action: 'complete' }
+          { text: 'Retry', icon: 'fas fa-redo', action: 'retry' },
+          { text: 'Fail', icon: 'fas fa-trash-alt', action: 'fail' },
+          { text: 'Complete', icon: 'fas fa-check', action: 'complete' }
         ]"
         @item-clicked="triggerAction"
       />

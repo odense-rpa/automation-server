@@ -1,9 +1,9 @@
 <template>
-  <content-card title="Cluster">
+  <content-card title="Cluster" class="mb-4">
     <template v-slot:header-right>
       <instant-schedule></instant-schedule>
     </template>
-    <table class="table mb-0 rounded-bottom table-striped table-hover">
+    <table class="table w-full mb-3">
       <thead>
         <tr>
           <th>Resource</th>
