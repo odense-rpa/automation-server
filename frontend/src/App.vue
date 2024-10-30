@@ -13,6 +13,7 @@
         <h1 class="text-2xl font-semibold">Automation Server</h1>
         <button class="lg:hidden" @click="toggleSidebar">☰</button>
       </div>
+      <hr />
       <nav class="mt-6">
         <router-link class="block py-2.5 px-4 rounded hover:bg-gray-700" to="/" active-class="nav-link-active"
           exact-active-class="nav-link-active">Home</router-link>
