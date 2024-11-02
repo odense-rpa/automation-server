@@ -30,5 +30,10 @@ from .trigger_repository import (
     TriggerRepository as TriggerRepository,
     AbstractTriggerRepository as AbstractTriggerRepository,
 )
+
 from .workqueue_repository import WorkqueueRepository as WorkqueueRepository
-from .workitem_repository import WorkItemRepository as WorkItemRepository
+
+from .workitem_repository import (
+    WorkItemRepository as WorkItemRepository,
+    AbstractWorkItemRepository as AbstractWorkItemRepository,
+)
