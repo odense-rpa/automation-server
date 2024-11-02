@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-from app.database.repository import ProcessRepository, TriggerRepository
 from app.database.models import Process, Trigger, AccessToken
 
 from .schemas import ProcessCreate, ProcessUpdate, TriggerCreate
-from .dependencies import get_repository, resolve_access_token, get_unit_of_work
+from .dependencies import resolve_access_token, get_unit_of_work
+from app.database.unit_of_work import AbstractUnitOfWork
 
 import app.enums as enums
+from . import get_standard_error_descriptions
 
-from app.database.unit_of_work import AbstractUnitOfWork
 
 router = APIRouter(prefix="/processes", tags=["Processes"])
 
 
-# Dependency Injection
+# Dependency Injection local to this router
+
 def get_process(
     process_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Process:
@@ -30,17 +31,9 @@ def get_process(
         return process
 
 
-# Error response
-RESPONSE_STATES = {
-    404: {
-        "description": "Process not found",
-        "content": {"application/json": {"example": {"detail": "Process not found"}}},
-    },
-    410: {
-        "description": "Process is gone",
-        "content": {"application/json": {"example": {"detail": "Process is gone"}}},
-    },
-}
+# Error responses
+
+RESPONSE_STATES = get_standard_error_descriptions("Process")
 
 
 # Routes
@@ -54,7 +47,7 @@ def get_processes(
         return uow.processes.get_all(include_deleted)
 
 
-@router.get("/{process_id}", responses=RESPONSE_STATES)
+@router.get("/{process_id}", responses = RESPONSE_STATES)
 def get_process(
     process: Process = Depends(get_process),
     token: AccessToken = Depends(resolve_access_token),
@@ -62,7 +55,7 @@ def get_process(
     return process
 
 
-@router.put("/{process_id}", responses=RESPONSE_STATES)
+@router.put("/{process_id}", responses = RESPONSE_STATES)
 def update_process(
     update: ProcessUpdate,
     process: Process = Depends(get_process),
@@ -73,7 +66,7 @@ def update_process(
         return uow.processes.update(process, update.model_dump())
 
 
-@router.post("", responses=RESPONSE_STATES)
+@router.post("", responses = RESPONSE_STATES)
 def create_process(
     process: ProcessCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -88,8 +81,8 @@ def create_process(
 
 @router.delete(
     "/{process_id}",
-    status_code=204,
-    responses={
+    status_code = 204,
+    responses = {
         204: {
             "description": "Item deleted",
             "content": {
