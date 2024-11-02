@@ -7,6 +7,9 @@ from .process_repository import (
 from .resource_repository import ResourceRepository as ResourceRepository
 from .session_repository import SessionRepository as SessionRepository
 from .sessionlog_repository import SessionLogRepository as SessionLogRepository
-from .trigger_repository import TriggerRepository as TriggerRepository
+from .trigger_repository import (
+    TriggerRepository as TriggerRepository,
+    AbstractTriggerRepository as AbstractTriggerRepository,
+)
 from .workqueue_repository import WorkqueueRepository as WorkqueueRepository
 from .workitem_repository import WorkItemRepository as WorkItemRepository

@@ -33,7 +33,7 @@ def get_process(
 # Error response
 RESPONSE_STATES = {
     404: {
-        "description": "Item not found",
+        "description": "Process not found",
         "content": {"application/json": {"example": {"detail": "Process not found"}}},
     },
     410: {
@@ -54,7 +54,7 @@ def get_processes(
         return uow.processes.get_all(include_deleted)
 
 
-@router.get("/{process_id}")
+@router.get("/{process_id}", responses=RESPONSE_STATES)
 def get_process(
     process: Process = Depends(get_process),
     token: AccessToken = Depends(resolve_access_token),
@@ -62,7 +62,7 @@ def get_process(
     return process
 
 
-@router.put("/{process_id}")
+@router.put("/{process_id}", responses=RESPONSE_STATES)
 def update_process(
     update: ProcessUpdate,
     process: Process = Depends(get_process),
@@ -73,7 +73,7 @@ def update_process(
         return uow.processes.update(process, update.model_dump())
 
 
-@router.post("")
+@router.post("", responses=RESPONSE_STATES)
 def create_process(
     process: ProcessCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -92,7 +92,9 @@ def create_process(
     responses={
         204: {
             "description": "Item deleted",
-            "content": {"application/json": {"example": {"detail": "Process has been deleted"}}},
+            "content": {
+                "application/json": {"example": {"detail": "Process has been deleted"}}
+            },
         }
     }
     | RESPONSE_STATES,
@@ -104,26 +106,23 @@ def delete_process(
 ) -> None:
     with uow:
         uow.processes.delete(process)
-        return 
+        return
 
 
-@router.post("/{process_id}/trigger")
+@router.post("/{process_id}/trigger", responses = RESPONSE_STATES)
 def create_trigger(
-    process_id: int,
     trigger: TriggerCreate,
     process: Process = Depends(get_process),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
-
-    repository: TriggerRepository = Depends(get_repository(Trigger)),
-    #process_repository: ProcessRepository = Depends(get_repository(Process)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Trigger:
     data = trigger.model_dump()
     data["deleted"] = False
 
     with uow:
-        data["process_id"] = process_id
+        data["process_id"] = process.id
 
+        # TODO: This code belongs in the service layer, not the API layer
         if data["type"] == enums.TriggerType.CRON:
             data["date"] = None
             data["workqueue_id"] = None
@@ -140,26 +139,18 @@ def create_trigger(
             data["cron"] = ""
             data["date"] = None
 
-        return repository.create(data)
+        return uow.triggers.create(data)
 
 
-@router.get("/{process_id}/trigger")
+@router.get("/{process_id}/trigger", responses = RESPONSE_STATES)
 def get_triggers(
-    process_id: int,
     include_deleted: bool = False,
-    repository: ProcessRepository = Depends(get_repository(Process)),
+    process: Process = Depends(get_process),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Trigger]:
-    # Check if the process exists
-    process = repository.get(process_id)
+    with uow:
+        if include_deleted:
+            return list(process.triggers)
 
-    if process is None:
-        raise HTTPException(status_code=404, detail="Process not found")
-
-    if process.deleted:
-        raise HTTPException(status_code=403, detail="Process is deleted")
-
-    if include_deleted:
-        return list(process.triggers)
-
-    return list(filter(lambda x: not x.deleted, process.triggers))
+        return [x for x in process.triggers if not x.deleted]
