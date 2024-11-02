@@ -8,6 +8,7 @@ from app.database import repository
 class AbstractUnitOfWork(AbstractContextManager):
     processes: repository.AbstractProcessRepository
     triggers: repository.AbstractTriggerRepository
+    credentials: repository.AbstractCredentialRepository
 
     def __enter__(self):
         return self
@@ -30,6 +31,7 @@ class UnitOfWork(AbstractUnitOfWork):
         self.session = session
         self.processes = repository.ProcessRepository(session)
         self.triggers = repository.TriggerRepository(session)
+        self.credentials = repository.CredentialRepository(session)
 
     def commit(self):
         self.session.commit()

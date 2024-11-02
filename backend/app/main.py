@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.workqueue import router as v1_workqueue_router
 from app.api.v1.workitem import router as v1_workitem_router
 from app.api.v1.process_router import router as v1_process_router
-from app.api.v1.credentials import router as v1_credentials_router
+from app.api.v1.credentials_router import router as v1_credentials_router
 from app.api.v1.resource import router as v1_resource_router
 from app.api.v1.session import router as v1_session_router
 from app.api.v1.trigger import router as v1_trigger_router
