@@ -10,7 +10,11 @@ from .process_repository import (
     AbstractProcessRepository as AbstractProcessRepository,
 )
 
-from .resource_repository import ResourceRepository as ResourceRepository
+from .resource_repository import (
+    ResourceRepository as ResourceRepository,
+    AbstractResourceRepository as AbstractResourceRepository,
+)
+
 from .session_repository import SessionRepository as SessionRepository
 from .sessionlog_repository import SessionLogRepository as SessionLogRepository
 from .trigger_repository import (

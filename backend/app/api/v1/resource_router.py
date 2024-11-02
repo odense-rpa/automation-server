@@ -1,77 +1,89 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.database.models import Resource, AccessToken
-from app.database.repository import ResourceRepository
+
+
 from app.services import ResourceService
+from app.database.unit_of_work import AbstractUnitOfWork
 
 from .schemas import ResourceCreate, ResourceUpdate
-from .dependencies import get_repository, get_resource_service, resolve_access_token
+from .dependencies import get_resource_service, resolve_access_token, get_unit_of_work
 
+from . import get_standard_error_descriptions
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
+
+# Dependency Injection local to this router
+
+
+def get_resource(
+    resource_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
+) -> Resource:
+    with uow:
+        resource = uow.resources.get(resource_id)
+
+        if resource is None:
+            raise HTTPException(status_code=404, detail="Resource not found")
+
+        if resource.deleted:
+            raise HTTPException(status_code=410, detail="Resource is gone")
+
+        return resource
+
+
+# Error responses
+
+RESPONSE_STATES = get_standard_error_descriptions("Resource")
 
 
 @router.get("")
 def get_resources(
     include_expired: bool = False,
-    repository: ResourceRepository = Depends(get_repository(Resource)),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Resource]:
     service.update_availability()
 
     # Return all resources that are not deleted and have been seen in the last 10 minutes
-    resources = repository.get_all(include_deleted=False)
+    with uow:
+        resources = uow.resources.get_all(include_deleted=False)
 
-    if include_expired:
-        return resources
+        if include_expired:
+            return resources
 
-    return [x for x in resources if x.available]
+        return [x for x in resources if x.available]
 
 
-@router.get("/{resource_id}")
+@router.get("/{resource_id}", responses=RESPONSE_STATES)
 def get_resource(
-    resource_id: str,
-    repository: ResourceRepository = Depends(get_repository(Resource)),
+    resource: Resource = Depends(get_resource),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Resource:
-    resource = repository.get(resource_id)
-
-    if resource is None:
-        raise HTTPException(status_code=404, detail="Resource not found")
-
     return resource
 
 
-@router.put("/{resource_id}")
+@router.put("/{resource_id}", responses=RESPONSE_STATES)
 def update_resource(
-    resource_id: str,
     update: ResourceUpdate,
-    repository: ResourceRepository = Depends(get_repository(Resource)),
+    resource: Resource = Depends(get_resource),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Resource:
-    resource = repository.get(resource_id)
-    if resource is None:
-        raise HTTPException(status_code=404, detail="Resource not found")
-
     if update.fqdn != resource.fqdn:
         raise HTTPException(status_code=400, detail="FQDN cannot be changed")
 
     return service.enroll(update.fqdn, update.name, update.capabilities)
 
 
-@router.put("/{resource_id}/ping")
+@router.put("/{resource_id}/ping", response_model=bool, responses=RESPONSE_STATES)
 def ping_resource(
-    resource_id: str,
-    repository: ResourceRepository = Depends(get_repository(Resource)),
+    resource: Resource = Depends(get_resource),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> bool:
-    resource = repository.get(resource_id)
-    if resource is None:
-        raise HTTPException(status_code=404, detail="Resource not found")
-
     service.keep_alive(resource)
 
     return True

@@ -10,6 +10,8 @@ from app.database.repository import (
     SessionLogRepository,
 )
 
+from app.database.unit_of_work import AbstractUnitOfWork
+
 from app.database.models import Session, Process, Resource, SessionLog, AccessToken
 import app.enums as enums
 
@@ -24,6 +26,7 @@ from app.api.v1.schemas import PaginatedResponse, PaginatedSearchParams
 from app.services import SessionService
 
 from .dependencies import (
+    get_unit_of_work,
     get_repository,
     get_session_service,
     get_paginated_search_params,
@@ -31,6 +34,8 @@ from .dependencies import (
 )
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
+
+
 
 
 @router.get("")
