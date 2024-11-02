@@ -10,6 +10,8 @@ class AbstractUnitOfWork(AbstractContextManager):
     triggers: repository.AbstractTriggerRepository
     credentials: repository.AbstractCredentialRepository
     resources: repository.AbstractResourceRepository
+    sessions: repository.AbstractSessionRepository
+    sessionlogs: repository.AbstractSessionLogRepository
 
     def __enter__(self):
         return self
@@ -34,6 +36,8 @@ class UnitOfWork(AbstractUnitOfWork):
         self.triggers = repository.TriggerRepository(session)
         self.credentials = repository.CredentialRepository(session)
         self.resources = repository.ResourceRepository(session)
+        self.sessions = repository.SessionRepository(session)
+        self.sessionlogs = repository.SessionLogRepository(session)
 
     def commit(self):
         self.session.commit()

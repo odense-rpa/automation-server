@@ -15,8 +15,17 @@ from .resource_repository import (
     AbstractResourceRepository as AbstractResourceRepository,
 )
 
-from .session_repository import SessionRepository as SessionRepository
-from .sessionlog_repository import SessionLogRepository as SessionLogRepository
+from .session_repository import (
+    SessionRepository as SessionRepository,
+    AbstractSessionRepository as AbstractSessionRepository,
+)
+
+from .sessionlog_repository import (
+    SessionLogRepository as SessionLogRepository,
+    AbstractSessionLogRepository as AbstractSessionLogRepository,
+)
+
+
 from .trigger_repository import (
     TriggerRepository as TriggerRepository,
     AbstractTriggerRepository as AbstractTriggerRepository,

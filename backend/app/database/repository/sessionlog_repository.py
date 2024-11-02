@@ -5,10 +5,38 @@ from sqlmodel import Session, select
 
 from app.database.models import SessionLog
 
-from .database_repository import DatabaseRepository
+from .database_repository import DatabaseRepository, AbstractRepository
+
+class AbstractSessionLogRepository(AbstractRepository[SessionLog]):
+    def get_paginated(
+        self,
+        session_id: int,
+        search: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 10,
+        include_deleted: bool = False,
+    ) -> tuple[List[SessionLog], int]:
+        raise NotImplementedError
+    
+    def get_logs_by_session_id(
+        self,
+        session_id: int,
+        search: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 10,
+    ) -> List[SessionLog]:
+        raise NotImplementedError
+    
+    def count_logs_by_session_id(
+        self, session_id: int, search: Optional[str] = None
+    ) -> int:
+        raise NotImplementedError
+    
+    def get_logs_by_workitem_id(self, workitem_id: int) -> List[SessionLog]:
+        raise NotImplementedError
 
 
-class SessionLogRepository(DatabaseRepository[SessionLog]):
+class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[SessionLog]):
     def __init__(self, session: Session) -> None:
         super().__init__(SessionLog, session)
 
