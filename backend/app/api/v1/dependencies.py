@@ -3,6 +3,11 @@ from datetime import datetime, timedelta
 from fastapi import Depends, Query, HTTPException, status, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+from app.database.unit_of_work import AbstractUnitOfWork,UnitOfWork
+from sqlmodel import Session
+from typing import Annotated
+
+
 from app.database.session import get_session
 
 import app.database.repository as repositories
@@ -139,3 +144,9 @@ def resolve_access_token(
         detail="Invalid or expired token",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+def get_unit_of_work(session: Session = Depends(get_session)) -> AbstractUnitOfWork:
+    return UnitOfWork(session)
+
+UnitOfWorkDep = Annotated[AbstractUnitOfWork, Depends(get_unit_of_work)]

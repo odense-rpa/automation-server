@@ -37,7 +37,7 @@ def test_get_process(session: Session, client: TestClient):
 
     response = client.get("/api/processes/2")
 
-    assert response.status_code == 403
+    assert response.status_code == 410
 
 def test_update_process(session: Session, client: TestClient):
     generate_basic_data(session)
@@ -100,13 +100,13 @@ def test_delete_process(session: Session, client: TestClient):
 
     response = client.delete("/api/processes/1")
 
-    assert response.status_code == 200
+    assert response.status_code == 204
 
     process = session.get(models.Process, 1)
     assert process.deleted is True
 
     response = client.get("/api/processes/1")
-    assert response.status_code == 403
+    assert response.status_code == 410
 
 def test_create_trigger_on_process(session: Session, client: TestClient):
     generate_basic_data(session)
