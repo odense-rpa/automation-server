@@ -13,6 +13,7 @@ class AbstractUnitOfWork(AbstractContextManager):
     sessions: repository.AbstractSessionRepository
     sessionlogs: repository.AbstractSessionLogRepository
     work_items: repository.AbstractWorkItemRepository
+    workqueues: repository.AbstractWorkqueueRepository
 
     def __enter__(self):
         return self
@@ -40,6 +41,7 @@ class UnitOfWork(AbstractUnitOfWork):
         self.sessions = repository.SessionRepository(session)
         self.sessionlogs = repository.SessionLogRepository(session)
         self.work_items = repository.WorkItemRepository(session)
+        self.workqueues = repository.WorkqueueRepository(session)
 
     def commit(self):
         self.session.commit()
