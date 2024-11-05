@@ -123,5 +123,15 @@ def test_create_session(session: Session, client: TestClient):
 
     data = response.json()
     assert data["process_id"] == 1
-    #assert data["resource_id"] == 1
+    assert data["status"] == enums.SessionStatus.NEW
+
+def test_get_session_by_resource_id(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/api/sessions/by_resource_id/3")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["process_id"] == 1
+    assert data["resource_id"] == 3
     assert data["status"] == enums.SessionStatus.NEW
