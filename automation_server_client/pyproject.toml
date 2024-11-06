@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "automation-server-client"
+version = "0.1.0"
+description = "This implements the base classes for building processes for the automation server."
+authors = ["Michael Wulff Nielsen <miwn@odense.dk>"]
+readme = "README.md"
+license = "MIT"                         # License
+homepage = "https://github.com/odense-rpa/automation-server"
+repository = "https://github.com/odense-rpa/automation-server"
+documentation = "https://github.com/odense-rpa/automation-server/docs"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
