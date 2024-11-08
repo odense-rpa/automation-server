@@ -6,10 +6,33 @@ from sqlmodel import Session as SqlSession, select, or_
 from app.database.models import Process, Session, SessionLog
 import app.enums as enums
 
-from .database_repository import DatabaseRepository
+from .database_repository import DatabaseRepository, AbstractRepository
 
 
-class SessionRepository(DatabaseRepository[Session]):
+class AbstractSessionRepository(AbstractRepository[Session]):
+    def get_by_resource_id(self, resource_id: int) -> Session | None:
+        raise NotImplementedError
+
+    def get_new_sessions(self) -> list[Session]:
+        raise NotImplementedError
+
+    def get_active_sessions(self) -> list[Session]:
+        raise NotImplementedError
+
+    def create_log(self, log_entry: dict) -> SessionLog:
+        raise NotImplementedError
+
+    def get_paginated(
+        self,
+        search: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 10,
+        include_deleted: bool = False,
+    ) -> tuple[List[Session], int]:
+        raise NotImplementedError
+
+
+class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
     def __init__(self, session: SqlSession) -> None:
         super().__init__(Session, session)
 

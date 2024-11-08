@@ -5,14 +5,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.workqueue import router as v1_workqueue_router
-from app.api.v1.workitem import router as v1_workitem_router
-from app.api.v1.process import router as v1_process_router
-from app.api.v1.credentials import router as v1_credentials_router
-from app.api.v1.resource import router as v1_resource_router
-from app.api.v1.session import router as v1_session_router
-from app.api.v1.trigger import router as v1_trigger_router
-from app.api.v1.sessionlog import router as v1_sessionlog_router
+from app.api.v1.workqueue_router import router as v1_workqueue_router
+from app.api.v1.workitem_router import router as v1_workitem_router
+from app.api.v1.process_router import router as v1_process_router
+from app.api.v1.credentials_router import router as v1_credentials_router
+from app.api.v1.resource_router import router as v1_resource_router
+from app.api.v1.session_router import router as v1_session_router
+from app.api.v1.trigger_router import router as v1_trigger_router
+from app.api.v1.sessionlog_router import router as v1_sessionlog_router
 from app.api.v1.accesstoken_router import router as v1_accesstoken_router
 
 from app.api.token_router import router as token_router
@@ -52,15 +52,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(v1_workqueue_router, prefix="/api")
-app.include_router(v1_workitem_router, prefix="/api")
-app.include_router(v1_process_router, prefix="/api")
-app.include_router(v1_credentials_router, prefix="/api")
-app.include_router(v1_resource_router, prefix="/api")
-app.include_router(v1_session_router, prefix="/api")
-app.include_router(v1_sessionlog_router, prefix="/api")
-app.include_router(v1_trigger_router, prefix="/api")
-app.include_router(v1_accesstoken_router, prefix="/api")
+app.include_router(v1_workqueue_router, prefix="")
+app.include_router(v1_workitem_router, prefix="")
+app.include_router(v1_process_router, prefix="")
+app.include_router(v1_credentials_router, prefix="")
+app.include_router(v1_resource_router, prefix="")
+app.include_router(v1_session_router, prefix="")
+app.include_router(v1_sessionlog_router, prefix="")
+app.include_router(v1_trigger_router, prefix="")
+app.include_router(v1_accesstoken_router, prefix="")
 app.include_router(token_router, prefix="")
 
 

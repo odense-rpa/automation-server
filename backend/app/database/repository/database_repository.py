@@ -9,7 +9,29 @@ from app.database.models import Base
 Model = TypeVar("Model", bound=Base)
 
 
-class DatabaseRepository(Generic[Model]):
+class AbstractRepository(Generic[Model]):
+    def create(self, data: dict) -> Model:
+        raise NotImplementedError
+
+    def get(self, pk: int) -> Model | None:
+        raise NotImplementedError
+
+    def update(self, instance: Model, data: dict) -> Model:
+        raise NotImplementedError
+
+    def delete(self, instance: Model) -> Model:
+        raise NotImplementedError
+
+    def get_all(self) -> list[Model]:
+        raise NotImplementedError
+
+    def filter(
+        self,
+        *expressions: BinaryExpression,
+    ) -> list[Model]:
+        raise NotImplementedError
+
+class DatabaseRepository(AbstractRepository[Model]):
     """Repository for performing database queries."""
 
     def __init__(self, model: type[Model], session: Session) -> None:

@@ -105,3 +105,33 @@ def test_session_reset_on_resource_detach(session: Session, client: TestClient):
     assert data["status"] == enums.SessionStatus.NEW
     assert data["dispatched_at"] is None
 
+def test_create_session(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # Check if a process exists
+    response = client.get("/api/processes/1")
+    assert response.status_code == 200
+
+    response = client.post(
+        "/api/sessions/",
+        json={
+            "process_id": 1,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["process_id"] == 1
+    assert data["status"] == enums.SessionStatus.NEW
+
+def test_get_session_by_resource_id(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/api/sessions/by_resource_id/3")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["process_id"] == 1
+    assert data["resource_id"] == 3
+    assert data["status"] == enums.SessionStatus.NEW

@@ -1,3 +1,4 @@
+import abc
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -9,7 +10,31 @@ from app.database.models import Workqueue, WorkItem
 
 import app.enums as enums
 
-from .database_repository import DatabaseRepository
+from .database_repository import DatabaseRepository, AbstractRepository
+
+class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
+    @abc.abstractmethod
+    def get_workitem_count(self, workqueue_id: int, status: enums.WorkItemStatus):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_workitems_paginated(
+        self,
+        workqueue_id: int,
+        search: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 10,
+        include_deleted: bool = False,
+    ) -> tuple[List[WorkItem], int]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def clear(
+            self, workqueue_id: int, 
+            workitem_status: enums.WorkItemStatus | None, 
+            days_older_than: int | None
+        ):
+        raise NotImplementedError
 
 
 class WorkqueueRepository(DatabaseRepository[Workqueue]):

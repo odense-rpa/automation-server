@@ -1,3 +1,5 @@
+import abc
+
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
@@ -6,7 +8,13 @@ from sqlmodel import Session, select
 from app.database.models import WorkItem
 import app.enums as enums
 
-from .database_repository import DatabaseRepository
+from .database_repository import DatabaseRepository, AbstractRepository
+
+class AbstractWorkItemRepository(AbstractRepository[WorkItem]):
+    @abc.abstractmethod
+    def get_next_item(self, queue_id: int):
+        raise NotImplementedError
+  
 
 
 class WorkItemRepository(DatabaseRepository[WorkItem]):

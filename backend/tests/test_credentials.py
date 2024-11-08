@@ -42,7 +42,7 @@ def test_get_credential(session: Session, client: TestClient):
 
     response = client.get("/api/credentials/2")
 
-    assert response.status_code == 403
+    assert response.status_code == 410
 
 
 def test_update_credential(session: Session, client: TestClient):
@@ -74,7 +74,7 @@ def test_update_credential(session: Session, client: TestClient):
         },
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 410
 
 def test_create_credential(session: Session, client: TestClient):
     generate_basic_data(session)   
@@ -95,16 +95,14 @@ def test_delete_credential(session: Session, client: TestClient):
 
     response = client.delete("/api/credentials/1")
 
-    assert response.status_code == 200
+    assert response.status_code == 204
 
+    # Verify against the database
+    
     credential = session.get(models.Credential, 1)
     assert credential.deleted is True
 
-    data = response.json()
-    assert data["name"] == "Secret credential"
-    assert data["username"] == "Secret username"
-    assert data["deleted"] is True
 
     response = client.delete("/api/credentials/2")
 
-    assert response.status_code == 403
+    assert response.status_code == 410
