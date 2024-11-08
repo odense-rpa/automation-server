@@ -16,7 +16,7 @@ axios.interceptors.request.use((config) => {
 const processesAPI = {
   getProcesses: async (include_deleted = false) => {
     try {
-      const response = await axios.get(`/processes/`, { params: { include_deleted } })
+      const response = await axios.get(`/processes`, { params: { include_deleted } })
       return response.data
     } catch (error) {
       throw new Error(`Error fetching processes: ${error}`)
@@ -24,7 +24,7 @@ const processesAPI = {
   },
   createProcess: async (processData) => {
     try {
-      const response = await axios.post(`/processes/`, processData)
+      const response = await axios.post(`/processes`, processData)
       return response.data
     } catch (error) {
       throw new Error(`Error creating process: ${error}`)
@@ -76,7 +76,7 @@ const processesAPI = {
 const workqueuesAPI = {
   getWorkqueues: async (include_deleted = false) => {
     try {
-      const response = await axios.get(`/workqueues/`, { params: { include_deleted } })
+      const response = await axios.get(`/workqueues`, { params: { include_deleted } })
       return response.data
     } catch (error) {
       throw new Error(`Error fetching workqueues: ${error}`)
@@ -94,7 +94,7 @@ const workqueuesAPI = {
   },
   createWorkqueue: async (workqueueData) => {
     try {
-      const response = await axios.post(`/workqueues/`, workqueueData)
+      const response = await axios.post(`/workqueues`, workqueueData)
       return response.data
     } catch (error) {
       throw new Error(`Error creating workqueue: ${error}`)
@@ -156,7 +156,7 @@ const workqueuesAPI = {
 const credentialsAPI = {
   getCredentials: async (include_deleted = false) => {
     try {
-      const response = await axios.get(`/credentials/`, { params: { include_deleted } })
+      const response = await axios.get(`/credentials`, { params: { include_deleted } })
       return response.data
     } catch (error) {
       throw new Error(`Error fetching credentials: ${error}`)
@@ -164,7 +164,7 @@ const credentialsAPI = {
   },
   createCredential: async (credentialData) => {
     try {
-      const response = await axios.post(`/credentials/`, credentialData)
+      const response = await axios.post(`/credentials`, credentialData)
       return response.data
     } catch (error) {
       throw new Error(`Error creating credential: ${error}`)
@@ -199,7 +199,7 @@ const credentialsAPI = {
 const resourcesAPI = {
   getResources: async (include_expired = false) => {
     try {
-      const response = await axios.get(`/resources/`, { params: { include_expired } })
+      const response = await axios.get(`/resources`, { params: { include_expired } })
       return response.data
     } catch (error) {
       throw new Error(`Error fetching resources: ${error}`)
@@ -207,7 +207,7 @@ const resourcesAPI = {
   },
   createResource: async (resourceData) => {
     try {
-      const response = await axios.post(`/resources/`, resourceData)
+      const response = await axios.post(`/resources`, resourceData)
       return response.data
     } catch (error) {
       throw new Error(`Error creating resource: ${error}`)
@@ -234,7 +234,7 @@ const resourcesAPI = {
 const sessionsAPI = {
   getSessions: async (include_deleted = false, page = 1, size = 20, search = '') => {
     try {
-      const response = await axios.get(`/sessions/`, {
+      const response = await axios.get(`/sessions`, {
         params: { page: page, size: size, search: search, include_deleted: include_deleted }
       })
       return response.data
@@ -252,7 +252,7 @@ const sessionsAPI = {
   },
   createSession: async (process_id) => {
     try {
-      const response = await axios.post(`/sessions/`, { process_id: process_id })
+      const response = await axios.post(`/sessions`, { process_id: process_id })
       return response.data
     } catch (error) {
       throw new Error(`Error creating session: ${error}`)
@@ -287,7 +287,7 @@ const sessionsAPI = {
 const triggersAPI = {
   getTriggers: async (include_deleted = false) => {
     try {
-      const response = await axios.get(`/triggers/`, { params: { include_deleted } })
+      const response = await axios.get(`/triggers`, { params: { include_deleted } })
       return response.data
     } catch (error) {
       throw new Error(`Error fetching triggers: ${error}`)
