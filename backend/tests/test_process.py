@@ -9,7 +9,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 def test_get_processes(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/processes/")
+    response = client.get("/processes/")
     data = response.json()
 
     assert response.status_code == 200
@@ -18,7 +18,7 @@ def test_get_processes(session: Session, client: TestClient):
     assert data[0]["description"] == "Process for unittest"
     assert data[0]["deleted"] is False
 
-    response = client.get("/api/processes/?include_deleted=true")
+    response = client.get("/processes/?include_deleted=true")
     data = response.json()
     assert len(data) == 2
 
@@ -26,7 +26,7 @@ def test_get_processes(session: Session, client: TestClient):
 def test_get_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/processes/1")
+    response = client.get("/processes/1")
 
     data = response.json()
 
@@ -35,7 +35,7 @@ def test_get_process(session: Session, client: TestClient):
     assert data["description"] == "Process for unittest"
     assert data["deleted"] is False
 
-    response = client.get("/api/processes/2")
+    response = client.get("/processes/2")
 
     assert response.status_code == 410
 
@@ -43,7 +43,7 @@ def test_update_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/processes/1",
+        "/processes/1",
         json={
             "name": "Process",
             "description": "New description",
@@ -75,7 +75,7 @@ def test_create_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/processes/",
+        "/processes/",
         json={
             "name": "Process",
             "description": "New description",
@@ -98,21 +98,21 @@ def test_create_process(session: Session, client: TestClient):
 def test_delete_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.delete("/api/processes/1")
+    response = client.delete("/processes/1")
 
     assert response.status_code == 204
 
     process = session.get(models.Process, 1)
     assert process.deleted is True
 
-    response = client.get("/api/processes/1")
+    response = client.get("/processes/1")
     assert response.status_code == 410
 
 def test_create_trigger_on_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/processes/1/trigger",
+        "/processes/1/trigger",
         json={
             "type": "cron",
             "cron": "15 4 * * *",
@@ -131,7 +131,7 @@ def test_get_triggers_on_process(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/processes/1/trigger",
+        "/processes/1/trigger",
         json={
             "type": "cron",
             "cron": "15 4 * * *",
@@ -139,7 +139,7 @@ def test_get_triggers_on_process(session: Session, client: TestClient):
         },
     )
 
-    response = client.get("/api/processes/1/trigger")
+    response = client.get("/processes/1/trigger")
 
     assert response.status_code == 200
 
