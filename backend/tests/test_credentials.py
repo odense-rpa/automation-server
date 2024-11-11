@@ -10,7 +10,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 def test_get_credentials(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/credentials/")
+    response = client.get("/credentials/")
     data = response.json()
 
     assert response.status_code == 200
@@ -19,7 +19,7 @@ def test_get_credentials(session: Session, client: TestClient):
     assert data[0]["username"] == "Secret username"
     assert data[0]["deleted"] is False
 
-    response = client.get("/api/credentials/?include_deleted=true")
+    response = client.get("/credentials/?include_deleted=true")
     data = response.json()
     assert len(data) == 2
 
@@ -31,7 +31,7 @@ def test_get_credentials(session: Session, client: TestClient):
 def test_get_credential(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/credentials/1")
+    response = client.get("/credentials/1")
 
     data = response.json()
 
@@ -40,7 +40,7 @@ def test_get_credential(session: Session, client: TestClient):
     assert data["username"] == "Secret username"
     assert data["deleted"] is False
 
-    response = client.get("/api/credentials/2")
+    response = client.get("/credentials/2")
 
     assert response.status_code == 410
 
@@ -49,7 +49,7 @@ def test_update_credential(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/credentials/1",
+        "/credentials/1",
         json={
             "name": "Secret credential",
             "username": "Secret username",
@@ -65,7 +65,7 @@ def test_update_credential(session: Session, client: TestClient):
     assert data["password"] == "New password"
 
     response = client.put(
-        "/api/credentials/2",
+        "/credentials/2",
         json={
             "name": "Secret deleted credential",
             "username": "Secret deleted username",
@@ -80,7 +80,7 @@ def test_create_credential(session: Session, client: TestClient):
     generate_basic_data(session)   
 
     response = client.post(
-        "/api/credentials/",
+        "/credentials/",
         json={
             "name": "New credential",
             "username": "New username",
@@ -93,7 +93,7 @@ def test_create_credential(session: Session, client: TestClient):
 def test_delete_credential(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.delete("/api/credentials/1")
+    response = client.delete("/credentials/1")
 
     assert response.status_code == 204
 
@@ -103,6 +103,6 @@ def test_delete_credential(session: Session, client: TestClient):
     assert credential.deleted is True
 
 
-    response = client.delete("/api/credentials/2")
+    response = client.delete("/credentials/2")
 
     assert response.status_code == 410
