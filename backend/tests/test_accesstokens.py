@@ -8,7 +8,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 
 def test_get_accesstoken_no_token(session: Session, client: TestClient):
     generate_basic_data(session)
-    response = client.get("/api/accesstokens/")
+    response = client.get("/accesstokens/")
 
     assert response.text == '[]'
     assert response.status_code == 200
@@ -18,7 +18,7 @@ def test_get_accesstokens(session: Session, client: TestClient):
 
     # Create a new access token
     response = client.post(
-        "/api/accesstokens",
+        "/accesstokens",
         json={
             "identifier": "UnusedAccessToken",
         },
@@ -29,13 +29,13 @@ def test_get_accesstokens(session: Session, client: TestClient):
 
     # Get the access token
     response = client.get(
-        "/api/accesstokens/",
+        "/accesstokens/",
         headers={"Authorization": f"Bearer {access_token}"},
     )
 
     # Create a 2nd access token with returned token
     response = client.post(
-        "/api/accesstokens",
+        "/accesstokens",
         headers={"Authorization": f"Bearer {access_token}"},
         json={
             "identifier": "UnusedAccessToken2",
@@ -44,7 +44,7 @@ def test_get_accesstokens(session: Session, client: TestClient):
 
     # Get all access tokens
     response = client.get(
-        "/api/accesstokens/",
+        "/accesstokens/",
         headers={"Authorization": f"Bearer {access_token}"},
     )
 
@@ -58,7 +58,7 @@ def test_create_and_access_without_token(session: Session, client: TestClient):
 
     # Create a new access token
     response = client.post(
-        "/api/accesstokens",
+        "/accesstokens",
         json={
             "identifier": "UnusedAccessToken",
         },
@@ -70,7 +70,7 @@ def test_create_and_access_without_token(session: Session, client: TestClient):
     assert data["identifier"] == "UnusedAccessToken"
 
     # Try to access the API without using the created token
-    response = client.get("/api/accesstokens/1")
+    response = client.get("/accesstokens/1")
 
     assert response.status_code == 401
 
@@ -79,7 +79,7 @@ def test_delete_accesstoken(session: Session, client: TestClient):
 
     # Create a new access token
     response = client.post(
-        "/api/accesstokens",
+        "/accesstokens",
         json={
             "identifier": "UnusedAccessToken",
         },
@@ -91,7 +91,7 @@ def test_delete_accesstoken(session: Session, client: TestClient):
 
     # Delete the access token
     response = client.delete(
-        "/api/accesstokens/1",
+        "/accesstokens/1",
         headers={"Authorization": f"Bearer {access_token}"},)
     
     assert response.status_code == 204
