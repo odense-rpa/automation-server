@@ -11,7 +11,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 def test_get_triggers(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/processes/1/trigger")
+    response = client.get("/processes/1/trigger")
     data = response.json()
 
     assert response.status_code == 200
@@ -19,7 +19,7 @@ def test_get_triggers(session: Session, client: TestClient):
 
     assert data[0]["type"] == enums.TriggerType.CRON
 
-    response = client.get("/api/processes/1/trigger?include_deleted=true")
+    response = client.get("/processes/1/trigger?include_deleted=true")
     data = response.json()
 
     assert response.status_code == 200
@@ -29,7 +29,7 @@ def test_create_trigger(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/processes/1/trigger",
+        "/processes/1/trigger",
         json={
             "type": enums.TriggerType.CRON,
             "cron": "0 0 * * *",
@@ -49,7 +49,7 @@ def test_create_trigger_failures(session: Session, client: TestClient):
 
     # Missing cron
     response = client.post(
-        "/api/processes/1/trigger",
+        "/processes/1/trigger",
         json={
             "type": enums.TriggerType.CRON,
             "cron": "0 ",
@@ -60,7 +60,7 @@ def test_create_trigger_failures(session: Session, client: TestClient):
 
     # Missing date
     response = client.post(
-        "/api/processes/1/trigger",
+        "/processes/1/trigger",
         json={
             "type": enums.TriggerType.DATE,
             "date": None,
@@ -71,7 +71,7 @@ def test_create_trigger_failures(session: Session, client: TestClient):
 
     # Missing workqueue
     response = client.post(
-        "/api/processes/1/trigger",
+        "/processes/1/trigger",
         json={
             "type": enums.TriggerType.WORKQUEUE,
             "workqueue_id": None,
@@ -86,10 +86,10 @@ def test_create_trigger_failures(session: Session, client: TestClient):
 def test_delete_trigger(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.delete("/api/triggers/1")
+    response = client.delete("/triggers/1")
     assert response.status_code == 204
 
-    response = client.get("/api/processes/1/trigger?include_deleted=false")
+    response = client.get("/processes/1/trigger?include_deleted=false")
     data = response.json()
 
     assert response.status_code == 200
@@ -99,7 +99,7 @@ def test_update_trigger(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/triggers/1",
+        "/triggers/1",
         json={
             "type": enums.TriggerType.CRON,
             "cron": "10 10 * * *",
@@ -116,7 +116,7 @@ def test_update_trigger(session: Session, client: TestClient):
 
     # Change a cron trigger to a workqueue trigger
     response = client.put(
-        "/api/triggers/1",
+        "/triggers/1",
         json={
             "type": enums.TriggerType.WORKQUEUE,
             "workqueue_id": 1,
