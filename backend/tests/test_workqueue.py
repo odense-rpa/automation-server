@@ -11,7 +11,7 @@ from app.enums import WorkItemStatus
 def test_get_workqueues(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/workqueues/")
+    response = client.get("/workqueues/")
     data = response.json()
 
     assert response.status_code == 200
@@ -21,7 +21,7 @@ def test_get_workqueues(session: Session, client: TestClient):
     assert data[0]["enabled"] is True
     assert data[0]["deleted"] is False
 
-    response = client.get("/api/workqueues/?include_deleted=true")
+    response = client.get("/workqueues/?include_deleted=true")
     data = response.json()
     assert len(data) == 2
 
@@ -29,7 +29,7 @@ def test_get_workqueues(session: Session, client: TestClient):
 def test_get_workqueue(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/workqueues/1")
+    response = client.get("/workqueues/1")
 
     data = response.json()
 
@@ -44,7 +44,7 @@ def test_update_workqueue(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/workqueues/1",
+        "/workqueues/1",
         json={
             "name": "Workqueue",
             "description": "New description",
@@ -70,7 +70,7 @@ def test_create_workqueue(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/workqueues/",
+        "/workqueues/",
         json={
             "name": "New workqueue",
             "description": "New description",
@@ -99,7 +99,7 @@ def test_add_workitem(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/workqueues/1/add",
+        "/workqueues/1/add",
         json={"data": "{}", "reference": "My reference"},
     )
 
@@ -122,7 +122,7 @@ def test_add_workitem(session: Session, client: TestClient):
 def test_next_item(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/workqueues/1/next_item")
+    response = client.get("/workqueues/1/next_item")
 
     assert response.status_code == 200
 
@@ -139,7 +139,7 @@ def test_next_item(session: Session, client: TestClient):
     assert data.status == WorkItemStatus.IN_PROGRESS
     assert data.locked is True
 
-    response = client.get("/api/workqueues/1/next_item")
+    response = client.get("/workqueues/1/next_item")
 
     assert response.status_code == 204
 
@@ -147,7 +147,7 @@ def test_next_item_disabled_queue(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/workqueues/1",
+        "/workqueues/1",
         json={
             "name": "Workqueue",
             "description": "New description",
@@ -157,7 +157,7 @@ def test_next_item_disabled_queue(session: Session, client: TestClient):
     assert response.status_code == 200
 
 
-    response = client.get("/api/workqueues/1/next_item")
+    response = client.get("/workqueues/1/next_item")
 
     assert response.status_code == 204
 
@@ -172,26 +172,26 @@ def test_clear_queue_dates(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/workqueues/1/clear",
+        "/workqueues/1/clear",
         json = {            
             "days_older_than": 1
         }
     )
     assert response.status_code == 204
 
-    response = client.get("/api/workqueues/1/items")
+    response = client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 5
 
     response = client.post(
-        "/api/workqueues/1/clear",
+        "/workqueues/1/clear",
         json = {            
             "days_older_than": 0
         }
     )
     assert response.status_code == 204
 
-    response = client.get("/api/workqueues/1/items")
+    response = client.get("/workqueues/1/items")
     data = response.json()    
     assert data["total_items"] == 0
 
@@ -202,7 +202,7 @@ def test_clear_queue_all_parameters(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/workqueues/1/clear",
+        "/workqueues/1/clear",
         json = {
             "workitem_status": "new",
             "days_older_than": 0
@@ -210,12 +210,12 @@ def test_clear_queue_all_parameters(session: Session, client: TestClient):
     )
     assert response.status_code == 204
 
-    response = client.get("/api/workqueues/1/items")
+    response = client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 4
 
     response = client.post(
-        "/api/workqueues/1/clear",
+        "/workqueues/1/clear",
         json = {
             "workitem_status": "failed",
             "days_older_than": 0
@@ -223,12 +223,12 @@ def test_clear_queue_all_parameters(session: Session, client: TestClient):
     )
     assert response.status_code == 204
 
-    response = client.get("/api/workqueues/1/items")
+    response = client.get("/workqueues/1/items")
     data = response.json()    
     assert data["total_items"] == 3
 
     response = client.post(
-        "/api/workqueues/1/clear",
+        "/workqueues/1/clear",
         json = {
             "workitem_status": "completed",
             "days_older_than": 1
@@ -236,7 +236,7 @@ def test_clear_queue_all_parameters(session: Session, client: TestClient):
     )
     assert response.status_code == 204
 
-    response = client.get("/api/workqueues/1/items")
+    response = client.get("/workqueues/1/items")
     data = response.json()    
     assert data["total_items"] == 3
     
@@ -248,11 +248,11 @@ def test_clear_queue_no_parameters(session: Session, client: TestClient):
     generate_basic_data(session)    
 
     response = client.post(
-        "/api/workqueues/1/clear",
+        "/workqueues/1/clear",
         json = {}
     )
     assert response.status_code == 204
 
-    response = client.get("/api/workqueues/1/items")
+    response = client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 0
