@@ -3,25 +3,28 @@
   <content-card title="Processes">
     <template v-slot:header-right>
       <div class="join">
-      <!-- Search Icon Button (Small) -->
-      <button class="join-item btn btn-square btn-sm">
-        <font-awesome-icon :icon="['fas', 'search']" />
-      </button>
+        <!-- Search Icon Button (Small) -->
+        <button class="join-item btn btn-square btn-sm">
+          <font-awesome-icon :icon="['fas', 'search']" />
+        </button>
 
-      <!-- Input Field (Small) -->
-      <input
-        type="text"
-        v-model="searchTerm"
-        placeholder="Search processes..."
-        class="join-item input input-bordered input-sm w-full max-w-xs"
-      />
+        <!-- Input Field (Small) -->
+        <input
+          type="text"
+          v-model="searchTerm"
+          placeholder="Search processes..."
+          class="join-item input input-bordered input-sm w-full max-w-xs"
+        />
 
-      <!-- Create New Process Button -->
-      <router-link :to="{ name: 'process.create' }" class="join-item btn btn-success btn-sm">+</router-link>
-    </div>
+        <!-- Create New Process Button -->
+        <router-link :to="{ name: 'process.create' }" class="join-item btn btn-success btn-sm">+</router-link>
+      </div>
     </template>
+    <div v-if="filteredProcesses.length === 0" class="text-center mb-4">
+      <p class="secondary-content font-semibold">No processes found matching search.</p>
+    </div>
 
-    <ProcessesTable :processes="filteredProcesses" />
+    <ProcessesTable :processes="filteredProcesses" v-if="filteredProcesses.length !== 0" />
   </content-card>
 </template>
 

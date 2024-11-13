@@ -7,7 +7,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 def test_get_empty_sessionlogs(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessionlogs/4?page=1&size=10")
+    response = client.get("/sessionlogs/4?page=1&size=10")
     data = response.json()
 
     assert response.status_code == 200
@@ -20,7 +20,7 @@ def test_get_empty_sessionlogs(session: Session, client: TestClient):
 def test_get_nonexistant_session(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessionlogs/220202?page=1&size=10")
+    response = client.get("/sessionlogs/220202?page=1&size=10")
     data = response.json()
 
     assert response.status_code == 404
@@ -29,13 +29,13 @@ def test_get_nonexistant_session(session: Session, client: TestClient):
 def test_get_deleted_session(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessionlogs/2?page=1&size=10")
+    response = client.get("/sessionlogs/2?page=1&size=10")
     assert response.status_code == 410
 
 def test_search_sessionlogs(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessionlogs/3?page=1&size=1")
+    response = client.get("/sessionlogs/3?page=1&size=1")
     data = response.json()
 
     assert response.status_code == 200
@@ -44,7 +44,7 @@ def test_search_sessionlogs(session: Session, client: TestClient):
     assert data["total_pages"] == 3
     assert len(data["items"]) == 1
 
-    response = client.get("/api/sessionlogs/3?page=1&size=1&search=nothing")
+    response = client.get("/sessionlogs/3?page=1&size=1&search=nothing")
     data = response.json()
 
     assert response.status_code == 200

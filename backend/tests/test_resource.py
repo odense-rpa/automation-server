@@ -7,7 +7,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 def test_get_resources(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/resources")
+    response = client.get("/resources")
     data = response.json()
 
     assert response.status_code == 200
@@ -17,14 +17,14 @@ def test_get_resources(session: Session, client: TestClient):
     assert data[0]["fqdn"] == "resource.example.com"
     assert data[0]["deleted"] is False
 
-    response = client.get("/api/resources/?include_expired=true")
+    response = client.get("/resources/?include_expired=true")
     data = response.json()
     assert len(data) == 3
 
 def test_get_resource(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/resources/1")
+    response = client.get("/resources/1")
     data = response.json()
 
     assert response.status_code == 200
@@ -36,7 +36,7 @@ def test_create_resource(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.post(
-        "/api/resources",
+        "/resources",
         json={
             "name": "resource3",
             "fqdn": "resource3.example.com",
@@ -55,7 +55,7 @@ def test_create_resource(session: Session, client: TestClient):
 def test_resource_should_expire(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/resources/3")
+    response = client.get("/resources/3")
     assert response.status_code == 200
 
     data = response.json()
@@ -63,10 +63,10 @@ def test_resource_should_expire(session: Session, client: TestClient):
     assert data["available"] is True
 
     # This will trigger a full available resource update
-    response = client.get("/api/resources")
+    response = client.get("/resources")
     assert response.status_code == 200
 
-    response = client.get("/api/resources/3")
+    response = client.get("/resources/3")
     assert response.status_code == 200
 
     data = response.json()
@@ -107,7 +107,7 @@ def test_update_resource(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/resources/1",
+        "/resources/1",
         json={
             "name": "resource",
             "fqdn": "resource.example.com",
@@ -128,7 +128,7 @@ def test_update_old_resource(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/resources/2",
+        "/resources/2",
         json={
             "name": "resource-old",
             "fqdn": "resource-old.example.com",

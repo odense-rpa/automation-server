@@ -8,7 +8,7 @@ from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
 def test_get_sessions(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessions/")
+    response = client.get("/sessions/")
     data = response.json()
 
     assert response.status_code == 200
@@ -22,14 +22,14 @@ def test_get_sessions(session: Session, client: TestClient):
     assert item["deleted"] is False
     assert item["status"] == enums.SessionStatus.NEW
 
-    response = client.get("/api/sessions/?include_deleted=true")
+    response = client.get("/sessions/?include_deleted=true")
     data = response.json()
     assert len(data["items"]) == 4
 
 def test_get_session(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessions/1")
+    response = client.get("/sessions/1")
 
     data = response.json()
 
@@ -44,7 +44,7 @@ def test_update_status_fail(session: Session, client: TestClient):
 
     # Change status to IN_PROGRESS without assigning a resource
     response = client.put(
-        "/api/sessions/1/status",
+        "/sessions/1/status",
         json={
             "status": enums.SessionStatus.IN_PROGRESS,
         },
@@ -54,7 +54,7 @@ def test_update_status_fail(session: Session, client: TestClient):
 
     # Change status to FAILED from NEW which is invalid
     response = client.put(
-        "/api/sessions/1/status",
+        "/sessions/1/status",
         json={
             "status": enums.SessionStatus.FAILED,
         },
@@ -64,7 +64,7 @@ def test_update_status_fail(session: Session, client: TestClient):
 
     # Attempt to change status of a non-existent session
     response = client.put(
-        "/api/sessions/5/status",
+        "/sessions/5/status",
         json={
             "status": enums.SessionStatus.IN_PROGRESS,
         },
@@ -74,7 +74,7 @@ def test_update_status_fail(session: Session, client: TestClient):
 def test_get_new_sessions(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessions/new")
+    response = client.get("/sessions/new")
     data = response.json()
 
     assert response.status_code == 200
@@ -87,7 +87,7 @@ def test_get_new_sessions(session: Session, client: TestClient):
 def test_session_reset_on_resource_detach(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessions/4")
+    response = client.get("/sessions/4")
     data = response.json()
 
     assert data["resource_id"] is not None
@@ -95,10 +95,10 @@ def test_session_reset_on_resource_detach(session: Session, client: TestClient):
     assert data["dispatched_at"] is not None
 
     # Now trigger a detach on the resource
-    response = client.get("/api/resources")
+    response = client.get("/resources")
     assert response.status_code == 200
 
-    response = client.get("/api/sessions/4")
+    response = client.get("/sessions/4")
     data = response.json()
 
     assert data["resource_id"] is None
@@ -109,11 +109,11 @@ def test_create_session(session: Session, client: TestClient):
     generate_basic_data(session)
 
     # Check if a process exists
-    response = client.get("/api/processes/1")
+    response = client.get("/processes/1")
     assert response.status_code == 200
 
     response = client.post(
-        "/api/sessions/",
+        "/sessions/",
         json={
             "process_id": 1,
         },
@@ -128,7 +128,7 @@ def test_create_session(session: Session, client: TestClient):
 def test_get_session_by_resource_id(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/sessions/by_resource_id/3")
+    response = client.get("/sessions/by_resource_id/3")
     data = response.json()
 
     assert response.status_code == 200

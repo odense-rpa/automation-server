@@ -11,7 +11,7 @@ from app.enums import WorkItemStatus
 def test_get_workitem(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/api/workitems/1")
+    response = client.get("/workitems/1")
     data = response.json()
 
     assert response.status_code == 200
@@ -24,7 +24,7 @@ def test_update_workitem(session: Session, client: TestClient):
     generate_basic_data(session)
 
     response = client.put(
-        "/api/workitems/1",
+        "/workitems/1",
         json={
             "reference": "New reference",
             "data": "{ 'test': 'data' }",
@@ -42,7 +42,7 @@ def test_update_item_status(session: Session, client: TestClient):
 
     # Get next item from the workqueue
     response = client.get(
-        "/api/workqueues/1/next_item",
+        "/workqueues/1/next_item",
     )
     assert response.status_code == 200
 
@@ -52,7 +52,7 @@ def test_update_item_status(session: Session, client: TestClient):
 
     # Update the item status
     response = client.put(
-        f"/api/workitems/{data['id']}/status",
+        f"/workitems/{data['id']}/status",
         json={
             "status": WorkItemStatus.COMPLETED,
         },

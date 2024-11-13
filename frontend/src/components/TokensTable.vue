@@ -1,40 +1,30 @@
 <template>
-    <content-card title="Tokens">
-      <template v-slot:header-right>
-        <div class="flex space-x-2">
-          <!-- Add Token Button -->
-          <router-link :to="{ name: 'token.create' }" class="btn btn-success btn-sm">+</router-link>
-        </div>
-      </template>
-  
       <!-- Tokens Table -->
-      <table class="table w-full mb-0 rounded-b-lg">
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Identifier</th>
-            <th class="text-center">Expires</th>
-            <th class="text-center">Created</th>
-            <th>&nbsp;</th>
-          </tr>
-        </thead>
-        <tbody>
-          <token-row
-            v-for="token in tokens"
-            :key="token.id"
-            :token="token"
-            @delete="handleDelete"
-            class="hover:bg-base-300 cursor-pointer"
-          />
-        </tbody>
-      </table>
-    </content-card>
+    <table class="table w-full mb-0 rounded-b-lg">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Identifier</th>
+          <th class="text-center">Expires</th>
+          <th class="text-center">Created</th>
+          <th>&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <token-row
+          v-for="token in tokens"
+          :key="token.id"
+          :token="token"
+          @delete="handleDelete"
+          class="hover:bg-base-300 cursor-pointer"
+        />
+      </tbody>
+    </table>
   </template>
   
 
 <script>
 //import WorkqueueItem from '@/components/WorkqueueItem.vue'
-import ContentCard from "./ContentCard.vue";
 import TokenRow from "./TokenRow.vue";
 import { useAlertStore } from '../stores/alertStore'
 import { accessTokensApi } from "@/services/automationserver";
@@ -44,7 +34,6 @@ const alertStore = useAlertStore()
 export default {
     name: 'TokensTable',
     components: {
-        ContentCard,
         TokenRow
     },
     props: {
