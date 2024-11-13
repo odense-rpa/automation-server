@@ -25,7 +25,6 @@
 
 <script>
 //import WorkqueueItem from '@/components/WorkqueueItem.vue'
-import ContentCard from "./ContentCard.vue";
 import TokenRow from "./TokenRow.vue";
 import { useAlertStore } from '../stores/alertStore'
 import { accessTokensApi } from "@/services/automationserver";
@@ -35,7 +34,6 @@ const alertStore = useAlertStore()
 export default {
     name: 'TokensTable',
     components: {
-        ContentCard,
         TokenRow
     },
     props: {
