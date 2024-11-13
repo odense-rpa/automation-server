@@ -52,15 +52,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(v1_workqueue_router, prefix="")
-app.include_router(v1_workitem_router, prefix="")
-app.include_router(v1_process_router, prefix="")
+app.include_router(v1_accesstoken_router, prefix="")
 app.include_router(v1_credentials_router, prefix="")
+app.include_router(v1_process_router, prefix="")
 app.include_router(v1_resource_router, prefix="")
 app.include_router(v1_session_router, prefix="")
 app.include_router(v1_sessionlog_router, prefix="")
 app.include_router(v1_trigger_router, prefix="")
-app.include_router(v1_accesstoken_router, prefix="")
+app.include_router(v1_workitem_router, prefix="")
+app.include_router(v1_workqueue_router, prefix="")
 app.include_router(token_router, prefix="")
 
 

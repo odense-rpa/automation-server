@@ -8,15 +8,19 @@
         </button>
 
         <!-- Input Field (Small) -->
-        <input type="text" v-model="searchTerm" placeholder="Search workqueues..."
-          class="join-item input input-bordered input-sm w-full max-w-xs" />
+        <input 
+          type="text" 
+          v-model="searchTerm" 
+          placeholder="Search workqueues..."
+          class="join-item input input-bordered input-sm w-full max-w-xs" 
+        />
 
         <!-- Create New Workqueue Button -->
         <router-link :to="{ name: 'workqueue.create' }" class="join-item btn btn-success btn-sm">+</router-link>
       </div>
     </template>
     <div v-if="filteredWorkqueues.length === 0" class="text-center mb-4">
-      <p class="secondary-content font-semibold">No sessions found matching search.</p>
+      <p class="secondary-content font-semibold">No workqueues found matching search.</p>
     </div>
 
     <workqueues-table :workqueues="filteredWorkqueues" v-if="filteredWorkqueues.length !== 0"  />
