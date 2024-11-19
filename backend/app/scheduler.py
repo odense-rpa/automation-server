@@ -38,7 +38,8 @@ async def schedule():
         resource_repository = ResourceRepository(session)
         resource_service = ResourceService(resource_repository, session_repository)
         session_service = SessionService(session_repository, resource_repository)
-        workqueue_service = WorkqueueService(WorkqueueRepository(session))
+        workqueue_repository = WorkqueueRepository(session)
+        workqueue_service = WorkqueueService(workqueue_repository)
         # Do some housekeeping
         session_service.reschedule_orphaned_sessions()
         session_service.flush_dangling_sessions()
@@ -72,7 +73,7 @@ async def schedule():
                     )
 
             if trigger.type == "workqueue":
-                workqueue = trigger.workqueue
+                workqueue = workqueue_repository.get(trigger.workqueue_id)
 
                 if workqueue is None:
                     logger.error(f"Workqueue {trigger.workqueue_id} does not exist")
