@@ -4,7 +4,7 @@ from app.api.v1.schemas import PaginatedResponse
 from app.database.repository import WorkqueueRepository
 
 from app.database.models import WorkItem
-
+from app.enums import WorkItemStatus
 
 class WorkqueueService:
     def __init__(self, workqueue_repository: WorkqueueRepository):
@@ -33,3 +33,8 @@ class WorkqueueService:
         )
 
         return response
+
+
+    def count_pending_items(self, workqueue_id: int) -> int:
+        # TODO: Implement deferred on this method
+        return self.repository.get_workitem_count(workqueue_id, status=WorkItemStatus.NEW)

@@ -1,22 +1,32 @@
 import logging
 import re
+import asyncio
 from datetime import datetime, timedelta
 from croniter import croniter
-
+import math
 from app.database.session import get_session
 from app.database.repository import (
     TriggerRepository,
     SessionRepository,
     ResourceRepository,
+    WorkqueueRepository,
 )
-from app.services import ResourceService, SessionService
+from app.services import ResourceService, SessionService, WorkqueueService
 from app.enums import SessionStatus
 
-from fastapi import Depends
 
 logger = logging.getLogger(__name__)
 
 last_run = None
+
+
+async def scheduler_background_task():
+    while True:
+        # Run the scheduler
+        await schedule()
+
+        # Sleep for 10 seconds before the next iteration
+        await asyncio.sleep(10)
 
 
 async def schedule():
@@ -28,7 +38,7 @@ async def schedule():
         resource_repository = ResourceRepository(session)
         resource_service = ResourceService(resource_repository, session_repository)
         session_service = SessionService(session_repository, resource_repository)
-
+        workqueue_service = WorkqueueService(WorkqueueRepository(session))
         # Do some housekeeping
         session_service.reschedule_orphaned_sessions()
         session_service.flush_dangling_sessions()
@@ -43,8 +53,6 @@ async def schedule():
         last_run = now
 
         triggers = trigger_repository.get_all(include_deleted=False)
-
-        sessions = session_repository.get_active_sessions()
 
         for trigger in triggers:
             if trigger.enabled is False:
@@ -73,18 +81,44 @@ async def schedule():
                 if workqueue.enabled is False:
                     continue
 
-                if trigger.workqueue_id not in sessions:
-                    logger.info(f"Triggering workqueue trigger {trigger.id}")
+                # Check if the workqueue has pending items
+                pending_items = workqueue_service.count_pending_items(
+                    trigger.workqueue_id
+                )
+
+                if pending_items == 0:
+                    continue
+
+                # Check how many sessions are running of process_id
+                active_sessions = [
+                    session
+                    for session in session_repository.get_active_sessions()
+                    if session.process_id == trigger.process_id
+                ]
+
+                required_sessions = pending_items // max(
+                    trigger.workqueue_scale_up_threshold, 1
+                )
+
+                if required_sessions > trigger.workqueue_resource_limit:
+                    required_sessions = trigger.workqueue_resource_limit
+
+                if len(active_sessions) < required_sessions:
+                    logger.info(
+                        f"Triggering workqueue trigger {trigger.id}. Required sessions: {required_sessions}, Active sessions: {len(active_sessions)}"
+                    )
+                    # Only trigger a single session pr tick. This allows other processes to scale up
+                    new_session(trigger.process_id, session_repository, force=True)
 
         # Dispatch again to assign resources to the new sessions
         dispatch(session_repository, resource_repository, resource_service)
 
 
-def new_session(process_id: int, session_repository: SessionRepository):
+def new_session(process_id: int, session_repository: SessionRepository, force=False):
     sessions = session_repository.get_new_sessions()
 
     # If there is a new or in progress session in the sessions objects, return
-    if any(session.process_id == process_id for session in sessions):
+    if any(session.process_id == process_id for session in sessions) and not force:
         return
 
     # Create a new session

@@ -19,7 +19,7 @@ from app.api.token_router import router as token_router
 
 from app.database.session import create_db_and_tables
 from app.config import settings
-from app.scheduler import schedule
+from app.scheduler import scheduler_background_task
 
 logging.basicConfig(level=logging.INFO)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
-    asyncio.create_task(background_task())
+    asyncio.create_task(scheduler_background_task())
 
     logger.info(f"Starting up, database url is: {settings.database_url}, debug is {settings.debug}")
 
@@ -64,7 +64,7 @@ app.include_router(v1_workqueue_router, prefix="")
 app.include_router(token_router, prefix="")
 
 
-async def background_task():
-    while True:
-        await asyncio.sleep(10)  # Sleep for 10 seconds
-        await schedule()
+#async def background_task():
+#    while True:
+#        await asyncio.sleep(10)  # Sleep for 10 seconds
+#        await schedule()
