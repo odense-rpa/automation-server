@@ -111,6 +111,7 @@
     <div class="text-right space-x-2">
       <button type="submit" class="btn btn-primary">Save</button>
       <router-link :to="{ name: 'process' }" class="btn">Cancel</router-link>
+      <button type="button" class="btn btn-error" @click="deleteProcess">Delete</button>
     </div>
   </form>
 </template>
@@ -138,6 +139,9 @@ export default {
   methods: {
     saveProcess() {
       this.$emit('save', this.editedProcess)
+    },
+    deleteProcess() {
+      this.$emit('delete', this.editedProcess)
     }
   },
 
