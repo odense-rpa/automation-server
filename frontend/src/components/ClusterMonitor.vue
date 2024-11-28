@@ -15,7 +15,7 @@
       </thead>
       <tbody>
         <cluster-item
-          v-for="resource in resources"
+          v-for="resource in sortedResources"
           :key="resource.id"
           :resource="resource"
         ></cluster-item>
@@ -53,17 +53,21 @@ export default {
 
   async mounted() {
     this.resources = await resourcesAPI.getResources()
-
     this.timer = setInterval(this.updateSessions, 5000)
     this.sessions = await sessionsAPI.getNewSessions()
   },
   beforeUnmount() {
     clearInterval(this.timer)
   },
+  computed: {
+    sortedResources() {
+      return this.resources.slice().sort((a, b) => a.name.localeCompare(b.name,"en"));
+    }
+
+  },
   methods: {
     async updateSessions() {
       var sessions = await sessionsAPI.getNewSessions()
-
       this.sessions = sessions.filter((session) => session.resource_id === null)
     }
   }
