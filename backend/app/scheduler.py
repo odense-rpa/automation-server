@@ -3,7 +3,7 @@ import re
 import asyncio
 from datetime import datetime, timedelta
 from croniter import croniter
-import math
+
 from app.database.session import get_session
 from app.database.repository import (
     TriggerRepository,
@@ -21,6 +21,7 @@ last_run = None
 
 
 async def scheduler_background_task():
+    
     while True:
         # Run the scheduler
         await schedule()
