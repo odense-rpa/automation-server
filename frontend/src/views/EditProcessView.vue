@@ -4,7 +4,7 @@
     <div>
       <content-card title="Process Information">
         <div class="p-4">
-          <process-form :process="process" @save="saveProcess" v-if="process" />
+          <process-form :process="process" @save="saveProcess" @delete="deleteProcess" v-if="process" />
         </div>
       </content-card>
     </div>
@@ -47,6 +47,21 @@ export default {
         })
       } catch (error) {
         console.log(error)
+        alertStore.addAlert({ type: 'danger', message: error })
+      }
+      // Redirect to the overview
+      this.$router.push({ name: 'process' })
+    },
+
+    async deleteProcess() {
+      try {
+        await processesAPI.deleteProcess(this.process.id)
+
+        alertStore.addAlert({
+          type: 'success',
+          message: "'" + this.process.name + "' was deleted"
+        })
+      } catch (error) {
         alertStore.addAlert({ type: 'danger', message: error })
       }
       // Redirect to the overview
