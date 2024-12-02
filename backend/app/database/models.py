@@ -15,16 +15,12 @@ class Base(SQLModel):
 
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-
-    name: str = Field()
+    name: str = Field(unique=True)
     username: str | None = Field()
     password: str | None = Field()
-
     deleted: typing.Optional[bool] = False
-
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
-
 
 class WorkItem(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
