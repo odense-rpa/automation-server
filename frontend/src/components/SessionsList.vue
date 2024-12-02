@@ -30,7 +30,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="session in sessions" :key="session.id" 
-                        :class="['cursor-pointer', 'hover:bg-base-300', { 'bg-red-500': session.status === 'failed' }]">
+                        :class="['cursor-pointer', 'hover:bg-base-300', { 'bg-red-400': session.status === 'failed' }]">
                         <td @click="edit(session.id)" class="text-center">{{ session.id }}</td>
                         <td @click="edit(session.id)"><process-label :process-id="session.process_id" /></td>
                         <td @click="edit(session.id)" class="text-center">{{ session.status }}</td>
