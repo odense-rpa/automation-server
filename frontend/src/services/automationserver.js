@@ -124,6 +124,20 @@ const workqueuesAPI = {
       throw new Error(`Error deleting workqueue: ${error}`)
     }
   },
+  clearWorkqueue: async(queue_id, workitem_status = null, days_older_than = null) => {
+    if (workitem_status === '') workitem_status = null;
+    if (days_older_than === '') days_older_than = null;
+
+    try {
+      const response = await axios.post(`/workqueues/${queue_id}/clear`, {
+      workitem_status,
+      days_older_than
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(`Error clearing workqueue: ${error}`)
+    }
+  },
   addWorkitem: async (queue_id, workitemData) => {
     try {
       const response = await axios.post(`/workqueues/${queue_id}/add`, workitemData)

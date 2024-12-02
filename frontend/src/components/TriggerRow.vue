@@ -74,7 +74,6 @@ export default {
         }
     },
     mounted() {
-        console.log("TriggerRow mounted");
         if (this.trigger.id === 0)
             this.isEdit = true;
     }
