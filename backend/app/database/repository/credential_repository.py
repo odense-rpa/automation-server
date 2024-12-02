@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.database.models import Credential
 
@@ -11,4 +11,5 @@ class CredentialRepository(DatabaseRepository[Credential]):
     def __init__(self, session: Session) -> None:
         super().__init__(Credential, session)
 
-
+    def get_by_name(self, name: str) -> Credential:
+        return self.session.exec(select(Credential).filter(Credential.name == name)).first()

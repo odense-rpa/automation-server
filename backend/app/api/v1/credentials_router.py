@@ -23,15 +23,27 @@ def get_credential(
             raise HTTPException(status_code=410, detail="Credential is gone")
 
         return credential
+    
+def get_credential_by_name(
+    credential_name: str, 
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work)    
+) -> Credential:
+    with uow:
+        credential = uow.credentials.get_by_name(credential_name)
 
+        if credential is None:
+            raise HTTPException(status_code=404, detail="Credential not found")
+
+        if credential.deleted:
+            raise HTTPException(status_code=410, detail="Credential is gone")
+
+        return credential
 
 # Error responses
 
 RESPONSE_STATES = get_standard_error_descriptions("Process")
 
-
 router = APIRouter(prefix="/credentials", tags=["Credentials"])
-
 
 @router.get("")
 def get_credentials(
@@ -49,6 +61,13 @@ def get_credentials(
 @router.get("/{credential_id}", responses=RESPONSE_STATES)
 def get_credential(
     credential: Credential = Depends(get_credential),
+    token: AccessToken = Depends(resolve_access_token),
+) -> Credential:
+    return credential
+
+@router.get("/by_name/{credential_name}", responses=RESPONSE_STATES)
+def get_credential_by_name(
+    credential: Credential = Depends(get_credential_by_name),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Credential:
     return credential

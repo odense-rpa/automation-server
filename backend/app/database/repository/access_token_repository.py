@@ -9,6 +9,7 @@ class AccessTokenRepository(DatabaseRepository[AccessToken]):
     def __init__(self, session: Session) -> None:
         super().__init__(AccessToken, session)
 
+    # TODO: Unit test this method
     def get_by_identifier(self, identifier: str) -> AccessToken:
         return (
             self.session.select(AccessToken)
