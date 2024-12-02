@@ -1,4 +1,5 @@
 from fastapi import Depends, APIRouter, HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from app.database.models import Credential, AccessToken
 from app.database.unit_of_work import AbstractUnitOfWork
@@ -90,12 +91,14 @@ def create_credential(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Credential:
-    with uow:
-        data = credential.model_dump()
-        data["deleted"] = False
+    try:
+        with uow:
+            data = credential.model_dump()
+            data["deleted"] = False
 
-        return uow.credentials.create(data)
-
+            return uow.credentials.create(data)
+    except IntegrityError:
+        raise HTTPException(status_code=422, detail="Credential name already exists")        
 
 @router.delete(
     "/{credential_id}",

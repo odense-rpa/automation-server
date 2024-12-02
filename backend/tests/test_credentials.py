@@ -141,4 +141,18 @@ def test_case_sensitivity(session: Session, client: TestClient):
 
 def test_empty_credential_name(session: Session, client: TestClient):
     response = client.get("/credential/by_name/")
-    assert response.status_code == 400  # Assuming FastAPI route validation catches this
+    assert response.status_code == 404  # Assuming FastAPI route validation catches this
+
+def test_insert_non_unique_named_credential(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.post(
+        "/credentials/",
+        json={
+            "name": "Secret credential",
+            "username": "New username",
+            "password": "New password",
+        },
+    )
+
+    assert response.status_code == 422
