@@ -27,7 +27,7 @@ This project is licensed under the MIT License and comes with no warranty. Use i
 2. **Create a virtual environment**:
 
     ```sh
-    python -m venv venv
+    python -m venv .venv
     ```
 
 3. **Activate the virtual environment**:
@@ -35,20 +35,27 @@ This project is licensed under the MIT License and comes with no warranty. Use i
     - On Windows:
 
         ```sh
-        venv\Scripts\activate
+        .venv\Scripts\activate
         ```
 
     - On macOS/Linux:
 
         ```sh
-        source venv/bin/activate
+        source .venv/bin/activate
         ```
 
 4. **Install the dependencies**:
+   
+   - Backend:
 
     ```sh
     pip install -r requirements.txt
     ```
+
+    - Frontend:
+   ```sh
+    npm install
+   ```
 
 ## Running the Application
 
