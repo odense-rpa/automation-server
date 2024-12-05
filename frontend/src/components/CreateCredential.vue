@@ -52,6 +52,16 @@
         <div v-if="passwordMismatch" class="text-error mt-2">Passwords do not match</div>
       </div>
 
+      <div class="mb-4">
+        <label for="data" class="label font-semibold">Data (JSON)</label>
+        <textarea 
+          id="data" 
+          class="textarea textarea-lg textarea-bordered w-full h-96" 
+          v-model="credentialData.data"
+          placeholder="JSON Data">
+        </textarea>
+      </div>
+
       <!-- Buttons -->
       <div class="text-right">
         <button type="submit" class="btn btn-primary" :disabled="passwordMismatch">Create</button>
@@ -75,7 +85,8 @@ export default {
       credentialData: {
         name: "",
         username: "",
-        password: ""
+        password: "",
+        data: ""
       },
       repeatPassword: ""
     };
@@ -99,6 +110,10 @@ export default {
         this.$emit("created");
         this.$emit("close");
       } catch (error) {
+        alertStore.addAlert({
+          message: "Failed to create credential. Error: " + error.message,
+          type: "error"
+        });
         console.error(error);
       }
     }

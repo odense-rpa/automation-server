@@ -1,30 +1,24 @@
 import app.enums as enums
-
 import typing
-from typing_extensions import Self
 
+from typing_extensions import Self
 from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import field_validator, model_validator
 from croniter import croniter
 
-
 class Base(SQLModel):
     pass
 
-
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-
-    name: str = Field()
+    name: str = Field(unique=True)
+    data: typing.Optional[str] = Field(default="{}")
     username: str | None = Field()
     password: str | None = Field()
-
     deleted: typing.Optional[bool] = False
-
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
-
 
 class WorkItem(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -34,10 +28,8 @@ class WorkItem(Base, table=True):
     status: enums.WorkItemStatus
     message: str = ""
     workqueue_id: int = Field(foreign_key="workqueue.id")
-
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
-
 
 class Workqueue(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)

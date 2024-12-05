@@ -22,6 +22,7 @@
             <th class="text-center">ID</th>
             <th>Name</th>
             <th>Username</th>
+            <th>Data</th>
             <th>&nbsp;</th>
           </tr>
         </thead>
@@ -30,6 +31,7 @@
             <td class="text-center">{{ credential.id }}</td>
             <td>{{ credential.name }}</td>
             <td>{{ credential.username }}</td>
+            <td><json-view :jsonData="credential.data" /></td>
             <td class="text-right">
               <dropdown-button :label="'Actions'" :items="[
                 { text: 'Edit', icon: 'fas fa-pencil-alt', action: 'edit', id: credential.id },
@@ -58,6 +60,7 @@ import CreateCredential from "@/components/CreateCredential.vue";
 import ContentCard from "@/components/ContentCard.vue";
 import DropdownButton from "@/components/DropdownButton.vue";
 import { useAlertStore } from "../stores/alertStore";
+import JsonView from "@/components/JsonView.vue";
 
 const alertStore = useAlertStore();
 
@@ -67,7 +70,8 @@ export default {
     EditCredential,
     CreateCredential,
     ContentCard,
-    DropdownButton
+    DropdownButton,
+    JsonView
   },
   data() {
     return {
@@ -86,7 +90,8 @@ export default {
         const term = this.searchTerm.toLowerCase();
         return (
           credential.name.toLowerCase().includes(term) ||
-          credential.username.toLowerCase().includes(term)
+          credential.username.toLowerCase().includes(term) ||
+          credential.data.toLowerCase().includes(term)
         );
       });
     }
@@ -104,7 +109,7 @@ export default {
         this.credentials = await credentialsAPI.getCredentials();
       } catch (error) {
         console.error(error);
-        alertStore.addAlert({ type: "danger", message: error });
+        alertStore.addAlert({ type: "error", message: error });
       }
     },
     editCredential(credential) {
@@ -118,7 +123,7 @@ export default {
           this.fetchCredentials();
         } catch (error) {
           console.error(error);
-          alertStore.addAlert({ type: "danger", message: error });
+          alertStore.addAlert({ type: "error", message: error });
         }
       }
     }

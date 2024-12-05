@@ -27,6 +27,7 @@
             <th class="text-center">Status</th>
             <th class="text-center">Created</th>
             <th class="text-center">Last change</th>
+			<th class="text-center">Notifications</th>
             <th>&nbsp;</th>
           </tr>
         </thead>

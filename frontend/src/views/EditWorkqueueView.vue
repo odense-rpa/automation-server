@@ -49,7 +49,7 @@ export default {
     try {
       this.workqueue = await workqueuesAPI.getWorkqueue(this.$route.params.id)
     } catch (error) {
-      alertStore.addAlert({ type: 'danger', message: error })
+      alertStore.addAlert({ type: 'error', message: error })
     }
   },
   methods: {
@@ -61,7 +61,7 @@ export default {
           message: "'" + this.workqueue.name + "' was saved"
         })
       } catch (error) {
-        alertStore.addAlert({ type: 'danger', message: error })
+        alertStore.addAlert({ type: 'error', message: error })
       }
       // Redirect to the overview
       this.isEditing = false
@@ -78,7 +78,7 @@ export default {
         })
         this.$refs.workitemsTable.fetchWorkItems();
       } catch (error) {
-        alertStore.addAlert({ type: 'danger', message: error })
+        alertStore.addAlert({ type: 'error', message: error })
       }     
     },
     onWorkitemsRefreshed(updatedWorkitems) {

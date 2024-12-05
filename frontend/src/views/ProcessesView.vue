@@ -63,7 +63,7 @@ export default {
       // Sort processes by name
       this.processes.sort((a, b) => a.name.localeCompare(b.name))
     } catch (error) {
-      alertStore.addAlert({ type: 'danger', message: error })
+      alertStore.addAlert({ type: 'error', message: error })
     }
   }
 }

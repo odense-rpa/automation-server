@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    # Ikke Python > 3.12 friendly
     asyncio.create_task(scheduler_background_task())
 
     logger.info(f"Starting up, database url is: {settings.database_url}, debug is {settings.debug}")
