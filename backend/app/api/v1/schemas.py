@@ -101,9 +101,11 @@ class CredentialCreate(BaseModel):
             # Optional: Perform additional checks on the parsed data
             if not isinstance(parsed_data, dict):
                 raise ValueError("The 'data' field must be a JSON object (string).")
+            
+            prettified_json = json.dumps(parsed_data, indent=4)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON provided in 'data': {e}")
-        return value
+        return prettified_json
 
 class CredentialUpdate(CredentialCreate):
     pass
