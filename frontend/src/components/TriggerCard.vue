@@ -75,7 +75,7 @@ export default {
             } catch (error) {
                 console.error('Failed to save trigger:', error);
                 this.newTrigger = null;
-                alertStore.addAlert({ type: 'danger', message: error })
+                alertStore.addAlert({ type: 'error', message: error })
             }
         },
         async cancelTrigger(trigger) {
@@ -93,7 +93,7 @@ export default {
                 await this.loadTriggers();
             } catch (error) {
                 console.error('Failed to delete trigger:', error);
-                alertStore.addAlert({ type: 'danger', message: error })
+                alertStore.addAlert({ type: 'error', message: error })
             }
         },
         async createTrigger() {

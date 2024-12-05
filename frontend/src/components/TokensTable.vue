@@ -54,7 +54,7 @@ export default {
                     this.$emit('refresh')
                 } catch (error) {
                     console.log(error)
-                    alertStore.addAlert({ type: 'danger', message: error })
+                    alertStore.addAlert({ type: 'error', message: error })
                 }
             }
             

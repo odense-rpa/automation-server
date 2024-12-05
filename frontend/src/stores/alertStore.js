@@ -9,7 +9,7 @@ export const useAlertStore = defineStore({
   actions: {
     addAlert(alert) {
       this.alerts.push(alert)
-      if (alert.type !== 'danger') {
+      if (alert.type !== 'error') {
         setTimeout(() => {
           this.removeAlert(alert)
         }, 2500) // Adjust the timeout as needed

@@ -43,7 +43,7 @@ export default {
         })
       } catch (error) {
         console.log(error)
-        alertStore.addAlert({ type: 'danger', message: error })
+        alertStore.addAlert({ type: 'error', message: error })
       }
       // Redirect to the overview
       this.$router.push({ name: 'process' })
