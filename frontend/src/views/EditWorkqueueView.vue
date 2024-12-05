@@ -13,10 +13,10 @@
         <workqueue-info :workqueue="workqueue" v-if="workqueue && !isEditing && !showClearForm" />
         <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit"
           v-if="workqueue && isEditing" />
-        <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue" @back="showClearForm = false" />
+        <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue"  @back="showClearForm = false" />
       </div>
     </content-card>
-    <workitems-table :workqueue-id="workqueue.id" :size="50" v-if="workqueue" />
+    <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable"  @workitems-refreshed="onWorkitemsRefreshed" :size="50" v-if="workqueue" />  
   </div>
 </template>
 
@@ -70,17 +70,21 @@ export default {
       this.isEditing = false
     },
     async clearQueue(workqueueid, workitem_status, days_older_than) {
-      try {
-        console.log(workqueueid, workitem_status, days_older_than);  
+      try {        
         await workqueuesAPI.clearWorkqueue(workqueueid, workitem_status, days_older_than)
         alertStore.addAlert({
           type: 'success',
-          message: "'" + this.workqueue.name + "' was cleared"
+          message: "" + this.workqueue.name + " was cleared"
         })
+        this.$refs.workitemsTable.fetchWorkItems();
       } catch (error) {
         alertStore.addAlert({ type: 'danger', message: error })
       }     
     },
+    onWorkitemsRefreshed(updatedWorkitems) {
+    console.log('Workitems have been refreshed:', updatedWorkitems);
+    // Optionally, perform any actions you need with updated workitems
+  },
   },
   computed: {
     // Compute the title based on either isEditing or showClearForm being true

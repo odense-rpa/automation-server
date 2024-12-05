@@ -122,6 +122,8 @@
           this.page = this.totalPages;
           this.fetchWorkItems();
         }
+
+        this.$emit('workitems-refreshed', this.workitems);
       },
       handlePageChange(newPage) {
         this.page = newPage;

@@ -4,7 +4,7 @@
             <div class="flex gap-0 mt-2 flex-wrap">
                 <!-- Date field -->
                 <div class="flex-1"> 
-                    <label class="font-semibold">Older than:</label>               
+                    <label class="font-semibold">Clear up to date:</label>               
                     <div class="relative max-w-md">
                         <input id="date" v-model="days_older_than" 
                         datepicker-format="dd-mm-yyyy" type="date"  
@@ -68,20 +68,13 @@ export default {
             var numberOfDays = this.calculateDaysOlderThan(this.days_older_than);
             this.$emit("clearWorkqueue", this.workqueue.id, this.workitem_status, numberOfDays);
         },
-        isValidDate(dateString) {
-            const regex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
-            return regex.test(dateString);
-        },
         calculateDaysOlderThan(dateString) {
 
-            const [day, month, year] = dateString.split('-');
-            const isoFormattedDate = `${day}-${month}-${year}`;
-            const givenDate = new Date(isoFormattedDate);
+            const givenDate = new Date(dateString);
             const currentDate = new Date();
-            const timeDifference = currentDate - givenDate;
-            const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+            const daysDifference = Math.floor((currentDate - givenDate) / (1000 * 60 * 60 * 24));
             console.log(daysDifference);
-            return daysDifference;
+            return Math.max(daysDifference,0);
         },
         openDatepicker(event) {
             // If the input type is date, triggering the click will open the datepicker
