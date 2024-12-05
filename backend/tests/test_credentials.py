@@ -156,3 +156,29 @@ def test_insert_non_unique_named_credential(session: Session, client: TestClient
     )
 
     assert response.status_code == 422
+
+def test_create_credential_with_invalid_json_data(session: Session, client: TestClient):
+    response = client.post(
+        "/credentials/",
+        json={
+            "name": "New credential",
+            "username": "New username",
+            "password": "New password",
+            "data": "invalid json",
+        },
+    )
+
+    assert response.status_code == 422    
+
+def test_create_credential_with_empty_json_data(session: Session, client: TestClient):
+    response = client.post(
+        "/credentials/",
+        json={
+            "name": "New credential",
+            "username": "New username",
+            "password": "New password",
+            "data": "",
+        },
+    )
+
+    assert response.status_code == 200

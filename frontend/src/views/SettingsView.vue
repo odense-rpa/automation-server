@@ -60,7 +60,7 @@ export default {
                 this.$router.push({ name: 'Home' })            
 
             } catch (error) {
-                alertStore.addAlert({ type: 'danger', message: "Could not connect to the API" });
+                alertStore.addAlert({ type: 'error', message: "Could not connect to the API" });
             }
 
         }

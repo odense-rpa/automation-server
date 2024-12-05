@@ -47,7 +47,7 @@ export default {
         })
       } catch (error) {
         console.log(error)
-        alertStore.addAlert({ type: 'danger', message: error })
+        alertStore.addAlert({ type: 'error', message: error })
       }
       // Redirect to the overview
       this.$router.push({ name: 'process' })
@@ -62,7 +62,7 @@ export default {
           message: "'" + this.process.name + "' was deleted"
         })
       } catch (error) {
-        alertStore.addAlert({ type: 'danger', message: error })
+        alertStore.addAlert({ type: 'error', message: error })
       }
       // Redirect to the overview
       this.$router.push({ name: 'process' })
@@ -72,7 +72,7 @@ export default {
       try {
         this.process = await processesAPI.getProcess(id)
       } catch (error) {
-        alertStore.addAlert({ type: 'danger', message: 'Error fetching process:', error })
+        alertStore.addAlert({ type: 'error', message: 'Error fetching process:', error })
       }
     }
   },
