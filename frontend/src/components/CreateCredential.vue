@@ -104,7 +104,7 @@ export default {
       try {
         await credentialsAPI.createCredential(this.credentialData);
         alertStore.addAlert({
-          message: "Credential updated successfully",
+          message: "Credential created successfully",
           type: "success"
         });
         this.$emit("created");

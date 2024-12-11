@@ -181,7 +181,7 @@ const credentialsAPI = {
       const response = await axios.post(`/credentials`, credentialData)
       return response.data
     } catch (error) {
-      throw new Error(`Error creating credential: ${error}`)
+      throw new Error(`${error["response"]["data"]["detail"][0]["msg"]}`)
     }
   },
   readCredential: async (credential_id) => {
@@ -197,7 +197,7 @@ const credentialsAPI = {
       const response = await axios.put(`/credentials/${credential_id}`, credentialData)
       return response.data
     } catch (error) {
-      throw new Error(`Error updating credential: ${error}`)
+      throw new Error(`${error["response"]["data"]["detail"][0]["msg"]}`)
     }
   },
   deleteCredential: async (credential_id) => {
