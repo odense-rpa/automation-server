@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    apiUrl: 'http://localhost:8000/api',
+    apiUrl: 'http://localhost:8000/',
     token: ''
   }),
   persist: {
