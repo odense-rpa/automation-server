@@ -1,7 +1,7 @@
 <template>
   <div>
     <cluster-monitor></cluster-monitor>
-    <sessions-list :size="5"></sessions-list>
+    <sessions-list :size="10"></sessions-list>
   </div>
 </template>
 <script>
