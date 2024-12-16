@@ -47,6 +47,9 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             .where(WorkItem.workqueue_id == workqueue_id)
             .where(WorkItem.status == status)
         ).first()
+    
+    def get_by_name(self, name: str) -> Workqueue:
+        return self.session.exec(select(Workqueue).filter(Workqueue.name == name)).first()
 
     def get_workitems_paginated(
         self,

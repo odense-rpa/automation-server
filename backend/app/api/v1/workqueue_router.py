@@ -44,6 +44,21 @@ def get_workqueue(
             raise HTTPException(status_code=410, detail="Workqueue is gone")
 
         return workqueue
+    
+def get_workqueue_by_name(
+    workqueue_name: str, 
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work)    
+) -> Workqueue:
+    with uow:
+        workqueue = uow.workqueues.get_by_name(workqueue_name)
+ 
+        if workqueue is None:
+            raise HTTPException(status_code=404, detail="Workqueue not found")
+ 
+        if workqueue.deleted:
+            raise HTTPException(status_code=410, detail="Workqueue is gone")
+ 
+        return workqueue
 
 
 @router.get("")
@@ -100,6 +115,12 @@ def get_workqueue(
 ) -> Workqueue:
     return workqueue
 
+@router.get("/by_name/{workqueue_name}")
+def get_workqueue_by_name(
+    workqueue: Workqueue = Depends(get_workqueue_by_name),
+    token: AccessToken = Depends(resolve_access_token),
+) -> Workqueue:
+    return workqueue
 
 @router.put("/{workqueue_id}")
 def update_workqueue(
@@ -118,8 +139,12 @@ def create_workqueue(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
-    with uow:
-        return uow.workqueues.create(create.model_dump())
+    try:
+        with uow:
+            return uow.workqueues.create(create.model_dump())
+    except IntegrityError:
+        raise HTTPException(status_code=422, detail="Workqueue name already exists")
+    
 
 
 @router.delete("/{workqueue_id}", status_code=204)
