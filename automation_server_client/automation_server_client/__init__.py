@@ -57,6 +57,7 @@ class Session:
     dispatched_at: str
     status: str
     stop_requested: bool
+    parameters: str
     deleted: bool
     created_at: str
     updated_at: str

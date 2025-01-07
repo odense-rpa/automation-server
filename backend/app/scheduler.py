@@ -10,10 +10,10 @@ from app.database.repository import (
     SessionRepository,
     ResourceRepository,
     WorkqueueRepository,
+    ProcessRepository
 )
 from app.services import ResourceService, SessionService, WorkqueueService
 from app.enums import SessionStatus
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,9 @@ async def scheduler_background_task():
 async def schedule():
     with next(get_session()) as session:
         global last_run
-
+        
+        
+        
         trigger_repository = TriggerRepository(session)
         session_repository = SessionRepository(session)
         resource_repository = ResourceRepository(session)
@@ -40,6 +42,8 @@ async def schedule():
         session_service = SessionService(session_repository, resource_repository)
         workqueue_repository = WorkqueueRepository(session)
         workqueue_service = WorkqueueService(workqueue_repository)
+        process_repository = ProcessRepository(session)
+
         # Do some housekeeping
         session_service.reschedule_orphaned_sessions()
         session_service.flush_dangling_sessions()
@@ -57,6 +61,11 @@ async def schedule():
 
         for trigger in triggers:
             if trigger.enabled is False:
+                continue
+
+            process = process_repository.get(trigger.process_id)
+            
+            if process is None or process.deleted:
                 continue
 
             if trigger.type == "cron":
@@ -116,13 +125,18 @@ async def schedule():
                     logger.info(
                         f"Triggering workqueue trigger {trigger.id}. Required sessions: {required_sessions}, Active sessions: {len(active_sessions)}"
                     )
-                    # Only trigger a single session pr tick. This allows other processes to scale up
-                    new_session(
-                        trigger.process_id,
-                        session_repository,
-                        force=True,
-                        parameters=trigger.parameters,
-                    )
+
+                    # Check if there are available resources
+                    resources = resource_repository.get_available_resources()
+
+                    if find_best_resource(process.requirements, resources) is not None:
+                        # Only trigger a single session pr tick. This allows other processes to scale up
+                        new_session(
+                            trigger.process_id,
+                            session_repository,
+                            force=True,
+                            parameters=trigger.parameters,
+                        )
 
         # Dispatch again to assign resources to the new sessions
         dispatch(session_repository, resource_repository, resource_service)

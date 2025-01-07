@@ -12,6 +12,7 @@ def remove_readonly(func, path, excinfo):
     os.chmod(path, 0o777)
     func(path)
 
+
 @contextmanager
 def temporary_directory():
     dirpath = tempfile.mkdtemp()
@@ -42,7 +43,7 @@ def get_venv_pip(venv_path):
         return os.path.join(venv_path, "bin", "pip")
 
 
-def run_python(repo_url, pat, environment=None):
+def run_python(repo_url, pat, environment=None, parameters: str = None):
     with temporary_directory() as temp_dir:
         # Step 1: Clone the GitHub repository
         clone_url = (
@@ -77,10 +78,8 @@ def run_python(repo_url, pat, environment=None):
                 f"{get_venv_pip(venv_path)} install -r requirements.txt"
             )
             logger.info(f"Installing dependencies: {pip_install_command}")
-            stdout, stderr, returncode = run_command(
-                pip_install_command, cwd=temp_dir
-            )
-            #logger.info(f"Pip install stdout: {stdout}")
+            stdout, stderr, returncode = run_command(pip_install_command, cwd=temp_dir)
+            # logger.info(f"Pip install stdout: {stdout}")
             if returncode != 0:
                 logger.error(f"Pip install stderr: {stderr}")
         else:
@@ -94,27 +93,26 @@ def run_python(repo_url, pat, environment=None):
             script_to_run = "app.py"
 
         if script_to_run:
-            
             # Get current environment and append custom variables
             current_env = os.environ.copy()
             if environment:
                 current_env.update(environment)
-                  
-            
-            
-            run_script_command = f"{get_venv_python(venv_path)} {script_to_run}"
+
+            run_script_command = f"{get_venv_python(venv_path)} {script_to_run} {parameters or ''}"
             logger.info(f"Running script: {run_script_command}")
             stdout, stderr, returncode = run_command(
                 run_script_command, cwd=temp_dir, env=current_env
             )
-            
+
             if returncode == 0:
                 logger.info(f"Script execution successful. return code: {returncode}")
 
             if returncode != 0 and stderr:
                 logger.error(f"Script execution stderr: {stderr}")
 
-                raise RuntimeError(f"Script execution failed. Return code: {returncode}")
-    
+                raise RuntimeError(
+                    f"Script execution failed. Return code: {returncode}"
+                )
+
         else:
             logger.warning("No main.py or app.py found to execute.")

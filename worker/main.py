@@ -55,6 +55,7 @@ if __name__ == "__main__":
                                     "ATS_RESOURCE": f"{resource['id']}",
                                     "ATS_PROCESS": f"{process['id']}",
                                 },
+                                parameters=session["parameters"],
                             )
                             continue
 
