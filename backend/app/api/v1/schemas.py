@@ -65,6 +65,9 @@ class TriggerCreate(BaseModel):
     workqueue_id: int | None = None
     workqueue_resource_limit: int = 0
     workqueue_scale_up_threshold: int = 0
+
+    parameters: Optional[str] = ""
+
     enabled: bool = False
 
     @model_validator(mode='after')

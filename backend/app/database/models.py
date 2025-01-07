@@ -87,6 +87,9 @@ class Trigger(Base, table=True):
     workqueue_resource_limit: int = 0
     workqueue_scale_up_threshold: int = 0
 
+    # Used for commandline parameters. Can be none
+    parameters: typing.Optional[str] = None
+
     deleted: typing.Optional[bool] = False
     enabled: typing.Optional[bool] = False
 

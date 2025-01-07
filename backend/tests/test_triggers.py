@@ -33,7 +33,8 @@ def test_create_trigger(session: Session, client: TestClient):
         json={
             "type": enums.TriggerType.CRON,
             "cron": "0 0 * * *",
-            "enabled": True
+            "enabled": True,
+            "parameters": "--queue"
         },
     )
 
@@ -43,6 +44,7 @@ def test_create_trigger(session: Session, client: TestClient):
     assert data["id"] == 5
     assert data["type"] == enums.TriggerType.CRON
     assert data["cron"] == "0 0 * * *"
+    assert data["parameters"] == "--queue"
 
 def test_create_trigger_failures(session: Session, client: TestClient):
     generate_basic_data(session)
