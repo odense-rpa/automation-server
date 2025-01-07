@@ -160,6 +160,8 @@ class Session(Base, table=True):
     process_id: int = Field(foreign_key="process.id")
     process: typing.Optional[Process] = Relationship()
 
+    parameters: typing.Optional[str] = None
+
     resource_id: typing.Optional[int] = Field(foreign_key="resource.id")
     resource: typing.Optional[Resource] = Relationship()
 

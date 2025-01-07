@@ -21,7 +21,6 @@ last_run = None
 
 
 async def scheduler_background_task():
-    
     while True:
         # Run the scheduler
         await schedule()
@@ -63,12 +62,20 @@ async def schedule():
             if trigger.type == "cron":
                 if croniter.match(trigger.cron, now):
                     logger.info(f"Triggering cron trigger {trigger.id}")
-                    new_session(trigger.process_id, session_repository)
+                    new_session(
+                        trigger.process_id,
+                        session_repository,
+                        parameters=trigger.parameters,
+                    )
 
             if trigger.type == "date":
                 if trigger.date <= now:
                     logger.info(f"Triggering date trigger {trigger.id}")
-                    new_session(trigger.process_id, session_repository)
+                    new_session(
+                        trigger.process_id,
+                        session_repository,
+                        parameters=trigger.parameters,
+                    )
                     trigger_repository.update(
                         trigger, {"enabled": False, "deleted": True}
                     )
@@ -110,13 +117,23 @@ async def schedule():
                         f"Triggering workqueue trigger {trigger.id}. Required sessions: {required_sessions}, Active sessions: {len(active_sessions)}"
                     )
                     # Only trigger a single session pr tick. This allows other processes to scale up
-                    new_session(trigger.process_id, session_repository, force=True)
+                    new_session(
+                        trigger.process_id,
+                        session_repository,
+                        force=True,
+                        parameters=trigger.parameters,
+                    )
 
         # Dispatch again to assign resources to the new sessions
         dispatch(session_repository, resource_repository, resource_service)
 
 
-def new_session(process_id: int, session_repository: SessionRepository, force=False):
+def new_session(
+    process_id: int,
+    session_repository: SessionRepository,
+    force=False,
+    parameters: str = None,
+):
     sessions = session_repository.get_new_sessions()
 
     # If there is a new or in progress session in the sessions objects, return
@@ -130,6 +147,7 @@ def new_session(process_id: int, session_repository: SessionRepository, force=Fa
             "status": SessionStatus.NEW,
             "deleted": False,
             "dispatched_at": None,
+            "parameters": parameters,
         }
     )
 
