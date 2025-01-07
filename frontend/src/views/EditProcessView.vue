@@ -12,7 +12,6 @@
     <!-- Right Column: 30% width -->
     <div class="space-y-4">
       <trigger-card :process-id="process.id" v-if="process" />
-      <content-card title="Recent Sessions"></content-card>
     </div>
   </div>
 </template>
