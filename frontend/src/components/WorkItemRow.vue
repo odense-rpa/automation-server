@@ -5,12 +5,6 @@
     'bg-yellow-300': workitem.status === 'pending user action'
   }">
 		<td class="text-center">{{ workitem.id }}</td>
-		<td>{{ workitem.reference }}</td>
-		<td>{{ workitem.message }}</td>
-		<td><json-view :jsonData="workitem.data" /></td>
-		<td class="text-center">{{ workitem.status }}</td>
-		<td class="text-center">{{ $formatDateTime(workitem.created_at) }}</td>
-		<td class="text-center">{{ $formatDateTime(workitem.updated_at) }}</td>
 		<td class="text-center">
 			<span v-if="workitem.status === 'failed'">
 				<font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
@@ -18,6 +12,13 @@
 			<span v-else>
 			</span>
 		</td>
+		<td>{{ workitem.reference }}</td>
+		<td>{{ workitem.message }}</td>
+		<td><json-view :jsonData="workitem.data" /></td>
+		<td class="text-center">{{ workitem.status }}</td>
+		<td class="text-center">{{ $formatDateTime(workitem.created_at) }}</td>
+		<td class="text-center">{{ $formatDateTime(workitem.updated_at) }}</td>
+    <td class="text-center">LOGNING HER??</td>
 		<td class="text-center">
 			<dropdown-button :label="'Actions'" :items="[
           { text: 'Retry', icon: 'fas fa-redo', action: 'retry' },
