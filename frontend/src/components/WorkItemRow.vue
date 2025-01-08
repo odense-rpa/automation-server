@@ -18,7 +18,6 @@
 		<td class="text-center">{{ workitem.status }}</td>
 		<td class="text-center">{{ $formatDateTime(workitem.created_at) }}</td>
 		<td class="text-center">{{ $formatDateTime(workitem.updated_at) }}</td>
-    <td class="text-center">LOGNING HER??</td>
 		<td class="text-center">
 			<dropdown-button :label="'Actions'" :items="[
           { text: 'Retry', icon: 'fas fa-redo', action: 'retry' },
