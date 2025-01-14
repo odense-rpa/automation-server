@@ -16,7 +16,7 @@
         <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue"  @back="showClearForm = false" />
       </div>
     </content-card>
-    <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable"  @workitems-refreshed="onWorkitemsRefreshed" :size="50" v-if="workqueue" />  
+    <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable"   :size="50" v-if="workqueue" />  
   </div>
 </template>
 
@@ -81,10 +81,6 @@ export default {
         alertStore.addAlert({ type: 'error', message: error })
       }     
     },
-    onWorkitemsRefreshed(updatedWorkitems) {
-    console.log('Workitems have been refreshed:', updatedWorkitems);
-    // Optionally, perform any actions you need with updated workitems
-  },
   },
   computed: {
     // Compute the title based on either isEditing or showClearForm being true

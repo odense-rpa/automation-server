@@ -13,7 +13,7 @@
     <div class="w-full lg:w-1/2 p-2">
       <dl class="grid grid-cols-5 gap-x-2">
         <dt class="col-span-2 font-semibold mb-2">Status:</dt>
-        <dd class="col-span-3 mb-2">{{ workitem.status }}</dd>
+        <dd class="col-span-3 mb-2"><font-awesome-icon :icon="['fas', 'triangle-exclamation']" v-if="workitem.status === 'failed'" /> {{ workitem.status }}</dd>
         <dt class="col-span-2 font-semibold mb-2">Created At:</dt>
         <dd class="col-span-3 mb-2">{{ $formatDateTime(workitem.created_at) }}</dd>
         <dt class="col-span-2 font-semibold mb-2">Updated At:</dt>

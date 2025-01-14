@@ -23,7 +23,8 @@ import {
   faCircle,
   faTimes,
   faXmarkCircle,
-  faTriangleExclamation
+  faTriangleExclamation,
+  faInfo
 } from '@fortawesome/free-solid-svg-icons'
 
 // Add icons to the library
@@ -43,7 +44,8 @@ library.add(
   faCircle,
   faTimes,
   faXmarkCircle,
-  faTriangleExclamation
+  faTriangleExclamation,
+  faInfo
 )
 
 // Export the FontAwesomeIcon component
