@@ -21,23 +21,18 @@
                 <thead>
                     <tr>
                         <th class="text-center">Id</th>
+                        <th>&nbsp;</th>
                         <th>Name</th>
                         <th class="text-center">Status</th>
                         <th class="text-center">Created</th>
                         <th class="text-center">Dispatched</th>
                         <th class="text-center">Last change</th>
-						<th class="text-center">Notifications</th>
                     </tr>
                 </thead>
                 <tbody>
 					<tr v-for="session in sessions" :key="session.id" 
 						:class="['cursor-pointer', 'hover:bg-base-300', { 'bg-red-400': session.status === 'failed' }]">
 						<td @click="edit(session.id)" class="text-center">{{ session.id }}</td>
-						<td @click="edit(session.id)"><process-label :process-id="session.process_id" /></td>
-						<td @click="edit(session.id)" class="text-center">{{ session.status }}</td>
-						<td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.created_at) }}</td>
-						<td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.dispatched_at) }}</td>
-						<td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.updated_at) }}</td>
 						<td @click="edit(session.id)" class="text-center">
 							<span v-if="session.status === 'failed'">
 								<font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
@@ -45,6 +40,11 @@
 							<span v-else>
 							</span>
 						</td>
+						<td @click="edit(session.id)"><process-label :process-id="session.process_id" /></td>
+						<td @click="edit(session.id)" class="text-center">{{ session.status }}</td>
+						<td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.created_at) }}</td>
+						<td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.dispatched_at) }}</td>
+						<td @click="edit(session.id)" class="text-center">{{ $formatDateTime(session.updated_at) }}</td>
 					</tr>
                 </tbody>
             </table>
