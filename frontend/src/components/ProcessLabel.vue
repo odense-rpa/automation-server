@@ -22,7 +22,7 @@ export default {
         try {
             this.process = await processesAPI.getProcess(this.processId);
         } catch (error) {
-            // Set af deleted process with empty name AI!
+            this.process = { name: '' }; // Set a deleted process with an empty name
         }
     }
 
