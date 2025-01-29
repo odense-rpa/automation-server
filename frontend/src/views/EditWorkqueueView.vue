@@ -5,9 +5,6 @@
         <button @click="isEditing = true" class="btn btn-primary btn-sm" v-if="!isEditing && !showClearForm">
           <font-awesome-icon :icon="['fas', 'pencil-alt']" />
         </button>
-        <button @click="showClearForm = true" class="btn btn-sm" v-if="!isEditing && !showClearForm">
-          Clear Workqueue items
-        </button>
       </template>
       <div class="card-body">
         <workqueue-info :workqueue="workqueue" v-if="workqueue && !isEditing && !showClearForm" />
@@ -16,7 +13,7 @@
         <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue"  @back="showClearForm = false" />
       </div>
     </content-card>
-    <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable"  @workitems-refreshed="onWorkitemsRefreshed" :size="50" v-if="workqueue" />  
+    <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable" @clearWorkQueueItems="clearQueue"  @workitems-refreshed="onWorkitemsRefreshed" :size="50" v-if="workqueue" />  
   </div>
 </template>
 
@@ -72,13 +69,19 @@ export default {
     async clearQueue(workqueueid, workitem_status, days_older_than) {
       try {        
         await workqueuesAPI.clearWorkqueue(workqueueid, workitem_status, days_older_than)
+        let message = '';
+        if (workitem_status == '') {
+          message = "All items were cleared from '" + this.workqueue.name + "'";
+        } else {
+          message = workitem_status + " items were cleared from '" + this.workqueue.name + "'";
+        }
         alertStore.addAlert({
           type: 'success',
-          message: "" + this.workqueue.name + " was cleared"
-        })
+          message: message
+        });
         this.$refs.workitemsTable.fetchWorkItems();
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message });
       }     
     },
     onWorkitemsRefreshed(updatedWorkitems) {

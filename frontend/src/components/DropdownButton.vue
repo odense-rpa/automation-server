@@ -2,7 +2,7 @@
   <div class="dropdown dropdown-bottom dropdown-end">
     <!-- Dropdown Toggle Button -->
     <button ref="dropdownButton" tabindex="0" class="btn btn-sm btn-accent-content m-1">
-      <font-awesome-icon :icon="['fas', 'ellipsis-v']" />
+      <font-awesome-icon :icon="icon" />
     </button>
     
     <!-- Dropdown Menu -->
@@ -24,6 +24,10 @@ export default {
     items: {
       type: Array,
       default: () => [],
+    },
+    icon: {
+      type: Array,
+      default: () => ['fas', 'ellipsis-v'], // Default icon
     },
   },
   data() {

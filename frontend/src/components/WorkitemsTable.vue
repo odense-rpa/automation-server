@@ -2,7 +2,7 @@
   <content-card title="Workitems">
     <template v-slot:header-right>
       <!-- Search Input Group -->
-      <div class="join">
+      <div class="join input-dropdown-container">
         <button class="join-item btn btn-square btn-sm">
           <font-awesome-icon :icon="['fas', 'search']" />
         </button>
@@ -11,6 +11,17 @@
           v-model="searchTerm"
           placeholder="Search workitems..."
           class="join-item input input-bordered input-sm w-full max-w-xs"
+        />
+        <dropdown-button
+        class="join-item"
+        :icon="['fas', 'broom']"
+          :items="[
+            { text: 'Clear new', action: 'new' },           
+            { text: 'Clear failed', action: 'failed'},
+            { text: 'Clear completed', action: 'completed'},
+            { text: 'Clear all', action: '' }
+          ]"          
+          @item-clicked="clearWorkQueueItems"
         />
       </div>
     </template>
@@ -63,13 +74,16 @@
   import PageNavigation from "@/components/PageNavigation.vue";
   import { workqueuesAPI } from "@/services/automationserver";
   import WorkItemRow from "./WorkItemRow.vue";
+  import DropdownButton from "./DropdownButton.vue";
+
   
   export default {
     name: "WorkitemsTable",
     components: {
       PageNavigation,
       ContentCard,
-      WorkItemRow
+      WorkItemRow,
+      DropdownButton
     },
     props: {
       size: {
@@ -88,7 +102,8 @@
         totalPages: 1,
         searchTerm: "",
         searchTimeout: null,
-        refreshInterval: null
+        refreshInterval: null,
+        dropdownOpen: false   
       };
     },
     async created() {
@@ -129,11 +144,23 @@
       handlePageChange(newPage) {
         this.page = newPage;
         this.fetchWorkItems();
-      }
+      },
+      clearWorkQueueItems(action) {  
+        if(action === '') {
+          if (confirm(`Are you sure you want to clear all workitems?`)) {
+            this.$emit("clearWorkQueueItems", this.workqueueId, action, 0);
+          }
+        } else if (confirm(`Are you sure you want to clear ${action} workitems?`)) {
+          this.$emit("clearWorkQueueItems", this.workqueueId, action, 0);
+        }
+      },
     }
   };
   </script>
   
   <style scoped>
-  /* Add any required styles here */
+  .input-dropdown-container {
+    display: flex;
+    align-items: center;
+  }
   </style>

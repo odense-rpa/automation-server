@@ -23,7 +23,7 @@
       <p class="secondary-content font-semibold">No workqueues found matching search.</p>
     </div>
 
-    <workqueues-table :workqueues="filteredWorkqueues" v-if="filteredWorkqueues.length !== 0"  />
+    <workqueues-table :workqueues="filteredWorkqueues" @refresh="refreshWorkqueues" v-if="filteredWorkqueues.length !== 0"  />
   </content-card>
 </template>
 
@@ -56,13 +56,18 @@ export default {
   },
   // Load all workqueues on created
   async created() {
-    try {
-      this.workqueues = await workqueuesAPI.getWorkqueuesWithInformation(false)
+    await this.refreshWorkqueues()
+  },
+  methods: {
+    async refreshWorkqueues() {
+      try {
+        this.workqueues = await workqueuesAPI.getWorkqueuesWithInformation(false)
 
-      // Sort workqueues by name
-      this.workqueues.sort((a, b) => a.name.localeCompare(b.name))
-    } catch (error) {
-      alertStore.addAlert({ type: 'error', message: error })
+        // Sort workqueues by name
+        this.workqueues.sort((a, b) => a.name.localeCompare(b.name))
+      } catch (error) {
+        alertStore.addAlert({ type: 'error', message: error })
+      }
     }
   }
 }
