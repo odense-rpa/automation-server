@@ -32,13 +32,13 @@
         <thead>
           <tr>
             <th class="text-center">Id</th>
+            <th>&nbsp;</th>
             <th>Reference</th>
             <th>Message</th>
             <th>Data</th>
             <th class="text-center">Status</th>
             <th class="text-center">Created</th>
             <th class="text-center">Last change</th>
-			<th class="text-center">Notifications</th>
             <th>&nbsp;</th>
           </tr>
         </thead>

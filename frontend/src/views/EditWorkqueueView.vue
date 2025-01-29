@@ -84,10 +84,6 @@ export default {
         alertStore.addAlert({ type: 'error', message: error.message });
       }     
     },
-    onWorkitemsRefreshed(updatedWorkitems) {
-    console.log('Workitems have been refreshed:', updatedWorkitems);
-    // Optionally, perform any actions you need with updated workitems
-  },
   },
   computed: {
     // Compute the title based on either isEditing or showClearForm being true

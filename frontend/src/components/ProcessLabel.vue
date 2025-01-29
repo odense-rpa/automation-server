@@ -19,7 +19,11 @@ export default {
         }
     },
     async mounted() {
-        this.process = await processesAPI.getProcess(this.processId);
+        try {
+            this.process = await processesAPI.getProcess(this.processId);
+        } catch (error) {
+            this.process = { name: '-- Deleted --' }; 
+        }
     }
 
 }
