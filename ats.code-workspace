@@ -1,0 +1,17 @@
+{
+    "folders": [
+      {
+        "path": "backend"
+      },
+      {
+        "path": "frontend"
+      },
+      {
+        "path": "worker"
+      },
+      {
+        "path": "automation_server_client"
+      }
+    ],
+    "settings": {}
+  }

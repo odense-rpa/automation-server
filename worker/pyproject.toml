@@ -1,0 +1,11 @@
+[project]
+name = "automation_server_worker"
+version = "0.1.0"
+description = "Provides a worker for the automation server. Runs python scripts"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.7.1",
+    "requests>=2.32.3",
+]
