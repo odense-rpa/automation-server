@@ -1,53 +1,11 @@
-import os
-import requests
 import json
 import logging
+import requests
+
 from dataclasses import dataclass
+from datetime import datetime
 
-
-from .config import AutomationServerConfig
-
-class AutomationServer:
-    session_id = None
-
-    def __init__(self, session_id=None):
-        session_id = session_id
-        self.workqueue_id = None
-        self.url = AutomationServerConfig.url
-        self.token = AutomationServerConfig.token
-
-        if session_id is not None:
-            self.session = Session.get_session(session_id)
-            self.process = Process.get_process(self.session.process_id)
-            if self.process.workqueue_id > 0:
-                self.workqueue_id = self.process.workqueue_id
-        else:
-            self.session = None
-            self.process = None
-
-
-    def workqueue(self):
-        if self.workqueue_id is None:
-            raise ValueError("workqueue_id is not set")
-
-        return Workqueue.get_workqueue(self.workqueue_id)
-
-    def from_environment():
-        # Check if ats_url, ats_token and ats_session are set in the environment, if not, return None
-        if "ATS_SESSION" not in os.environ:
-            return None
-
-        return AutomationServer(os.environ["ATS_SESSION"])
-
-    def debug(workqueue_id):
-        ats = AutomationServer(None)
-        ats.workqueue_id = workqueue_id
-        return ats
-
-    def __str__(self):
-        return f"AutomationServer(url={self.url}, token={self.token},session = {self.session}, process = {self.process}, workqueue_id={self.workqueue_id})"
-
-
+from ._config import AutomationServerConfig
 
 @dataclass
 class Session:
@@ -57,8 +15,8 @@ class Session:
     dispatched_at: str
     status: str
     stop_requested: bool
-    parameters: str
     deleted: bool
+    parameters: str
     created_at: str
     updated_at: str
 
@@ -215,8 +173,33 @@ class WorkItem:
         response = requests.put(
             f"{AutomationServerConfig.url}/workitems/{self.id}/status",
             headers={"Authorization": f"Bearer {AutomationServerConfig.token}"},
-            json={"status": status, message: message},
+            json={"status": status, "message": message},
         )
         response.raise_for_status()
         self.status = status
         self.message = message
+
+@dataclass
+class Credential:
+    id: int
+    name: str
+    data: str
+    username: str
+    password: str
+    deleted: bool
+    created_at: datetime
+    updated_at: datetime
+
+    @staticmethod
+    def get_credential(credential: str) -> "Credential":
+        
+        response = requests.get(
+            f"{AutomationServerConfig.url}/credentials/by_name/{requests.utils.quote(credential)}",
+            headers={"Authorization": f"Bearer {AutomationServerConfig.token}"},
+        )
+        response.raise_for_status()
+
+        return Credential(**response.json())
+
+    def get_data_as_dict(self) -> dict:
+        return json.loads(self.data)
