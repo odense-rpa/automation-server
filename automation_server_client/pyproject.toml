@@ -12,7 +12,7 @@ documentation = "https://github.com/odense-rpa/automation-server/docs"
 [tool.poetry.dependencies]
 python = ">=3.11"
 requests = "^2.32.3"
-
+python-dotenv = "^1.0.1"
 
 [build-system]
 requires = ["poetry-core"]

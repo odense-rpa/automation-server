@@ -4,8 +4,7 @@ import json
 import logging
 from dataclasses import dataclass
 
-
-from .config import AutomationServerConfig
+from ._config import AutomationServerConfig
 
 class AutomationServer:
     session_id = None
@@ -220,3 +219,6 @@ class WorkItem:
         response.raise_for_status()
         self.status = status
         self.message = message
+        
+        
+__all__ = ["AutomationServer", "AutomationServerConfig", "Session", "Process", "Workqueue", "WorkItem"]

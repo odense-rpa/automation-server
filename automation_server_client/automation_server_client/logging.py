@@ -1,7 +1,7 @@
 import logging
 import requests
 
-from .config import AutomationServerConfig
+from ._config import AutomationServerConfig
 
 # Custom HTTP Handler for logging
 class AutomationServerLoggingHandler(logging.Handler):
