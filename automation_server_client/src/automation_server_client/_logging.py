@@ -9,10 +9,11 @@ class AutomationServerLoggingHandler(logging.Handler):
         super().__init__()
 
     def emit(self, record):
+        print("Sending log")
         log_entry = self.format(record)  # Format the log record
         log_data = { "workitem_id": 0, "message": log_entry }
 
-        if AutomationServerConfig.session == "" or AutomationServerConfig.url == "":
+        if AutomationServerConfig.session is None or AutomationServerConfig.url == "":
             return
 
         if AutomationServerConfig.workitem_id is not None:
@@ -28,4 +29,3 @@ class AutomationServerLoggingHandler(logging.Handler):
         except Exception as e:
             # Handle any exceptions that occur when sending the log
             print(f"Failed to send log to {self.url}: {e}")
-
