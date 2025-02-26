@@ -8,9 +8,6 @@
       },
       {
         "path": "worker"
-      },
-      {
-        "path": "automation_server_client"
       }
     ],
     "settings": {}
