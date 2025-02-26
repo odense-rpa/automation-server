@@ -17,7 +17,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 # Install Playwright and required browsers
 RUN pip install playwright
 #RUN playwright install-deps
-RUN playwright install --with-deps
+RUN playwright install chromium --with-deps
 
 
 # Copy requirements and install Python dependencies
