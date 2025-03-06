@@ -5,6 +5,7 @@ description = "Provides a worker for the automation server. Runs python scripts"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "gitpython>=3.1.44",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.7.1",
     "requests>=2.32.3",

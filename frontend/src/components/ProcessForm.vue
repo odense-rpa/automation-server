@@ -84,6 +84,7 @@
           required
         >
           <option value="0">None</option>
+          <option :value="cred.id" v-for="cred in credentials" :key="cred.id">{{ cred.name }}</option>
         </select>
       </div>
     </div>
@@ -117,7 +118,7 @@
 </template>
 
 <script>
-import { workqueuesAPI } from '@/services/automationserver.js'
+import { workqueuesAPI, credentialsAPI } from '@/services/automationserver.js'
 
 export default {
   props: {
@@ -129,11 +130,13 @@ export default {
   data() {
     return {
       editedProcess: { ...this.process },
-      workqueues: []
+      workqueues: [],
+      credentials: []
     }
   },
   async mounted() {
     this.workqueues = await workqueuesAPI.getWorkqueues()
+    this.credentials = await credentialsAPI.getCredentials()
   },
 
   methods: {

@@ -1,118 +1,141 @@
 import subprocess
 import os
 import tempfile
-import shutil
 import logging
-from contextlib import contextmanager
+import sys
+
+from pathlib import Path
+from typing import Optional, Tuple, Dict, List
+
+import git
+
 
 logger = logging.getLogger(__name__)
 
 
-def remove_readonly(func, path, excinfo):
-    os.chmod(path, 0o777)
-    func(path)
+def run_command(
+    cmd: str, cwd: Optional[str] = None, env: Optional[dict] = None
+) -> Tuple[str, str, int]:
+    """Runs a shell command with logging and error handling.
 
+    Returns:
+        Tuple containing:
+        - stdout (str): The standard output of the command.
+        - stderr (str): The standard error of the command.
+        - returncode (int): Exit code of the command (0 = success, non-zero = failure).
+    """
+    merged_env = os.environ.copy()
+    if env:
+        merged_env.update(env)
 
-@contextmanager
-def temporary_directory():
-    dirpath = tempfile.mkdtemp()
-    try:
-        yield dirpath
-    finally:
-        shutil.rmtree(dirpath, onerror=remove_readonly)
+    logging.info(f"Executing: {cmd} (cwd={cwd})")
 
-
-def run_command(command, cwd=None, env=None):
     result = subprocess.run(
-        command, shell=True, cwd=cwd, env=env, capture_output=True, text=True
+        cmd,
+        shell=True,
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=merged_env,
     )
+    # Log outputs
+    if result.stdout:
+        logging.info(f"STDOUT:\n{result.stdout.strip()}")
+    if result.stderr and result.returncode != 0:
+        logging.error(f"STDERR:\n{result.stderr.strip()}")
+
     return result.stdout, result.stderr, result.returncode
 
 
-def get_venv_python(venv_path):
-    if os.name == "nt":  # Windows
-        return os.path.join(venv_path, "Scripts", "python.exe")
-    else:  # Unix-based systems
-        return os.path.join(venv_path, "bin", "python")
+def get_python_executable(venv_path) -> str:
+    """Determine the correct Python executable path in the virtual environment."""
+    return venv_path / (
+        "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
+    )
 
 
-def get_venv_pip(venv_path):
-    if os.name == "nt":  # Windows
-        return os.path.join(venv_path, "Scripts", "pip.exe")
-    else:  # Unix-based systems
-        return os.path.join(venv_path, "bin", "pip")
+def run_python(
+    repo_url: str,
+    username: Optional[str] = None,
+    token: Optional[str] = None,
+    script_env: Optional[Dict[str, str]] = None,
+    script_args: Optional[List[str]] = None,
+) -> Tuple[Optional[str], Optional[str], int]:
+    """Clones repo, sets up env with 'uv', installs deps, and runs main.py.
 
+    Args:
+        repo_url (str): Git repository URL.
+        username (Optional[str]): Git username for authentication (if needed).
+        token (Optional[str]): Personal Access Token for authentication (if needed).
+        script_env (Optional[Dict[str, str]]): Environment variables to pass when running main.py.
+        script_args (Optional[List[str]]): Command-line arguments to pass to main.py.
 
-def run_python(repo_url, pat, environment=None, parameters: str = None):
-    with temporary_directory() as temp_dir:
-        # Step 1: Clone the GitHub repository
-        clone_url = (
-            repo_url if pat is None else repo_url.replace("https://", f"https://{pat}@")
-        )
-        clone_command = f"git clone {clone_url} {temp_dir}"
+    Returns:
+        Tuple[str | None, str | None, int]: (stdout, stderr, return code).
+    """
 
-        logger.info(f"Cloning repository: {repo_url}")
-        stdout, stderr, returncode = run_command(clone_command)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
 
-        if returncode != 0:
-            logger.error(f"Failed to clone repository. Return code: {returncode}")
-            logger.error(f"{stderr}")
+        # Inject authentication into the repo URL if credentials are provided
+        if username and token:
+            repo_url = repo_url.replace("https://", f"https://{username}:{token}@")
 
-        # Step 2: Set up virtual environment
-        venv_path = os.path.join(temp_dir, ".venv")
-        venv_command = f"python -m venv {venv_path}"
+        # Clone the repo
+        logging.info(f"Cloning repository into {temp_path}...")
+        try:
+            git.Repo.clone_from(repo_url, temp_path)
+        except git.exc.GitCommandError as e:
+            logging.error(f"Git clone failed: {e}")
+            return None, None, 1
 
-        logger.info(f"Creating virtual environment: {venv_path}")
+        # Initialize virtual environment using 'uv'
+        venv_path = temp_path / ".venv"
+        logging.info("Setting up virtual environment with 'uv'...")
+        run_command(f"uv venv {venv_path}", cwd=temp_path)
 
-        stdout, stderr, returncode = run_command(venv_command)
+        # Get the correct Python executable inside .venv
+        python_executable = get_python_executable(venv_path)
 
-        logger.info(f"Venv creation stdout: {stdout}")
+        # Ensure pip is installed in the correct environment
+        logging.info("Ensuring pip is available in the virtual environment...")
+        run_command(f"{python_executable} -m ensurepip", cwd=temp_path)
 
-        if returncode != 0:
-            logger.error(f"Venv creation stderr: {stderr}")
-
-        # Step 3: Install requirements if present
-        requirements_path = os.path.join(temp_dir, "requirements.txt")
-        if os.path.exists(requirements_path):
-            pip_install_command = (
-                f"{get_venv_pip(venv_path)} install -r requirements.txt"
+        # Install dependencies
+        if (temp_path / "requirements.txt").exists():
+            logging.info("Installing dependencies from requirements.txt...")
+            run_command(
+                f"{python_executable} -m pip install -r requirements.txt", cwd=temp_path
             )
-            logger.info(f"Installing dependencies: {pip_install_command}")
-            stdout, stderr, returncode = run_command(pip_install_command, cwd=temp_dir)
-            # logger.info(f"Pip install stdout: {stdout}")
-            if returncode != 0:
-                logger.error(f"Pip install stderr: {stderr}")
+        elif (temp_path / "pyproject.toml").exists():
+            logging.info("Installing dependencies using 'uv sync'...")
+            run_command("uv sync", cwd=temp_path)
         else:
-            logger.info("No requirements.txt found, skipping dependency installation.")
+            logging.warning(
+                "No requirements.txt or pyproject.toml found. Skipping dependency installation."
+            )
 
-        # Step 4: Find and execute main.py or app.py
-        script_to_run = None
-        if os.path.exists(os.path.join(temp_dir, "main.py")):
-            script_to_run = "main.py"
-        elif os.path.exists(os.path.join(temp_dir, "app.py")):
-            script_to_run = "app.py"
+        # Run the main.py script
+        main_script = temp_path / "main.py"
+        if main_script.exists():
+            logging.info("Running main.py...")
 
-        if script_to_run:
-            # Get current environment and append custom variables
-            current_env = os.environ.copy()
-            if environment:
-                current_env.update(environment)
+            # Convert script_args list to a space-separated string
+            script_args_str = " ".join(script_args) if script_args else ""
 
-            run_script_command = f"{get_venv_python(venv_path)} {script_to_run} {parameters or ''}"
-            logger.info(f"Running script: {run_script_command}")
             stdout, stderr, returncode = run_command(
-                run_script_command, cwd=temp_dir, env=current_env
+                f"{python_executable} {main_script} {script_args_str}",
+                cwd=temp_path,
+                env=script_env,
             )
 
             if returncode == 0:
-                logger.info(f"Script execution successful. return code: {returncode}")
+                logging.info("Execution completed successfully.")
+            else:
+                logging.error(f"Execution failed with return code {returncode}")
 
-            if returncode != 0 and stderr:
-                logger.error(f"Script execution stderr: {stderr}")
-
-                raise RuntimeError(
-                    f"Script execution failed. Return code: {returncode}"
-                )
-
+            return stdout, stderr, returncode
         else:
-            logger.warning("No main.py or app.py found to execute.")
+            logging.error("Error: main.py not found in the repository.")
+            return None, None, 1

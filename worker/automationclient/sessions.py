@@ -85,6 +85,13 @@ def get_process(session):
     return response.json()
 
 
+def get_credential(credential_id: int) -> dict:
+    response = requests.get(
+        f"{automationserver_url}/credentials/{credential_id}", headers=headers
+    )
+    response.raise_for_status()
+    return response.json()
+
 def add_log_message(session_id: int, message: str, workqueue_id=None) -> dict:
     json = {"message": message}
     if workqueue_id is not None:
