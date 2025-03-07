@@ -56,7 +56,7 @@ if __name__ == "__main__":
                         # TODO: Get the credentials associated with GIT.
                         username = None
                         token = None
-                        if process["target_credentials_id"] is not None:
+                        if process["target_credentials_id"] is not None and process["target_credentials_id"] != 0:
                             credentials = sessions.get_credential(
                                 process["target_credentials_id"]
                             )
