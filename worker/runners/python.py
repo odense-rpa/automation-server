@@ -38,11 +38,13 @@ def run_command(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env=merged_env,
+        encoding="utf-8",
     )
     # Log outputs
     if result.stdout:
         logging.info(f"STDOUT:\n{result.stdout.strip()}")
     if result.stderr and result.returncode != 0:
+        logging.error(f"STDOUT:\n{result.stdout.strip()}")
         logging.error(f"STDERR:\n{result.stderr.strip()}")
 
     return result.stdout, result.stderr, result.returncode

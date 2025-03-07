@@ -19,13 +19,6 @@ logger = logging.getLogger(__name__)
 capabilities = f"python {platform.system()}".lower()
 
 if __name__ == "__main__":
-    # python.run_python(
-    #     repo_url="https://github.com/odense-rpa/test-process.git",
-    #     # repo_url="https://github.com/odense-rpa/process-template.git",
-    #     script_env={"ATS_URL": "http://localhost:8000", "ATS_WORKQUEUE_OVERRIDE": "1"},
-    #     script_args=[],
-    # )
-    # exit()
 
     logger.info("Starting worker")
     while True:
@@ -64,14 +57,15 @@ if __name__ == "__main__":
                         username = None
                         token = None
                         if process["target_credentials_id"] is not None:
-                            credentials = sessions.get_credentials(
+                            credentials = sessions.get_credential(
                                 process["target_credentials_id"]
                             )
+                            logger.info(f"Using credentials: {credentials["name"]}")
                             username = credentials["username"]
-                            token = credentials["token"]
+                            token = credentials["password"]
 
                         if process["target_type"] == "python":
-                            python.run_python(
+                            _, _ , returncode = python.run_python(
                                 repo_url=process["target_source"],
                                 username=username,
                                 token=token,
@@ -82,9 +76,12 @@ if __name__ == "__main__":
                                     "ATS_RESOURCE": f"{resource['id']}",
                                     "ATS_PROCESS": f"{process['id']}",
                                 },
-                                script_args=[session["parameters"]],
+                                script_args=[session["parameters"]] if session["parameters"] else [],
                             )
-                            continue
+                            
+                            if returncode != 0:
+                                raise RuntimeError("Failing session")
+                            
 
                         resources.ping_resource(resource["id"])
         except ConnectionError:
