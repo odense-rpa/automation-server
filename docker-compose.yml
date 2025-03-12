@@ -1,5 +1,16 @@
 version: '3.8'
 
+x-worker-common: &worker-template
+  image: ats-worker:development
+  environment:
+    - ATS_URL=http://api:8000/
+    - ATS_TOKEN=
+    - TZ=Europe/Copenhagen
+  networks:
+    - app-network
+  depends_on:
+    - api
+
 services:
   api:
     build:
@@ -7,6 +18,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000"
+    environment:
+      - TZ=Europe/Copenhagen
     networks:
       - app-network
     volumes:
@@ -22,6 +35,7 @@ services:
       - app-network
     environment:
       - VITE_ATS_API_BASE_URL=/api  # Set environment variable
+      - TZ=Europe/Copenhagen
 
   proxy:
     image: nginx:latest
@@ -37,28 +51,12 @@ services:
       - app-network
 
   worker01:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile
-    environment:
-      - ATS_URL=http://api:8000/api  # Set environment variable
+    <<: *worker-template
     hostname: worker-01
-    networks:
-      - app-network
-    depends_on:
-      - api
 
   worker02:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile
-    environment:
-      - ATS_URL=http://api:8000/api  # Set environment variable
+    <<: *worker-template
     hostname: worker-02
-    networks:
-      - app-network
-    depends_on:
-      - api
 
 
 networks:

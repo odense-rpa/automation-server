@@ -3,6 +3,10 @@ FROM python:3.13-slim
 # Install uv and uvx
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
 # Set working directory in the container
 WORKDIR /app
 
