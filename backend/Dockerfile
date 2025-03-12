@@ -28,7 +28,7 @@ COPY . /app
 COPY ./alembic.ini.docker /app/alembic.ini
 COPY scripts/entry-point.sh /app/entry-point.sh
 
-#RUN rm .env
+RUN rm .env
 
 RUN uv sync
 
