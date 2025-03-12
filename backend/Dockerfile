@@ -1,5 +1,9 @@
 # Use the official Python image from the Docker Hub
-FROM python:3.12-slim
+FROM python:3.13-slim
+
+# Install uv and uvx
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -14,17 +18,19 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy the requirements.txt file
-COPY requirements.txt .
+#COPY requirements.txt .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+#RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the FastAPI app code and entry-point script
 COPY . /app
 COPY ./alembic.ini.docker /app/alembic.ini
 COPY scripts/entry-point.sh /app/entry-point.sh
 
-RUN rm .env
+#RUN rm .env
+
+RUN uv sync
 
 # Make the entry-point script executable
 RUN chmod +x /app/entry-point.sh
