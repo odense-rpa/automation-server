@@ -11,7 +11,6 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system dependencies for Playwright
-#RUN apt-get update && apt-get upgrade && apt-get install -y git
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
@@ -22,13 +21,13 @@ RUN apt-get update && \
 RUN pip install --upgrade pip
 
 # Set environment variables to disable sandboxing
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+#ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Install Playwright and required browsers
-RUN pip install playwright
-#RUN playwright install-deps
-RUN playwright install chromium --with-deps
+#RUN pip install playwright
+#RUN playwright install chromium --with-deps
 
+# Playwright is copied to specific build
 
 # Copy requirements and install Python dependencies
 #COPY requirements.txt .
