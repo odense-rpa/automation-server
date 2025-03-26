@@ -22,7 +22,6 @@ class ResourceService:
             if (
                 resource.last_seen < datetime.now() - timedelta(minutes=10)
                 and not resource.deleted
-                and resource.available
             ):
                 # Only detach the resource if there are no in-progress sessions
                 if not any(
