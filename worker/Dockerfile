@@ -11,7 +11,13 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system dependencies for Playwright
-RUN apt-get update && apt-get upgrade && apt-get install -y git
+#RUN apt-get update && apt-get upgrade && apt-get install -y git
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
+
 
 RUN pip install --upgrade pip
 
