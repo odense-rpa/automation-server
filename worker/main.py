@@ -22,7 +22,7 @@ capabilities = f"python {platform.system()} {os.getenv('ATS_CAPABILITIES') or ""
 
 if __name__ == "__main__":
 
-    logger.info("Starting worker")
+    logger.info(f"Starting worker with capabilities: '{capabilities}'")
     while True:
         try:
             with resources.acquire_resource(
