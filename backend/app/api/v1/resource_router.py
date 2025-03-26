@@ -31,6 +31,18 @@ def get_resource(
         return resource
 
 
+def get_resource_include_deleted(
+    resource_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
+) -> Resource:
+    with uow:
+        resource = uow.resources.get(resource_id)
+
+        if resource is None:
+            raise HTTPException(status_code=404, detail="Resource not found")
+
+        return resource
+
+
 # Error responses
 
 RESPONSE_STATES = get_standard_error_descriptions("Resource")
@@ -38,7 +50,7 @@ RESPONSE_STATES = get_standard_error_descriptions("Resource")
 
 @router.get("")
 def get_resources(
-    include_expired: bool = False,
+    include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
@@ -47,12 +59,7 @@ def get_resources(
 
     # Return all resources that are not deleted and have been seen in the last 10 minutes
     with uow:
-        resources = uow.resources.get_all(include_deleted=False)
-
-        if include_expired:
-            return resources
-
-        return [x for x in resources if x.available]
+        return uow.resources.get_all(include_deleted=include_deleted)
 
 
 @router.get("/{resource_id}", responses=RESPONSE_STATES)
@@ -67,7 +74,7 @@ def get_resource(
 @router.put("/{resource_id}", responses=RESPONSE_STATES)
 def update_resource(
     update: ResourceUpdate,
-    resource: Resource = Depends(get_resource),
+    resource: Resource = Depends(get_resource_include_deleted),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),

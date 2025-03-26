@@ -17,7 +17,7 @@ def test_get_resources(session: Session, client: TestClient):
     assert data[0]["fqdn"] == "resource.example.com"
     assert data[0]["deleted"] is False
 
-    response = client.get("/resources/?include_expired=true")
+    response = client.get("/resources/?include_deleted=true")
     data = response.json()
     assert len(data) == 3
 
@@ -67,11 +67,12 @@ def test_resource_should_expire(session: Session, client: TestClient):
     assert response.status_code == 200
 
     response = client.get("/resources/3")
-    assert response.status_code == 200
+    assert response.status_code == 410
 
-    data = response.json()
-    assert data["name"] == "resource-should-expire"
-    assert data["available"] is False
+    #data = response.json()
+    #assert data["name"] == "resource-should-expire"
+    #assert data["available"] is False
+    #assert data["deleted"] is True
 
 
 

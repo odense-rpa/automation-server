@@ -45,7 +45,7 @@ def session_repository(request):
 def resource_repository():
     class MockResourceRepository:
         def get(self, id):
-            return Resource(id=1, available=False)
+            return Resource(id=1, available=False, deleted = True)
     return MockResourceRepository()
 
 # Test for flushing active sessions

@@ -219,7 +219,7 @@ def generate_basic_data(session: Session):
             capabilities="win32 chrome python blue_prism",
             available=False,
             last_seen=datetime.now() - timedelta(days=14),
-            deleted=False,
+            deleted=True,
         )
     )
 

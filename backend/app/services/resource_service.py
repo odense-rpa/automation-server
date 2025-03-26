@@ -64,7 +64,7 @@ class ResourceService:
         data = resource.model_dump()
 
         data["available"] = False
-
+        data["deleted"] = True
         self.flush_sessions(resource)
 
         return self.repository.update(resource, data)

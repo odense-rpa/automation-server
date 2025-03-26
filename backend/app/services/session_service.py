@@ -47,7 +47,7 @@ class SessionService:
 
             resource = self.resource_repository.get(session.resource_id)
 
-            if resource is None or not resource.available:
+            if resource is None or resource.deleted:
                 self.repository.update(
                     session, {"resource_id": None, "dispatched_at": None}
                 )
@@ -66,6 +66,6 @@ class SessionService:
             ):
                 resource = self.resource_repository.get(session.resource_id)
 
-                if resource is None or not resource.available:
+                if resource is None or resource.deleted:
                     self.repository.update(session, {"status": "failed"})
                     continue

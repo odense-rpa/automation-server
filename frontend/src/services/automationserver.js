@@ -211,9 +211,9 @@ const credentialsAPI = {
 }
 
 const resourcesAPI = {
-  getResources: async (include_expired = false) => {
+  getResources: async (include_deleted = false) => {
     try {
-      const response = await axios.get(`/resources`, { params: { include_expired } })
+      const response = await axios.get(`/resources`, { params: { include_deleted } })
       return response.data
     } catch (error) {
       throw new Error(`Error fetching resources: ${error}`)
