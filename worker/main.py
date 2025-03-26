@@ -2,6 +2,8 @@ import logging
 import socket
 import time
 import platform
+import os
+
 from requests.exceptions import ConnectionError
 
 from automationclient import (
@@ -16,7 +18,7 @@ from runners import python
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-capabilities = f"python {platform.system()}".lower()
+capabilities = f"python {platform.system()} {os.getenv('ATS_CAPABILITIES') or ""}".lower().strip()
 
 if __name__ == "__main__":
 
