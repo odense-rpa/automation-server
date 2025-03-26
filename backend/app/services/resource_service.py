@@ -43,9 +43,18 @@ class ResourceService:
             "available": True,
         }
 
+        # We can't overwrite available here unless it has been deleted
+        # TODO: Reconsider controlplane and the available flag - it could be computed based on the sessions
         if previous is not None:
-            resource = self.repository.update(previous, data)
-            self.flush_sessions(resource)
+            if previous.deleted:
+                resource = self.repository.update(previous, data)
+                self.flush_sessions(resource)
+            else:
+                resource = self.repository.update(
+                    previous,
+                    {"last_seen": datetime.now(), "capabilities": capabilities},
+                )
+
             return resource
 
         return self.repository.create(data)
@@ -70,7 +79,7 @@ class ResourceService:
 
     def flush_sessions(self, resource: Resource):
         """
-        Detaches all sessions from the specified resource. 
+        Detaches all sessions from the specified resource.
         If any session is in progress, it will be marked as failed. If any session is new, it will be detached from the resource.
         """
         sessions = self.session_repository.get_active_sessions()

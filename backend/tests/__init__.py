@@ -234,6 +234,18 @@ def generate_basic_data(session: Session):
         )
     )
 
+    session.add(
+        models.Resource(
+            name="resource-not-available",
+            fqdn="resource-not-available.example.com",
+            capabilities="win32 chrome python blue_prism",
+            available=False,
+            last_seen= datetime.now(),
+            deleted=False,
+        )
+    )
+
+
 
     session.add(models.Session(process_id=1, status=enums.SessionStatus.NEW))
 

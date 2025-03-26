@@ -11,7 +11,7 @@ def test_get_resources(session: Session, client: TestClient):
     data = response.json()
 
     assert response.status_code == 200
-    assert len(data) == 1
+    assert len(data) == 2
 
     assert data[0]["name"] == "resource"
     assert data[0]["fqdn"] == "resource.example.com"
@@ -19,7 +19,7 @@ def test_get_resources(session: Session, client: TestClient):
 
     response = client.get("/resources/?include_deleted=true")
     data = response.json()
-    assert len(data) == 3
+    assert len(data) == 4
 
 def test_get_resource(session: Session, client: TestClient):
     generate_basic_data(session)
@@ -124,6 +124,28 @@ def test_update_resource(session: Session, client: TestClient):
     assert data["capabilities"] == "win32 chrome python"
     assert data["available"] is True
     assert data["last_seen"] is not None
+
+def test_update_resource_preserve_available(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.put(
+        "/resources/4",
+        json={
+            "name": "resource-not-available",
+            "fqdn": "resource-not-available.example.com",
+            "capabilities": "win32 chrome python",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "resource-not-available"
+    assert data["fqdn"] == "resource-not-available.example.com"
+    assert data["capabilities"] == "win32 chrome python"
+    assert data["available"] is False
+    assert data["last_seen"] is not None
+
 
 def test_update_old_resource(session: Session, client: TestClient):
     generate_basic_data(session)
