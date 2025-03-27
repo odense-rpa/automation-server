@@ -1,8 +1,9 @@
 import abc
 
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 
-from app.database.models import Resource
+from app.database.models import Resource, Session
+from app.enums import SessionStatus
 
 from .database_repository import DatabaseRepository, AbstractRepository
 
@@ -16,6 +17,9 @@ class AbstractResourceRepository(AbstractRepository[Resource]):
     def get_available_resources(self) -> list[Resource]:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def is_resource_available(self, resource: Resource) -> bool:
+        raise NotImplementedError
 
 class ResourceRepository(AbstractResourceRepository, DatabaseRepository[Resource]):
     def __init__(self, session: Session) -> None:
@@ -27,8 +31,21 @@ class ResourceRepository(AbstractResourceRepository, DatabaseRepository[Resource
         ).first()
 
     def get_available_resources(self) -> list[Resource]:
-        return self.session.scalars(
+        resources = self.session.scalars(
             select(Resource)
-            .where(Resource.available == True)  # noqa: E712
             .where(Resource.deleted == False)  # noqa: E712
         ).all()
+        
+        return [resource for resource in resources if self.is_resource_available(resource)]
+
+    def is_resource_available(self, resource: Resource) -> bool:
+        
+        sessions = self.session.scalars(
+            select(Session)
+            .where(Session.resource_id == resource.id)
+            .where(or_(Session.status == SessionStatus.NEW, Session.status == SessionStatus.IN_PROGRESS))
+        ).all()
+        
+        return len(sessions) == 0
+        
+        
