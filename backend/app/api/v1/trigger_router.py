@@ -8,7 +8,7 @@ from app.database.unit_of_work import AbstractUnitOfWork
 from .schemas import TriggerUpdate
 from .dependencies import get_unit_of_work, resolve_access_token
 
-from . import get_standard_error_descriptions
+from . import error_descriptions
 
 router = APIRouter(prefix="/triggers", tags=["Triggers"])
 
@@ -30,13 +30,12 @@ def get_trigger(
         return trigger
 
 
-# Error responses
-
-RESPONSE_STATES = get_standard_error_descriptions("Trigger")
 
 
 # Get triggers
-@router.get("", response_model=list[Trigger])
+@router.get(
+    "", response_model=list[Trigger], responses=error_descriptions("Trigger", _403=True)
+)
 async def get_triggers(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -46,7 +45,10 @@ async def get_triggers(
 
 
 # Update a trigger
-@router.put("/{trigger_id}", responses=RESPONSE_STATES)
+@router.put(
+    "/{trigger_id}",
+    responses=error_descriptions("Trigger", _403=True, _404=True, _410=True),
+)
 async def update_trigger(
     update: TriggerUpdate,
     trigger: Trigger = Depends(get_trigger),
@@ -58,7 +60,11 @@ async def update_trigger(
 
 
 # Delete a trigger
-@router.delete("/{trigger_id}", responses=RESPONSE_STATES, status_code=204)
+@router.delete(
+    "/{trigger_id}",
+    responses=error_descriptions("Trigger", _204=True, _403=True, _404=True, _410=True),
+    status_code=204,
+)
 async def delete_trigger(
     trigger: Trigger = Depends(get_trigger),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),

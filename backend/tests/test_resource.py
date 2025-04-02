@@ -61,13 +61,14 @@ def test_resource_should_expire(session: Session, client: TestClient):
     data = response.json()
     assert data["name"] == "resource-should-expire"
     assert data["available"] is True
+    assert data["deleted"] is False
 
     # This will trigger a full available resource update
     response = client.get("/resources")
     assert response.status_code == 200
 
     response = client.get("/resources/3")
-    assert response.status_code == 410
+    assert response.status_code == 404
 
     #data = response.json()
     #assert data["name"] == "resource-should-expire"

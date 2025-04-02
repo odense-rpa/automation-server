@@ -8,13 +8,14 @@ from .dependencies import resolve_access_token, get_unit_of_work
 from app.database.unit_of_work import AbstractUnitOfWork
 
 import app.enums as enums
-from . import get_standard_error_descriptions
+from . import error_descriptions
 
 
 router = APIRouter(prefix="/processes", tags=["Processes"])
 
 
 # Dependency Injection local to this router
+
 
 def get_process(
     process_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
@@ -31,13 +32,8 @@ def get_process(
         return process
 
 
-# Error responses
-
-RESPONSE_STATES = get_standard_error_descriptions("Process")
-
-
 # Routes
-@router.get("")
+@router.get("", responses=error_descriptions("Process", _403=True))
 def get_processes(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -47,7 +43,10 @@ def get_processes(
         return uow.processes.get_all(include_deleted)
 
 
-@router.get("/{process_id}", responses = RESPONSE_STATES)
+@router.get(
+    "/{process_id}",
+    responses=error_descriptions("Process", _403=True, _404=True, _410=True),
+)
 def get_process(
     process: Process = Depends(get_process),
     token: AccessToken = Depends(resolve_access_token),
@@ -55,7 +54,10 @@ def get_process(
     return process
 
 
-@router.put("/{process_id}", responses = RESPONSE_STATES)
+@router.put(
+    "/{process_id}",
+    responses=error_descriptions("Process", _403=True, _404=True, _410=True),
+)
 def update_process(
     update: ProcessUpdate,
     process: Process = Depends(get_process),
@@ -66,7 +68,7 @@ def update_process(
         return uow.processes.update(process, update.model_dump())
 
 
-@router.post("", responses = RESPONSE_STATES)
+@router.post("", responses=error_descriptions("Process", _403=True))
 def create_process(
     process: ProcessCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -81,16 +83,16 @@ def create_process(
 
 @router.delete(
     "/{process_id}",
-    status_code = 204,
-    responses = {
+    status_code=204,
+    responses=error_descriptions("Process", _403=True, _404=True, _410=True)
+    | {
         204: {
             "description": "Item deleted",
             "content": {
                 "application/json": {"example": {"detail": "Process has been deleted"}}
             },
         }
-    }
-    | RESPONSE_STATES,
+    },
 )
 def delete_process(
     process: Process = Depends(get_process),
@@ -102,7 +104,9 @@ def delete_process(
         return
 
 
-@router.post("/{process_id}/trigger", responses = RESPONSE_STATES)
+@router.post(
+    "/{process_id}/trigger", responses=error_descriptions("Trigger", _403=True)
+)
 def create_trigger(
     trigger: TriggerCreate,
     process: Process = Depends(get_process),
@@ -135,7 +139,10 @@ def create_trigger(
         return uow.triggers.create(data)
 
 
-@router.get("/{process_id}/trigger", responses = RESPONSE_STATES)
+@router.get(
+    "/{process_id}/trigger",
+    responses=error_descriptions("Trigger", _403=True, _404=True, _410=True),
+)
 def get_triggers(
     include_deleted: bool = False,
     process: Process = Depends(get_process),

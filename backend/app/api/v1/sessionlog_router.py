@@ -6,6 +6,7 @@ from app.database.models import SessionLog, WorkItem, Session, AccessToken
 
 from app.services import SessionLogService
 
+from . import error_descriptions
 
 from app.api.v1.schemas import PaginatedResponse
 
@@ -17,18 +18,16 @@ from .dependencies import (
 
 from .session_router import (
     get_session as get_session_dependency,
-    RESPONSE_STATES as SESSION_RESPONSE_STATES,
 )
 
 from .workitem_router import (
     get_workitem as get_workitem_dependency,
-    RESPONSE_STATES as WORKITEM_RESPONSE_STATES,
 )
 
 router = APIRouter(prefix="/sessionlogs", tags=["Sessionlogs"])
 
 
-@router.get("/{session_id}", responses=SESSION_RESPONSE_STATES)
+@router.get("/{session_id}", responses=error_descriptions("Session", _403=True, _404=True))
 def get_sessionlogs(
     paginated_search: PaginatedSearchParams = Depends(get_paginated_search_params),
     session: Session = Depends(get_session_dependency),
@@ -43,7 +42,7 @@ def get_sessionlogs(
     )
 
 
-@router.get("/by_workitem/{item_id}", responses=WORKITEM_RESPONSE_STATES)
+@router.get("/by_workitem/{item_id}", responses=error_descriptions("WorkItem", _403=True, _404=True, _410=True))
 def get_by_workitem(
     workitem: WorkItem = Depends(get_workitem_dependency),
     service: SessionLogService = Depends(get_sessionlog_service),

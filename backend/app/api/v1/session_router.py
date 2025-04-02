@@ -25,16 +25,14 @@ from .dependencies import (
     resolve_access_token,
 )
 
-from . import get_standard_error_descriptions
+from . import error_descriptions
 
 # We borrow the get_resource function from the resource_router module to check for a valid resource
-from .resource_router import get_resource, RESPONSE_STATES as RESOURCE_RESPONSE_STATES
+from .resource_router import get_resource
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
 # Dependency Injection local to this router
-
-RESPONSE_STATES = get_standard_error_descriptions("Session")
 
 
 def get_session(
@@ -54,10 +52,9 @@ def get_session(
 
 # Error responses
 
-RESPONSE_STATES = get_standard_error_descriptions("Session")
 
 
-@router.get("")
+@router.get("", responses=error_descriptions("Session", _403=True))
 def get_sessions(
     include_deleted: bool = False,
     paginated_search: PaginatedSearchParams = Depends(get_paginated_search_params),
@@ -72,7 +69,7 @@ def get_sessions(
     )
 
 
-@router.get("/new")
+@router.get("/new", responses=error_descriptions("Session", _403=True))
 def get_new_sessions(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
@@ -80,7 +77,10 @@ def get_new_sessions(
     return uow.sessions.get_new_sessions()
 
 
-@router.get("/{session_id}", responses=RESPONSE_STATES)
+@router.get(
+    "/{session_id}",
+    responses=error_descriptions("Session", _403=True, _404=True, _410=True),
+)
 def get_session(
     session: Session = Depends(get_session),
     token: AccessToken = Depends(resolve_access_token),
@@ -103,7 +103,7 @@ def get_session(
             },
         }
     }
-    | RESPONSE_STATES,
+    | error_descriptions("Session", _403=True),
 )
 def update_session_status(
     update: SessionStatusUpdate,
@@ -131,14 +131,10 @@ def update_session_status(
         return uow.sessions.update(session, data)
 
 
-@router.post("",responses={
-        404: {
-            "description": "Process not found",
-            "content": {
-                "application/json": {"example": {"detail": "Process not found"}}
-            },
-        }
-    })
+@router.post(
+    "",
+    responses=error_descriptions("Process", _403=True, _404=True),
+)
 def create_session(
     session: SessionCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -160,7 +156,11 @@ def create_session(
         return uow.sessions.create(data)
 
 
-@router.get("/by_resource_id/{resource_id}", responses=RESOURCE_RESPONSE_STATES)
+@router.get(
+    "/by_resource_id/{resource_id}",
+    responses=error_descriptions("Session", _403=True, _204=True)
+    | error_descriptions("Resource", _404=True),
+)
 def get_active_sessions_by_resource(
     resource: Resource = Depends(get_resource),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -186,7 +186,7 @@ def get_active_sessions_by_resource(
             },
         }
     }
-    | RESPONSE_STATES,
+    | error_descriptions("Session", _404=True),
 )
 def add_session_log(
     log: SessionLogCreate,

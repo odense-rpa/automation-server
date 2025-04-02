@@ -9,7 +9,7 @@ from app.database.unit_of_work import AbstractUnitOfWork
 from .schemas import ResourceCreate, ResourceUpdate
 from .dependencies import get_resource_service, resolve_access_token, get_unit_of_work
 
-from . import get_standard_error_descriptions
+from . import error_descriptions
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -26,7 +26,7 @@ def get_resource(
             raise HTTPException(status_code=404, detail="Resource not found")
 
         if resource.deleted:
-            raise HTTPException(status_code=410, detail="Resource is gone")
+            raise HTTPException(status_code=404, detail="Resource is unavailable")
 
         return resource
 
@@ -45,10 +45,8 @@ def get_resource_include_deleted(
 
 # Error responses
 
-RESPONSE_STATES = get_standard_error_descriptions("Resource")
 
-
-@router.get("")
+@router.get("", responses=error_descriptions("Resource", _403=True))
 def get_resources(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -62,8 +60,10 @@ def get_resources(
         return uow.resources.get_all(include_deleted=include_deleted)
 
 
-@router.get("/{resource_id}", responses=RESPONSE_STATES)
-def get_resource(
+@router.get(
+    "/{resource_id}", responses=error_descriptions("Resource", _403=True, _404=True)
+)
+def get_resource_by_id(
     resource: Resource = Depends(get_resource),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
@@ -71,7 +71,9 @@ def get_resource(
     return resource
 
 
-@router.put("/{resource_id}", responses=RESPONSE_STATES)
+@router.put(
+    "/{resource_id}", responses=error_descriptions("Resource", _403=True, _404=True)
+)
 def update_resource(
     update: ResourceUpdate,
     resource: Resource = Depends(get_resource_include_deleted),
@@ -85,7 +87,11 @@ def update_resource(
     return service.enroll(update.fqdn, update.name, update.capabilities)
 
 
-@router.put("/{resource_id}/ping", response_model=bool, responses=RESPONSE_STATES)
+@router.put(
+    "/{resource_id}/ping",
+    response_model=bool,
+    responses=error_descriptions("Resource", _403=True, _404=True),
+)
 def ping_resource(
     resource: Resource = Depends(get_resource_include_deleted),
     service: ResourceService = Depends(get_resource_service),
@@ -96,7 +102,7 @@ def ping_resource(
     return True
 
 
-@router.post("")
+@router.post("", responses=error_descriptions("Resource", _403=True))
 def create_resource(
     resource: ResourceCreate,
     service: ResourceService = Depends(get_resource_service),
