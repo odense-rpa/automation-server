@@ -63,7 +63,10 @@ def update_workitem_status(
     with uow:
         data = status.model_dump()
 
-        if status.status in [WorkItemStatus.COMPLETED, WorkItemStatus.FAILED]:
+
+        # We clear the locked flag because these statuses indicate that we have stopped working on the item
+        if status.status in [WorkItemStatus.COMPLETED, WorkItemStatus.FAILED, WorkItemStatus.NEW, WorkItemStatus.PENDING_USER_ACTION]:
             data["locked"] = False
+
 
         return uow.work_items.update(workitem, data)

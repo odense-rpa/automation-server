@@ -87,7 +87,7 @@ def update_resource(
 
 @router.put("/{resource_id}/ping", response_model=bool, responses=RESPONSE_STATES)
 def ping_resource(
-    resource: Resource = Depends(get_resource),
+    resource: Resource = Depends(get_resource_include_deleted),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> bool:

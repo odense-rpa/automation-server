@@ -37,7 +37,55 @@ def test_update_workitem(session: Session, client: TestClient):
     assert data["reference"] == "New reference"
     assert data["data"] == "{ 'test': 'data' }"
 
-def test_update_item_status(session: Session, client: TestClient):
+def test_get_next_item(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # Get next item from the workqueue
+    response = client.get(
+        "/workqueues/1/next_item",
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == WorkItemStatus.IN_PROGRESS
+    assert data["locked"] is True
+    assert "updated_at" in data
+
+def test_update_item_status_completed(session: Session, client: TestClient):
+    workitem = _start_item_update(session, client, WorkItemStatus.COMPLETED)
+
+    assert workitem.status == WorkItemStatus.COMPLETED
+    assert workitem.locked is False
+
+def test_update_item_status_failed(session: Session, client: TestClient):
+
+    workitem = _start_item_update(session, client, WorkItemStatus.FAILED)
+
+    assert workitem.status == WorkItemStatus.FAILED
+    assert workitem.locked is False
+    
+
+def test_update_item_status_user_pending(session: Session, client: TestClient):
+    workitem = _start_item_update(session, client, WorkItemStatus.PENDING_USER_ACTION)
+
+    assert workitem.status == WorkItemStatus.PENDING_USER_ACTION
+    assert workitem.locked is False
+
+
+def test_update_item_status_new(session: Session, client: TestClient):
+    workitem = _start_item_update(session, client, WorkItemStatus.NEW)
+
+    assert workitem.status == WorkItemStatus.NEW
+    assert workitem.locked is False
+    
+def test_update_item_status_in_progress(session: Session, client: TestClient):
+    workitem = _start_item_update(session, client, WorkItemStatus.IN_PROGRESS)
+    
+    assert workitem.status == WorkItemStatus.IN_PROGRESS
+    assert workitem.locked is True
+
+
+def _start_item_update(session: Session, client: TestClient, status: WorkItemStatus) -> models.WorkItem:
     generate_basic_data(session)
 
     # Get next item from the workqueue
@@ -54,16 +102,10 @@ def test_update_item_status(session: Session, client: TestClient):
     response = client.put(
         f"/workitems/{data['id']}/status",
         json={
-            "status": WorkItemStatus.COMPLETED,
+            "status": status,
         },
     )
 
     assert response.status_code == 200
-
-    workitem = session.get(models.WorkItem, data["id"])
-
-    assert workitem.status == WorkItemStatus.COMPLETED
-    assert workitem.locked is False
-    assert workitem.updated_at is not None
     
-
+    return session.get(models.WorkItem, data["id"])

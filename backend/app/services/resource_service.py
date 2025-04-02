@@ -62,9 +62,9 @@ class ResourceService:
     def keep_alive(self, resource: Resource):
         data = resource.model_dump()
 
+    
         data["deleted"] = False
         data["last_seen"] = datetime.now()
-        data["available"] = True
 
         return self.repository.update(resource, data)
 
