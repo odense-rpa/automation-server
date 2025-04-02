@@ -47,8 +47,9 @@ if __name__ == "__main__":
                     capabilities=capabilities,
                 ) as resource:
                     
-                    ping_thread = threading.Thread(target=ping_resource, args=(resource["id"],))
-                    ping_thread.start()
+                    if ping_thread is None or not ping_thread.is_alive():
+                        ping_thread = threading.Thread(target=ping_resource, args=(resource["id"],))
+                        ping_thread.start()
                     
                     while True:
                         with sessions.acquire_session(
