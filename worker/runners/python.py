@@ -112,7 +112,7 @@ def run_python(
             )
         elif (temp_path / "pyproject.toml").exists():
             logging.info("Installing dependencies using 'uv sync'...")
-            run_command("uv sync", cwd=temp_path)
+            run_command("uv sync --refresh", cwd=temp_path)
         else:
             logging.warning(
                 "No requirements.txt or pyproject.toml found. Skipping dependency installation."
