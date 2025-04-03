@@ -7,6 +7,7 @@
     <td class="text-center">{{ workitem.id }}</td>
     <td class="text-center">
       <font-awesome-icon :icon="['fas', 'triangle-exclamation']" v-if="workitem.status === 'failed'" />
+      <font-awesome-icon :icon="['fas', 'lock']" v-if="workitem.locked" />
     </td>
     <td>{{ workitem.reference }}</td>
     <td>{{ workitem.message }}</td>

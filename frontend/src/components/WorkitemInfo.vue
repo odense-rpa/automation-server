@@ -3,7 +3,7 @@
     <div class="w-full lg:w-1/2 p-2">
       <dl class="grid grid-cols-5 gap-x-2">
         <dt class="col-span-2 font-semibold mb-2">ID:</dt>
-        <dd class="col-span-3 mb-2">{{ workitem.id }}</dd>
+        <dd class="col-span-3 mb-2">{{ workitem.id }} <font-awesome-icon :icon="['fas', 'lock']" v-if="workitem.locked" /></dd>
         <dt class="col-span-2 font-semibold mb-2">Message:</dt>
         <dd class="col-span-3 mb-2">{{ workitem.message }}</dd>
         <dt class="col-span-2 font-semibold mb-2">Data:</dt>

@@ -26,7 +26,8 @@ import {
   faTriangleExclamation,
   faCaretDown,
   faBroom,
-  faInfo
+  faInfo,
+  faLock,
 } from '@fortawesome/free-solid-svg-icons'
 
 // Add icons to the library
@@ -49,7 +50,8 @@ library.add(
   faTriangleExclamation,
   faCaretDown,
   faBroom,
-  faInfo
+  faInfo,
+  faLock
 )
 
 // Export the FontAwesomeIcon component
