@@ -117,6 +117,9 @@ async def schedule():
                 required_sessions = pending_items // max(
                     trigger.workqueue_scale_up_threshold, 1
                 )
+                
+                if required_sessions == 0:
+                    required_sessions = 1
 
                 if required_sessions > trigger.workqueue_resource_limit:
                     required_sessions = trigger.workqueue_resource_limit
