@@ -1,15 +1,15 @@
 version: '3.8'
 
-x-worker-common: &worker-template
-  image: ats-worker:development
-  environment:
-    - ATS_URL=http://api:8000/
-    - ATS_TOKEN=
-    - TZ=Europe/Copenhagen
-  networks:
-    - app-network
-  depends_on:
-    - api
+#x-worker-common: &worker-template
+#  image: ats-worker:development
+#  environment:
+#    - ATS_URL=http://api:8000/
+#    - ATS_TOKEN=
+#    - TZ=Europe/Copenhagen
+#  networks:
+#    - app-network
+#  depends_on:
+#    - api
 
 services:
   api:
@@ -50,13 +50,13 @@ services:
     networks:
       - app-network
 
-  worker01:
-    <<: *worker-template
-    hostname: worker-01
+#  worker01:
+#    <<: *worker-template
+#    hostname: worker-01
 
-  worker02:
-    <<: *worker-template
-    hostname: worker-02
+#  worker02:
+#    <<: *worker-template
+#    hostname: worker-02
 
 
 networks:
