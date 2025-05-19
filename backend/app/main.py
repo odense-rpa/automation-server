@@ -21,7 +21,7 @@ from app.database.session import create_db_and_tables
 from app.config import settings
 from app.scheduler import scheduler_background_task
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO if settings.debug else logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +39,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Automation server",
     description="Automation server",
-    version="1.0.0",
+    version="0.1.1",
     docs_url="/docs",
-    openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
 
