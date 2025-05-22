@@ -41,7 +41,9 @@ app = FastAPI(
     description="Automation server",
     version="0.1.1",
     docs_url="/docs",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
+    
 )
 
 app.add_middleware(
