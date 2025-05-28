@@ -10,10 +10,8 @@
         <!-- Input Field (Small) -->
         <input type="text" v-model="searchTerm" placeholder="Search credentials..."
           class="join-item input input-bordered input-sm w-full max-w-xs" />
-
-        <!-- Create New Credential Button -->
-        <button @click="showCreateForm = true" class="join-item btn btn-success btn-sm">+</button>
       </div>
+      <button @click="showCreateForm = true" class="join-item btn btn-primary btn-sm">+ Create</button>
     </template>
     <div v-if="filteredCredentials.length > 0">
       <table class="table w-full mb-3">

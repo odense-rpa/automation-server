@@ -3,7 +3,7 @@
         <template v-slot:header-right>
         <div class="flex space-x-2">
             <!-- Add Token Button -->
-            <router-link :to="{ name: 'token.create' }" class="btn btn-success btn-sm">+</router-link>
+            <router-link :to="{ name: 'token.create' }" class="btn btn-primary btn-sm">+ Create</router-link>
         </div>
         </template>
         <div v-if="tokens.length === 0" class="text-center mb-4">

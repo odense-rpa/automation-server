@@ -14,10 +14,8 @@
           placeholder="Search workqueues..."
           class="join-item input input-bordered input-sm w-full max-w-xs" 
         />
-
-        <!-- Create New Workqueue Button -->
-        <router-link :to="{ name: 'workqueue.create' }" class="join-item btn btn-success btn-sm">+</router-link>
       </div>
+      <router-link :to="{ name: 'workqueue.create' }" class="join-item btn btn-primary btn-sm">+ Create</router-link>
     </template>
     <div v-if="loading" class="text-center mb-4">
       <p class="secondary-content font-semibold">Loading workqueues...</p>

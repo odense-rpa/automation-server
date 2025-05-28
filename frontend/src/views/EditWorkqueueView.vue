@@ -3,7 +3,7 @@
     <content-card :title="contentCardTitle" class="mb-3">
       <template v-slot:header-right>
         <button @click="isEditing = true" class="btn btn-primary btn-sm" v-if="!isEditing && !showClearForm">
-          <font-awesome-icon :icon="['fas', 'pencil-alt']" />
+          <font-awesome-icon :icon="['fas', 'pencil-alt']" /> Edit
         </button>
       </template>
       <div class="card-body">
