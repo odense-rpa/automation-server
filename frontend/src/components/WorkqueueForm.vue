@@ -42,6 +42,7 @@
     <div class="flex justify-end space-x-2 mt-4">
       <button type="submit" class="btn btn-primary">Save</button>
       <button type="button" @click="cancelEdit" class="btn">Cancel</button>
+      <button type="button" @click="deleteWorkqueue" class="btn btn-error" v-if="editedWorkqueue.id">Delete</button>
     </div>
   </form>
 </template>
@@ -69,6 +70,9 @@ export default {
     cancelEdit() {
       this.$emit('cancel', this.editedWorkqueue)
       this.editedWorkqueue = { ...this.workqueue }
+    },
+    deleteWorkqueue() {
+      this.$emit('delete', this.editedWorkqueue)
     }
   },
   watch: {
