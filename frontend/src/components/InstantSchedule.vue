@@ -32,7 +32,7 @@ export default {
         }
     },
     async created() {
-        this.processes = await processesAPI.getProcesses()
+        this.processes = await processesAPI.getProcesses().sort((a, b) => a.name.localeCompare(b.name))
     },
     methods: {
         async trigger() {

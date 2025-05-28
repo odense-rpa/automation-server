@@ -39,7 +39,7 @@ export default {
     methods: {
         // Define the methods here
         async fetchTokens() {
-            this.tokens = await accessTokensApi.getAccessTokens();
+            this.tokens = await accessTokensApi.getAccessTokens().sort((a, b) => a.name.localeCompare(b.name));
         }
     },
 }

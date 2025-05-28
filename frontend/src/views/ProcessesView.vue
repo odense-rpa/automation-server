@@ -51,7 +51,7 @@ export default {
     filteredProcesses() {
       return this.processes.filter((process) =>
         process.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      )
+      ).sort((a, b) => a.name.localeCompare(b.name));
     }
   },
   async created() {

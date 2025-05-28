@@ -51,7 +51,7 @@ export default {
     filteredWorkqueues() {
       return this.workqueues.filter((workqueue) =>
         workqueue.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      )
+      ).sort((a, b) => a.name.localeCompare(b.name));
     }
   },
   // Load all workqueues on created

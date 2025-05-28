@@ -93,7 +93,7 @@ export default {
           credential.username.toLowerCase().includes(term) ||
           credential.data.toLowerCase().includes(term)
         );
-      });
+      }).sort((a, b) => a.name.localeCompare(b.name));
     }
   },
   methods: {
