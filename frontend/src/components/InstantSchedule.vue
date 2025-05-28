@@ -14,7 +14,7 @@
       :class="{ 'btn-disabled': selected === '' }"
       :disabled="selected === ''"
       @click.prevent="trigger()">
-      +
+      <font-awesome-icon :icon="['fas', 'play']" />
     </button>
 </div>
 </template>
@@ -32,7 +32,10 @@ export default {
         }
     },
     async created() {
-        this.processes = await processesAPI.getProcesses().sort((a, b) => a.name.localeCompare(b.name))
+        this.processes = await processesAPI.getProcesses()
+        if (this.processes.length > 0) {
+             this.processes.sort((a, b) => a.name.localeCompare(b.name))
+        }
     },
     methods: {
         async trigger() {
