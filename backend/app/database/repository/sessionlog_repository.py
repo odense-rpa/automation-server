@@ -55,10 +55,18 @@ class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[Sess
         if search:
             query = query.where(SessionLog.message.contains(search))
 
-        return [
-            self.session.exec(query.offset(skip).limit(limit)).all(),
-            self.session.exec(select(func.count()).select_from(query)).first(),
-        ]
+        # The original query for items already includes filters for session_id and search.
+        # We create a new count_query based on SessionLog and apply the same filters.
+        count_query = select(func.count()).select_from(SessionLog)
+        if query.whereclause is not None:
+            count_query = count_query.where(query.whereclause)
+            
+        total_count = self.session.exec(count_query).first()
+
+        return (
+            list(self.session.exec(query.offset(skip).limit(limit)).all()),
+            total_count,
+        )
 
     def get_logs_by_session_id(
         self,
