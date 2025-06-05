@@ -15,7 +15,7 @@ class Base(SQLModel):
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
-    data: typing.Dict = Field(default="{}",sa_type=JSONB)
+    data: typing.Dict = Field(default={},sa_type=JSONB)
     username: str | None = Field()
     password: str | None = Field()
     deleted: bool = False
@@ -24,7 +24,7 @@ class Credential(Base, table=True):
 
 class WorkItem(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    data: typing.Dict = Field(default="{}",sa_type=JSONB)
+    data: typing.Dict = Field(default={},sa_type=JSONB)
     reference: str | None = Field(default="")
     locked: bool
     status: enums.WorkItemStatus

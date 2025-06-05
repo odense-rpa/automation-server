@@ -2,10 +2,9 @@ import json
 
 from typing import Optional, Dict
 from typing import Generic, TypeVar, List
-from pydantic.generics import GenericModel
 from typing_extensions import Self
 from datetime import datetime
-from pydantic import BaseModel, Field, model_validator, validator
+from pydantic import BaseModel, Field, model_validator
 from croniter import croniter
 from app import enums
 
@@ -89,26 +88,11 @@ class TriggerUpdate(TriggerCreate):
 
 class CredentialCreate(BaseModel):
     name: str
-    data: Optional[str] = "{}"
+    data: Optional[Dict] = None
     username: Optional[str] = ""
     password: Optional[str] = ""
 
-    @validator("data")
-    def validate_json(cls, value):
-        if(value.strip() == ""):
-            return "{}"
-        
-        try:
-            # Parse the JSON string
-            parsed_data = json.loads(value)
-            # Optional: Perform additional checks on the parsed data
-            if not isinstance(parsed_data, dict):
-                raise ValueError("The 'data' field must be a JSON object (string).")
-            
-            prettified_json = json.dumps(parsed_data, indent=4)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON provided in 'data': {e}")
-        return prettified_json
+
 
 class CredentialUpdate(CredentialCreate):
     pass
@@ -155,7 +139,7 @@ class PaginatedSearchParams(BaseModel):
 
 T = TypeVar('T')
 
-class PaginatedResponse(GenericModel, Generic[T]):
+class PaginatedResponse(BaseModel, Generic[T]):
     page: int
     size: int
     total_items: int

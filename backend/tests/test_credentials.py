@@ -177,7 +177,7 @@ def test_create_credential_with_empty_json_data(session: Session, client: TestCl
             "name": "New credential",
             "username": "New username",
             "password": "New password",
-            "data": "",
+            "data": {},
         },
     )
 
