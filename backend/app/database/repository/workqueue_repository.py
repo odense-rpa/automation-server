@@ -79,7 +79,7 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
         if query.whereclause is not None:
             count_query = count_query.where(query.whereclause)
         
-        total_count = self.session.exec(count_query).scalar_one()
+        total_count = self.session.exec(count_query).first()
 
         return (
             list(self.session.exec(query.offset(skip).limit(limit)).all()),
