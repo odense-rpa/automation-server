@@ -7,13 +7,15 @@ from sqlmodel import SQLModel, Field, Relationship
 from pydantic import field_validator, model_validator
 from croniter import croniter
 
+from sqlalchemy.dialects.postgresql import JSONB
+
 class Base(SQLModel):
     pass
 
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
-    data: typing.Optional[str] = Field(default="{}")
+    data: typing.Dict = Field(default="{}",sa_type=JSONB)
     username: str | None = Field()
     password: str | None = Field()
     deleted: bool = False
@@ -22,7 +24,7 @@ class Credential(Base, table=True):
 
 class WorkItem(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    data: str
+    data: typing.Dict = Field(default="{}",sa_type=JSONB)
     reference: str | None = Field(default="")
     locked: bool
     status: enums.WorkItemStatus

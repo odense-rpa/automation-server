@@ -34,12 +34,12 @@ class WorkqueueInformation(BaseModel):
     pending_user_action: int
     
 class WorkItemCreate(BaseModel):
-    data: str
+    data: Dict
     reference: Optional[str] = ""
 
 class WorkItemUpdate(BaseModel):
-    data: str
-    reference: Optional[str] = ""
+    data: Optional[Dict] = None
+    reference: Optional[str] = None
 
 class WorkItemStatusUpdate(BaseModel):
     status: enums.WorkItemStatus

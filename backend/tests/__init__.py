@@ -1,41 +1,8 @@
 from datetime import datetime, timedelta
-from fastapi.testclient import TestClient
-from sqlmodel import Session, SQLModel, create_engine
-from sqlmodel.pool import StaticPool
+from sqlmodel import Session
 
-from app.database.session import get_session
 import app.database.models as models
 import app.enums as enums
-
-from app.main import app
-
-import pytest
-
-
-@pytest.fixture(name="session")
-def session_fixture():
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False,
-    )
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as session:
-        yield session
-
-
-@pytest.fixture(name="client")
-def client_fixture(session: Session):
-    def get_session_override():
-        return session
-
-    app.dependency_overrides[get_session] = get_session_override
-    
-    client = TestClient(app)
-    yield client
-    app.dependency_overrides.clear()
-
 
 def generate_basic_data(session: Session):
     session.add(
@@ -79,7 +46,7 @@ def generate_basic_data(session: Session):
     session.add(
         models.WorkItem(
             status=enums.WorkItemStatus.NEW,
-            data="{}",
+            data={},
             reference="Embedded workitem",
             locked=False,
             workqueue_id=1
@@ -89,7 +56,7 @@ def generate_basic_data(session: Session):
     session.add(
         models.WorkItem(
             status=enums.WorkItemStatus.IN_PROGRESS,
-            data="{}",
+            data={},
             reference="Embedded workitem",
             locked=False,
             workqueue_id=1
@@ -99,7 +66,7 @@ def generate_basic_data(session: Session):
     session.add(
         models.WorkItem(
             status=enums.WorkItemStatus.COMPLETED,
-            data="{}",
+            data={},
             reference="Embedded workitem",
             locked=False,
             workqueue_id=1
@@ -109,7 +76,7 @@ def generate_basic_data(session: Session):
     session.add(
         models.WorkItem(
             status=enums.WorkItemStatus.FAILED,
-            data="{}",
+            data={},
             reference="Embedded workitem",
             locked=False,
             workqueue_id=1
@@ -119,7 +86,7 @@ def generate_basic_data(session: Session):
     session.add(
         models.WorkItem(
             status=enums.WorkItemStatus.PENDING_USER_ACTION,
-            data="{}",
+            data={},
             reference="Embedded workitem",
             locked=False,
             workqueue_id=1

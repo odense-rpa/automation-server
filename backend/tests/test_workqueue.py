@@ -4,7 +4,7 @@ from sqlmodel import Session
 from app.database.models import Workqueue, WorkItem
 
 
-from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
+from . import generate_basic_data  # noqa: F401
 from app.enums import WorkItemStatus
 
 
@@ -100,20 +100,20 @@ def test_add_workitem(session: Session, client: TestClient):
 
     response = client.post(
         "/workqueues/1/add",
-        json={"data": "{}", "reference": "My reference"},
+        json={"data": {}, "reference": "My reference"},
     )
 
     assert response.status_code == 200
 
     data = response.json()
-    assert data["data"] == "{}"
+    assert data["data"] == {}
     assert data["reference"] == "My reference"
     assert data["status"] == WorkItemStatus.NEW
     assert data["locked"] is False
 
     data = session.get(WorkItem, 2)
 
-    assert data.data == "{}"
+    assert data.data == {}
     assert data.reference == "Embedded workitem"
     assert data.status == WorkItemStatus.IN_PROGRESS
     assert data.locked is False
@@ -127,14 +127,14 @@ def test_next_item(session: Session, client: TestClient):
     assert response.status_code == 200
 
     data = response.json()
-    assert data["data"] == "{}"
+    assert data["data"] == {}
     assert data["reference"] == "Embedded workitem"
     assert data["status"] == WorkItemStatus.IN_PROGRESS
     assert data["locked"] is True
 
     data = session.get(WorkItem, 1)
 
-    assert data.data == "{}"
+    assert data.data == {}
     assert data.reference == "Embedded workitem"
     assert data.status == WorkItemStatus.IN_PROGRESS
     assert data.locked is True
