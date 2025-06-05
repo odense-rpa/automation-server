@@ -16,7 +16,7 @@ class Credential(Base, table=True):
     data: typing.Optional[str] = Field(default="{}")
     username: str | None = Field()
     password: str | None = Field()
-    deleted: typing.Optional[bool] = False
+    deleted: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
@@ -37,7 +37,7 @@ class Workqueue(Base, table=True):
     description: typing.Optional[str]
     enabled: bool = Field(default=True)
 
-    deleted: bool = Field(default=False)
+    deleted: bool = False
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -63,7 +63,7 @@ class Process(Base, table=True):
     workqueue_id: int | None = Field(default=None, foreign_key="workqueue.id")
     workqueue: typing.Optional[Workqueue] = Relationship()
 
-    deleted: typing.Optional[bool] = False
+    deleted: bool = False
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())

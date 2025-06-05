@@ -50,9 +50,9 @@ class ProcessCreate(BaseModel):
     requirements: Optional[str] = ""
     target_type: enums.TargetTypeEnum
     target_source: Optional[str] = ""
-    target_credentials_id: Optional[int]
-    credentials_id: Optional[int]
-    workqueue_id: int
+    target_credentials_id: Optional[int] = None
+    credentials_id: Optional[int] = None
+    workqueue_id: Optional[int] = None
     requirements: Optional[str] = ""
 
 class ProcessUpdate(ProcessCreate):
