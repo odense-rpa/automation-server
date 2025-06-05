@@ -141,9 +141,6 @@ class AccessTokenRead(BaseModel):
     deleted: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
-class AccessTokenCreate(BaseModel):
-    identifier: str
-
 # Schemas for the API
 class PaginationParams(BaseModel):
     page: int = Field(1, ge=1, description="Page number, starting from 1")

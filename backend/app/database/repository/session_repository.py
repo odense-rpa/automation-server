@@ -132,18 +132,6 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
 
         count_query = select(func.count()).select_from(Session)
         if query.whereclause is not None:
-            # This ensures that filters applied for 'include_deleted' and 'search'
-            # are also applied to the count query.
-            # Note: The join for search (Process.name) is part of the query structure
-            # and will be implicitly handled if query.whereclause refers to joined tables.
-            # However, for a simple count, we typically count on the primary table (Session).
-            # If the original query's whereclause depends on the join,
-            # the count_query might need to replicate the join as well.
-            # For now, we assume query.whereclause is sufficient.
-            # A more robust way for complex joins would be query.subquery()
-            # but we are trying to follow the pattern from workqueue_repository.
-            # Let's refine this if testing shows issues with joined searches.
-            # A simple approach is to ensure the count query also has the join if the main query does.
             if search: # If search is active, the join to Process is active
                 count_query = count_query.join(Session.process)
 

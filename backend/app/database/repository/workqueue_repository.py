@@ -73,8 +73,6 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             )
         query = query.order_by(WorkItem.updated_at.desc())
         
-        # Create a separate query for counting, reusing the where clause from the original query
-        # before pagination and ordering were applied.
         count_query = select(func.count()).select_from(WorkItem)
         if query.whereclause is not None:
             count_query = count_query.where(query.whereclause)

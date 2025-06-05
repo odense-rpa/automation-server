@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-import app.database.models as models
+
 
 from . import generate_basic_data  # noqa: F401
 
