@@ -102,6 +102,18 @@ export default {
         return;
       }
       try {
+        // Convert credentialData.data to JSON if it's a string
+        if (typeof this.credentialData.data === "string") {
+          try {
+            this.credentialData.data = JSON.parse(this.credentialData.data);
+          } catch (error) {
+            alertStore.addAlert({
+              message: "Invalid JSON format in data field",
+              type: "error"
+            });
+            return;
+          }
+        }
         await credentialsAPI.createCredential(this.credentialData);
         alertStore.addAlert({
           message: "Credential created successfully",

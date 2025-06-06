@@ -57,7 +57,7 @@
         <textarea 
           id="data" 
           class="textarea textarea-lg textarea-bordered w-full h-96" 
-          v-model="credentialData.data"
+          v-model="jsonAsString"
           placeholder="JSON Data">
         </textarea>
       </div>
@@ -89,12 +89,23 @@ export default {
   data() {
     return {
       credentialData: { ...this.credential },
-      repeatPassword: this.credential.password
+      repeatPassword: this.credential.password,
+      jsonAsString: ""
     };
   },
   computed: {
     passwordMismatch() {
       return this.credentialData.password !== this.repeatPassword;
+    }
+  },
+  watch: {
+    credential: {
+      handler(newVal) {
+        this.credentialData = { ...newVal };
+        this.repeatPassword = newVal.password;
+        this.jsonAsString = JSON.stringify(newVal.data, null, 2);
+      },
+      immediate: true
     }
   },
   methods: {
@@ -103,6 +114,16 @@ export default {
         return;
       }
       try {
+        let data = JSON.parse(this.jsonAsString);
+        if (data === null) {
+          alertStore.addAlert({
+            message: "Invalid JSON format in data field",
+            type: "error"
+          });
+          return;
+        }
+
+        this.credentialData.data = data;
         await credentialsAPI.updateCredential(this.credential.id, this.credentialData);
         alertStore.addAlert({
           message: "Credential updated successfully",
