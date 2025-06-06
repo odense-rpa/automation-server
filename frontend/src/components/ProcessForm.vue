@@ -35,7 +35,7 @@
           class="select select-bordered w-full"
           required
         >
-          <option value="0">None</option>
+          <option :value="null" :key="0">None</option>
           <option :value="queue.id" v-for="queue in workqueues" :key="queue.id">
             {{ queue.name }}
           </option>
@@ -81,9 +81,8 @@
         <select
           v-model="editedProcess.target_credentials_id"
           class="select select-bordered w-full"
-          required
         >
-          <option value="0">None</option>
+          <option :value="null" :key="0">None</option>
           <option :value="cred.id" v-for="cred in credentials" :key="cred.id">{{ cred.name }}</option>
         </select>
       </div>
@@ -112,7 +111,7 @@
     <div class="text-right space-x-2">
       <button type="submit" class="btn btn-primary">Save</button>
       <router-link :to="{ name: 'process' }" class="btn">Cancel</router-link>
-      <button type="button" class="btn btn-error" @click="deleteProcess">Delete</button>
+      <button type="button" class="btn btn-error" @click="deleteProcess" v-if="this.process.id">Delete</button>
     </div>
   </form>
 </template>

@@ -24,9 +24,9 @@ export default {
         description: '',
         target_type: 'python',
         target_source: '',
-        target_credentials_id: 0,
-        credentials_id: 0,
-        workqueue_id: 0
+        target_credentials_id: null,
+        credentials_id: null,
+        workqueue_id: null
       }
     }
   },
