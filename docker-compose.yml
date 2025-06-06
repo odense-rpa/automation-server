@@ -1,29 +1,48 @@
 version: '3.8'
 
-#x-worker-common: &worker-template
-#  image: ats-worker:development
-#  environment:
-#    - ATS_URL=http://api:8000/
-#    - ATS_TOKEN=
-#    - TZ=Europe/Copenhagen
-#  networks:
-#    - app-network
-#  depends_on:
-#    - api
+# This docker-compose file sets up a development environment. It can be used as a base for production use.
+
+x-worker-common: &worker-template
+  build:
+    context: ./worker
+    dockerfile: Dockerfile
+  environment:
+    - ATS_URL=http://api:8000
+    - ATS_TOKEN=
+    - TZ=Europe/Copenhagen
+  networks:
+    - app-network
+  depends_on:
+    - api
 
 services:
+  db:
+    image: postgres:latest
+    environment:
+      # Set a default user / password for the api. Change this for production use.
+      POSTGRES_USER: ats_user 
+      POSTGRES_PASSWORD: ats_password
+      POSTGRES_DB: ats
+    ports:
+      - "5432"
+    networks:
+      - app-network
+    volumes:
+      - db-data:/var/lib/postgresql/data  # Mount named volume to /var/lib/postgresql/data
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    depends_on:
+      - db
     ports:
       - "8000"
     environment:
       - TZ=Europe/Copenhagen
+      # Remember to set username and password for production use
+      - DATABASE_URL=postgresql://ats_user:ats_password@db:5432/ats
     networks:
       - app-network
-    volumes:
-      - api-data:/data  # Mount named volume to /data
 
   frontend:
     build:
@@ -50,18 +69,17 @@ services:
     networks:
       - app-network
 
-#  worker01:
-#    <<: *worker-template
-#    hostname: worker-01
+  worker01:
+    <<: *worker-template
+    hostname: worker-01
 
-#  worker02:
-#    <<: *worker-template
-#    hostname: worker-02
-
+  worker02:
+    <<: *worker-template
+    hostname: worker-02
 
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  api-data:
+  db-data:

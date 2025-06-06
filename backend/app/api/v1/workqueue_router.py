@@ -200,16 +200,8 @@ def gets_next_workitem(
         return Response(status_code=204)
 
     with uow:
-        for retry_count in range(6):
-            try:
-                item = uow.work_items.get_next_item(workqueue.id)
-                return item if item is not None else Response(status_code=204)
-            except IntegrityError:
-                if retry_count == 5:
-                    return Response(
-                        status_code=503, detail="Service is busy, please come back later"
-                    )
-                sleep(0.1)
+        item = uow.work_items.get_next_item(workqueue.id)
+        return item if item is not None else Response(status_code=204)
 
 
 @router.get("/{workqueue_id}/items")

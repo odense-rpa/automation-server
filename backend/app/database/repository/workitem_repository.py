@@ -47,6 +47,8 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
                 .where(WorkItem.locked == False)  # noqa: E712
                 .where(WorkItem.status == enums.WorkItemStatus.NEW)
                 .order_by(WorkItem.created_at)
+                .limit(1)
+                .with_for_update(skip_locked=True)  # Use skip_locked to avoid waiting for locked rows
             ).first()
 
             if item is None:
@@ -57,8 +59,7 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
             item.updated_at = datetime.now()
             self.session.add(item)
             self.session.commit()
-
-            self.get(item.id)
+            self.session.refresh(item)
             return item
         except IntegrityError:
             self.session.rollback()
