@@ -44,7 +44,7 @@ def test_search_sessionlogs(session: Session, client: TestClient):
     assert data["total_pages"] == 3
     assert len(data["items"]) == 1
 
-    response = client.get("/sessionlogs/3?page=1&size=1&search=nothing")
+    response = client.get("/sessionlogs/3?page=1&size=1&search=nOthing")
     data = response.json()
 
     assert response.status_code == 200

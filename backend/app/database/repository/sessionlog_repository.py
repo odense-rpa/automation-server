@@ -53,7 +53,7 @@ class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[Sess
         )
 
         if search:
-            query = query.where(SessionLog.message.contains(search))
+            query = query.where(SessionLog.message.ilike(f"%{search}%"))
 
         # The original query for items already includes filters for session_id and search.
         # We create a new count_query based on SessionLog and apply the same filters.

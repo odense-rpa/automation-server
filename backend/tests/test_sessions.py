@@ -1,10 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-import app.database.models as models
-import app.enums as enums
-
-
 from . import generate_basic_data  # noqa: F401
 
 def test_get_session_logs(session: Session, client: TestClient):
