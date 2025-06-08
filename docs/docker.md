@@ -89,7 +89,6 @@ networks:
 
 volumes:
   api-data:
-    driver: local
     driver_opts:
       type: none
       o: bind
