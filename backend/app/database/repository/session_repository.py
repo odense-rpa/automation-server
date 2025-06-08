@@ -125,7 +125,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             query = query.filter(Session.deleted == False)  # noqa: E712
 
         if search:
-            query = query.join(Session.process).filter(Process.name.contains(search))
+            query = query.join(Session.process).filter(Process.name.ilike(f"%{search}%"))
 
         # Sort in descending order by default
         query = query.order_by(Session.id.desc())
