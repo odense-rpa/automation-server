@@ -115,3 +115,5 @@ def _start_item_update(
     assert response.status_code == 200
 
     return session.get(models.WorkItem, data["id"])
+
+

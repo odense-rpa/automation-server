@@ -256,3 +256,25 @@ def test_clear_queue_no_parameters(session: Session, client: TestClient):
     response = client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 0
+
+
+def test_workitems_paging(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/workqueues/1/items?page=1&size=2")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_items"] == 5
+    assert len(data["items"]) == 2
+    assert data["total_pages"] == 3
+
+
+def test_workitems_paging_with_search(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/workqueues/1/items?page=1&size=2&search=emBed")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_items"] == 5
