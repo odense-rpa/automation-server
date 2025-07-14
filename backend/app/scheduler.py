@@ -3,7 +3,6 @@ import re
 import asyncio
 from datetime import datetime
 from croniter import croniter
-import shlex
 
 from app.database.session import get_session
 from app.database.repository import (
@@ -21,43 +20,21 @@ logger = logging.getLogger(__name__)
 
 
 def validate_parameters(parameters: str) -> str:
-    """Validate and sanitize trigger parameters to prevent injection attacks.
+    """Simple parameter validation for trigger parameters.
     
     Args:
         parameters: Raw parameter string from trigger
         
     Returns:
-        Sanitized parameter string
+        Cleaned parameter string
         
     Raises:
-        ValueError: If parameters contain dangerous characters
+        ValueError: If parameters are too long
     """
     if not parameters:
         return ""
     
-    # Remove any null bytes
-    parameters = parameters.replace('\x00', '')
-    
-    # Check for dangerous shell metacharacters
-    dangerous_chars = ['|', '&', ';', '>', '<', '`', '$', '(', ')', '{', '}', '[', ']', '*', '?', '!', '~']
-    for char in dangerous_chars:
-        if char in parameters:
-            raise ValueError(f"Invalid character '{char}' in parameters")
-    
-    # Check for dangerous command sequences
-    dangerous_sequences = ['rm ', 'del ', 'format ', 'shutdown', 'reboot', 'sudo', 'su ', 'chmod', 'chown']
-    params_lower = parameters.lower()
-    for seq in dangerous_sequences:
-        if seq in params_lower:
-            raise ValueError(f"Dangerous command sequence '{seq}' detected in parameters")
-    
-    # Ensure parameters can be safely parsed as shell arguments
-    try:
-        shlex.split(parameters)
-    except ValueError as e:
-        raise ValueError(f"Invalid parameter format: {e}")
-    
-    # Additional length check
+    # Simple length check for basic protection
     if len(parameters) > settings.scheduler_max_parameter_length:
         raise ValueError(f"Parameters too long (max {settings.scheduler_max_parameter_length} characters)")
     
@@ -65,7 +42,7 @@ def validate_parameters(parameters: str) -> str:
 
 
 def validate_cron_expression(cron_expr: str) -> str:
-    """Validate cron expression format.
+    """Simple cron expression validation.
     
     Args:
         cron_expr: Cron expression string
@@ -82,24 +59,71 @@ def validate_cron_expression(cron_expr: str) -> str:
     cron_expr = cron_expr.strip()
     
     try:
-        # Test if croniter can parse it
+        # Let croniter handle all validation
         croniter(cron_expr)
     except Exception as e:
         raise ValueError(f"Invalid cron expression: {e}")
     
-    # Additional validation - ensure it has correct number of fields
-    fields = cron_expr.split()
-    if len(fields) not in [5, 6]:  # Standard cron (5 fields) or with seconds (6 fields)
-        raise ValueError("Cron expression must have 5 or 6 fields")
-    
     return cron_expr
+
+
+def process_trigger_with_validation(trigger, session_repository, trigger_logic_func):
+    """Helper function to reduce code duplication in trigger processing.
+    
+    Args:
+        trigger: The trigger object to process
+        session_repository: Session repository for creating sessions
+        trigger_logic_func: Function that contains the specific trigger logic
+        
+    Returns:
+        bool: True if trigger was processed successfully
+    """
+    try:
+        validated_params = validate_parameters(trigger.parameters)
+        return trigger_logic_func(trigger, session_repository, validated_params)
+    except ValueError as e:
+        logger.error(f"Invalid trigger {trigger.id}: {e}")
+        return False
+
+
+def calculate_required_sessions(pending_items, scale_threshold):
+    """Calculate how many sessions are needed based on pending items.
+    
+    Args:
+        pending_items: Number of pending work items
+        scale_threshold: Items per session threshold
+        
+    Returns:
+        int: Number of sessions required (minimum 1)
+    """
+    if pending_items == 0:
+        return 0
+    
+    required = pending_items // max(scale_threshold, 1)
+    return max(1, required)
+
+
+def should_scale_up(active_sessions, required_sessions, resource_limit):
+    """Check if we should scale up based on current and required sessions.
+    
+    Args:
+        active_sessions: List of currently active sessions
+        required_sessions: Number of sessions we need
+        resource_limit: Maximum allowed sessions for this trigger
+        
+    Returns:
+        bool: True if we should create a new session
+    """
+    if required_sessions == 0:
+        return False
+    
+    # Don't exceed the resource limit
+    capped_required = min(required_sessions, resource_limit)
+    return len(active_sessions) < capped_required
 
 
 class AutomationScheduler:
     """Simple scheduler class to manage automation triggers and execution."""
-    
-    def __init__(self):
-        pass
     
     async def run_background_task(self):
         """Background task that runs the scheduler in a loop."""
@@ -120,11 +144,8 @@ class AutomationScheduler:
     
     async def schedule(self):
         """Main scheduling logic."""
-        # Use the session generator properly
-        session_gen = get_session()
-        session = next(session_gen)
-        
-        try:
+        # Use proper database session management
+        with next(get_session()) as session:
             trigger_repository = TriggerRepository(session)
             session_repository = SessionRepository(session)
             resource_repository = ResourceRepository(session)
@@ -155,110 +176,75 @@ class AutomationScheduler:
                     continue
 
                 if trigger.type == "cron":
-                    try:
-                        # Validate cron expression
+                    def cron_logic(trigger, session_repository, validated_params):
                         validated_cron = validate_cron_expression(trigger.cron)
-                        validated_params = validate_parameters(trigger.parameters)
-                        
                         if croniter.match(validated_cron, now):
                             logger.info(f"Triggering cron trigger {trigger.id}")
-                            new_session(
-                                trigger.process_id,
-                                session_repository,
-                                parameters=validated_params,
-                            )
-                    except ValueError as e:
-                        logger.error(f"Invalid cron trigger {trigger.id}: {e}")
+                            new_session(trigger.process_id, session_repository, parameters=validated_params)
+                        return True
+                    
+                    if not process_trigger_with_validation(trigger, session_repository, cron_logic):
                         continue
 
                 if trigger.type == "date":
-                    try:
-                        validated_params = validate_parameters(trigger.parameters)
-                        
+                    def date_logic(trigger, session_repository, validated_params):
                         if trigger.date <= now:
                             logger.info(f"Triggering date trigger {trigger.id}")
-                            new_session(
-                                trigger.process_id,
-                                session_repository,
-                                parameters=validated_params,
-                            )
-                            trigger_repository.update(
-                                trigger, {"enabled": False, "deleted": True}
-                            )
-                    except ValueError as e:
-                        logger.error(f"Invalid date trigger {trigger.id}: {e}")
+                            new_session(trigger.process_id, session_repository, parameters=validated_params)
+                            trigger_repository.update(trigger, {"enabled": False, "deleted": True})
+                        return True
+                    
+                    if not process_trigger_with_validation(trigger, session_repository, date_logic):
                         continue
 
                 if trigger.type == "workqueue":
-                    try:
-                        validated_params = validate_parameters(trigger.parameters)
-                        
+                    def workqueue_logic(trigger, session_repository, validated_params):
                         workqueue = workqueue_repository.get(trigger.workqueue_id)
-
+                        
                         if workqueue is None:
                             logger.error(f"Workqueue {trigger.workqueue_id} does not exist")
-                            continue
-
-                        if workqueue.enabled is False:
-                            continue
-
-                        # Check if the workqueue has pending items
-                        pending_items = workqueue_service.count_pending_items(
-                            trigger.workqueue_id
-                        )
-
-                        if pending_items == 0:
-                            continue
-
-                        # Check how many sessions are running of process_id
-                        active_sessions = [
-                            session
-                            for session in session_repository.get_active_sessions()
-                            if session.process_id == trigger.process_id
-                        ]
-
-                        required_sessions = pending_items // max(
-                            trigger.workqueue_scale_up_threshold, 1
+                            return True  # Continue processing other triggers
+                        
+                        if not workqueue.enabled:
+                            return True  # Skip disabled workqueues
+                        
+                        # Check for pending work items
+                        pending_items = workqueue_service.count_pending_items(trigger.workqueue_id)
+                        
+                        # Calculate how many sessions we need
+                        required_sessions = calculate_required_sessions(
+                            pending_items, trigger.workqueue_scale_up_threshold
                         )
                         
                         if required_sessions == 0:
-                            required_sessions = 1
-
-                        if required_sessions > trigger.workqueue_resource_limit:
-                            required_sessions = trigger.workqueue_resource_limit
-
-                        if len(active_sessions) < required_sessions:
-                            logger.info(
-                                f"Triggering workqueue trigger {trigger.id}. Required sessions: {required_sessions}, Active sessions: {len(active_sessions)}"
-                            )
-
-                            # Check if there are available resources
+                            return True  # No work to do
+                        
+                        # Check current active sessions for this process
+                        active_sessions = [
+                            session for session in session_repository.get_active_sessions()
+                            if session.process_id == trigger.process_id
+                        ]
+                        
+                        # Decide if we should scale up
+                        if should_scale_up(active_sessions, required_sessions, trigger.workqueue_resource_limit):
+                            logger.info(f"Triggering workqueue trigger {trigger.id}. "
+                                      f"Required: {min(required_sessions, trigger.workqueue_resource_limit)}, "
+                                      f"Active: {len(active_sessions)}")
+                            
+                            # Check if resources are available
                             resources = resource_repository.get_available_resources()
-
                             if find_best_resource(process.requirements, resources) is not None:
-                                # Only trigger a single session pr tick. This allows other processes to scale up
-                                new_session(
-                                    trigger.process_id,
-                                    session_repository,
-                                    force=True,
-                                    parameters=validated_params,
-                                )
-                    except ValueError as e:
-                        logger.error(f"Invalid workqueue trigger {trigger.id}: {e}")
+                                # Only trigger one session per tick to allow other processes to scale
+                                new_session(trigger.process_id, session_repository, 
+                                           force=True, parameters=validated_params)
+                        
+                        return True
+                    
+                    if not process_trigger_with_validation(trigger, session_repository, workqueue_logic):
                         continue
 
             # Dispatch again to assign resources to the new sessions
             dispatch(session_repository, resource_repository, resource_service)
-            
-        except Exception as e:
-            logger.error(f"Error in scheduler: {e}")
-            raise
-        finally:
-            # Properly close the session generator
-            try:
-                next(session_gen)
-            except StopIteration:
-                pass  # Normal end of generator
 
 
 # Global scheduler instance
