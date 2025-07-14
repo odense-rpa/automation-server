@@ -107,6 +107,7 @@ class ResourceUpdate(ResourceCreate):
 
 class SessionCreate(BaseModel):
     process_id: int
+    parameters: Optional[str] = None
 
 class SessionStatusUpdate(BaseModel):
     status: Optional[enums.SessionStatus] = None

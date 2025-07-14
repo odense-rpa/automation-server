@@ -264,9 +264,9 @@ const sessionsAPI = {
       throw new Error(`Error reading session: ${error}`)
     }
   },
-  createSession: async (process_id) => {
+  createSession: async (process_id, parameters = null) => {
     try {
-      const response = await axios.post(`/sessions`, { process_id: process_id })
+      const response = await axios.post(`/sessions`, { process_id: process_id, parameters: parameters })
       return response.data
     } catch (error) {
       throw new Error(`Error creating session: ${error}`)
