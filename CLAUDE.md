@@ -23,6 +23,7 @@ Key directories:
 - `backend/app/api/v1/`: API endpoints and routers
 - `backend/app/services/`: Business logic services
 - `backend/app/database/`: Models, repositories, and database session management
+- `backend/app/scheduler/`: Modular scheduler implementation
 - `frontend/src/components/`: Vue components
 - `frontend/src/views/`: Vue page views
 - `worker/`: Script execution environment
@@ -69,6 +70,49 @@ Backend tests use pytest and are located in `backend/tests/`. Tests cover:
 - Database operations
 
 Run tests with: `cd backend && uv run pytest`
+
+## Scheduler Architecture
+
+The scheduler has been refactored into a modular architecture using the Strategy pattern:
+
+### Structure
+```
+backend/app/scheduler/
+├── __init__.py              # Package exports and documentation
+├── core.py                  # Main AutomationScheduler class
+├── validators.py            # Parameter and cron validation
+├── dispatcher.py            # Resource allocation logic
+├── utils.py                # Utility functions for resource matching
+└── trigger_processors/     # Strategy pattern implementation
+    ├── __init__.py
+    ├── base.py             # AbstractTriggerProcessor interface
+    ├── cron.py             # Cron trigger processor
+    ├── date.py             # Date trigger processor
+    ├── workqueue.py        # Workqueue trigger processor
+    └── registry.py         # Processor registry
+```
+
+### Key Components
+
+- **AutomationScheduler**: Main orchestrator that manages the scheduling loop
+- **TriggerProcessors**: Handle specific trigger types using the Strategy pattern
+- **ResourceDispatcher**: Manages session-to-resource allocation
+- **ProcessingServices**: Container for dependency injection of services and repositories
+- **TriggerProcessorRegistry**: Maps trigger types to their processors
+
+### Adding New Trigger Types
+
+1. Create a new processor class inheriting from `AbstractTriggerProcessor`
+2. Implement the `_process_trigger` method with your specific logic
+3. Register the processor in `TriggerProcessorRegistry`
+4. Add the new trigger type to the `TriggerType` enum
+
+### Testing
+
+Scheduler tests are located in `backend/tests/scheduler/` with comprehensive coverage:
+- Unit tests for each trigger processor
+- Integration tests for the core scheduler
+- Validation and utility function tests
 
 ## Key Configuration
 
