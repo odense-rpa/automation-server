@@ -3,7 +3,7 @@ import abc
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
+from sqlmodel import Session, select, desc
 
 from app.database.models import WorkItem
 import app.enums as enums
@@ -13,6 +13,10 @@ from .database_repository import DatabaseRepository, AbstractRepository
 class AbstractWorkItemRepository(AbstractRepository[WorkItem]):
     @abc.abstractmethod
     def get_next_item(self, queue_id: int):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def get_by_reference(self, reference: str, status: enums.WorkItemStatus | None = None) -> list[WorkItem]:
         raise NotImplementedError
   
 
@@ -64,4 +68,20 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
         except IntegrityError:
             self.session.rollback()
             raise
+
+    def get_by_reference(self, reference: str, status: enums.WorkItemStatus | None = None) -> list[WorkItem]:
+        """Get work items by reference value, optionally filtered by status, sorted newest to oldest."""
+        if not reference or reference.strip() == "":
+            return []
+        
+        query = select(WorkItem).where(
+            WorkItem.reference == reference
+        )
+        
+        if status is not None:
+            query = query.where(WorkItem.status == status)
+            
+        query = query.order_by(desc(WorkItem.created_at))
+        
+        return list(self.session.scalars(query))
 
