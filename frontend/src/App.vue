@@ -73,4 +73,8 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+  .nav-link-active {
+    background-color: #374151; /* Tailwind gray-700 */    
+  }
+</style>

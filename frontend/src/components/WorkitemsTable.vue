@@ -12,18 +12,20 @@
           placeholder="Search workitems..."
           class="join-item input input-bordered input-sm w-full max-w-xs"
         />
-        <dropdown-button
-        class="join-item"
-        :icon="['fas', 'broom']"
+      </div>
+      <dropdown-button
+          class="join-item"
           :items="[
             { text: 'Clear new', action: 'new' },           
             { text: 'Clear failed', action: 'failed'},
             { text: 'Clear completed', action: 'completed'},
             { text: 'Clear all', action: '' }
-          ]"          
-          @item-clicked="clearWorkQueueItems"
-        />
-      </div>
+          ]"
+          @item-clicked="clearWorkQueueItems">
+          <button class="btn btn-sm flex items-center space-x-2">
+            <font-awesome-icon :icon="['fas', 'broom']" />Clear  
+          </button>
+        </dropdown-button>
     </template>
 
     <div>

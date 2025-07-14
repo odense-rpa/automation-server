@@ -15,10 +15,9 @@
           placeholder="Search processes..."
           class="join-item input input-bordered input-sm w-full max-w-xs"
         />
-
-        <!-- Create New Process Button -->
-        <router-link :to="{ name: 'process.create' }" class="join-item btn btn-success btn-sm">+</router-link>
       </div>
+      
+      <router-link :to="{ name: 'process.create' }" class="btn btn-primary btn-sm">+ Create</router-link>      
     </template>
     <div v-if="filteredProcesses.length === 0" class="text-center mb-4">
       <p class="secondary-content font-semibold">No processes found matching search.</p>
@@ -51,7 +50,7 @@ export default {
     filteredProcesses() {
       return this.processes.filter((process) =>
         process.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      )
+      ).sort((a, b) => a.name.localeCompare(b.name));
     }
   },
   async created() {
