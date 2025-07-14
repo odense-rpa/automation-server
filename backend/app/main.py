@@ -28,12 +28,25 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
-    # Ikke Python > 3.12 friendly
-    asyncio.create_task(scheduler_background_task())
-
+    
+    # Create and store scheduler task reference to prevent garbage collection
+    scheduler_task = asyncio.create_task(scheduler_background_task())
+    
     logger.info(f"Starting up, database url is: {settings.database_url}, debug is {settings.debug}")
 
-    yield
+    try:
+        yield
+    finally:
+        # Graceful shutdown: cancel scheduler task
+        if scheduler_task and not scheduler_task.done():
+            logger.info("Shutting down scheduler...")
+            scheduler_task.cancel()
+            try:
+                await scheduler_task
+            except asyncio.CancelledError:
+                logger.info("Scheduler task cancelled successfully")
+            except Exception as e:
+                logger.error(f"Error during scheduler shutdown: {e}")
 
 
 app = FastAPI(
