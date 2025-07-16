@@ -6,13 +6,12 @@ x-worker-common: &worker-template
   build:
     context: ./worker
     # Uncomment the specific line to choose between including playwright or not
-    #dockerfile: Dockerfile
-    dockerfile: Dockerfile.playwright
+    dockerfile: Dockerfile
+    #dockerfile: Dockerfile.playwright
   environment:
     - ATS_URL=http://api:8000
     - ATS_TOKEN=
     - TZ=Europe/Copenhagen
-    - ATS_CAPABILITIES=playwright
   networks:
     - app-network
   depends_on:
@@ -26,8 +25,6 @@ services:
       POSTGRES_USER: ats_user 
       POSTGRES_PASSWORD: ats_password
       POSTGRES_DB: ats
-    ports:
-      - "5432:5432"
     networks:
       - app-network
     volumes:
