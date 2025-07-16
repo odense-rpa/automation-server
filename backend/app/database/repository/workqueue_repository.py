@@ -39,6 +39,15 @@ class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
     ):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def get_by_reference(
+        self,
+        workqueue_id: int,
+        reference: str,
+        status: enums.WorkItemStatus | None = None,
+    ) -> list[WorkItem]:
+        raise NotImplementedError
+
 
 class WorkqueueRepository(DatabaseRepository[Workqueue]):
     def __init__(self, session: Session) -> None:
@@ -104,3 +113,25 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
 
         self.session.exec(query)
         self.session.commit()
+
+    def get_by_reference(
+        self,
+        workqueue_id: int,
+        reference: str,
+        status: enums.WorkItemStatus | None = None,
+    ) -> list[WorkItem]:
+        """Get work items by reference value within a specific workqueue, optionally filtered by status."""
+        if not reference or reference.strip() == "":
+            return []
+        
+        query = select(WorkItem).where(
+            WorkItem.workqueue_id == workqueue_id,
+            WorkItem.reference == reference
+        )
+        
+        if status is not None:
+            query = query.where(WorkItem.status == status)
+            
+        query = query.order_by(WorkItem.created_at.desc())
+        
+        return list(self.session.scalars(query))

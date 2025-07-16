@@ -278,3 +278,61 @@ def test_workitems_paging_with_search(session: Session, client: TestClient):
 
     data = response.json()
     assert data["total_items"] == 5
+
+
+def test_get_workitems_by_reference_in_workqueue(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # Test getting items by reference within a specific workqueue
+    response = client.get("/workqueues/1/by_reference/Embedded workitem")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 5  # All 5 items have the same reference and are in workqueue 1
+    
+    # Verify all items have the correct reference and workqueue
+    for item in data:
+        assert item["reference"] == "Embedded workitem"
+        assert item["workqueue_id"] == 1
+    
+    # Verify sorting (newest to oldest by created_at)
+    created_times = [item["created_at"] for item in data]
+    assert created_times == sorted(created_times, reverse=True)
+
+    # Test with non-existent reference
+    response = client.get("/workqueues/1/by_reference/NonExistentReference")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 0
+
+
+def test_get_workitems_by_reference_in_workqueue_with_status_filter(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # Test filtering by COMPLETED status within workqueue
+    response = client.get("/workqueues/1/by_reference/Embedded workitem?status=completed")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 1  # Only one COMPLETED item in workqueue 1
+    assert data[0]["status"] == WorkItemStatus.COMPLETED
+    assert data[0]["reference"] == "Embedded workitem"
+    assert data[0]["workqueue_id"] == 1
+
+    # Test filtering by NEW status within workqueue
+    response = client.get("/workqueues/1/by_reference/Embedded workitem?status=new")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 1  # Only one NEW item in workqueue 1
+    assert data[0]["status"] == WorkItemStatus.NEW
+    assert data[0]["reference"] == "Embedded workitem"
+    assert data[0]["workqueue_id"] == 1
+
+    # Test filtering by status that doesn't exist for this reference in this workqueue
+    response = client.get("/workqueues/1/by_reference/NonExistentReference?status=completed")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 0
