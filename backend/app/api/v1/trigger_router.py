@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
+from typing import List, Dict, Any
+from datetime import datetime
 
 from app.database.models import Trigger, AccessToken
 
@@ -9,6 +11,7 @@ from .schemas import TriggerUpdate
 from .dependencies import get_unit_of_work, resolve_access_token
 
 from . import error_descriptions
+from app.scheduler.upcoming_calculator import get_upcoming_executions
 
 router = APIRouter(prefix="/triggers", tags=["Triggers"])
 
@@ -74,3 +77,45 @@ async def delete_trigger(
         uow.triggers.delete(trigger)
 
     return
+
+
+# Get upcoming executions
+@router.get(
+    "/upcoming",
+    response_model=List[Dict[str, Any]],
+    responses=error_descriptions("Trigger", _403=True),
+)
+async def get_upcoming_trigger_executions(
+    hours_ahead: int = Query(24, description="Hours ahead to look for executions", ge=1, le=168),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+):
+    """Get upcoming trigger executions within the specified time window."""
+    with uow:
+        # Get all active triggers
+        triggers = uow.triggers.get_all(include_deleted=False)
+        active_triggers = [t for t in triggers if t.enabled]
+        
+        # Get upcoming executions
+        upcoming = get_upcoming_executions(active_triggers, hours_ahead)
+        
+        # Enhance with process information
+        result = []
+        for execution in upcoming:
+            trigger = execution['trigger']
+            process = uow.processes.get(trigger.process_id)
+            
+            if process and not process.deleted:
+                result.append({
+                    'trigger_id': trigger.id,
+                    'process_id': trigger.process_id,
+                    'process_name': process.name,
+                    'process_description': process.description,
+                    'next_execution': execution['next_execution'].isoformat(),
+                    'trigger_type': execution['trigger_type'],
+                    'parameters': execution['parameters'],
+                    'cron': trigger.cron if trigger.type.value == 'cron' else None,
+                    'date': trigger.date.isoformat() if trigger.date else None
+                })
+        
+        return result

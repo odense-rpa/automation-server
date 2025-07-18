@@ -330,6 +330,14 @@ const triggersAPI = {
     } catch (error) {
       throw new Error(`Error deleting trigger: ${error}`)
     }
+  },
+  getUpcomingExecutions: async (hours_ahead = 24) => {
+    try {
+      const response = await axios.get(`/triggers/upcoming`, { params: { hours_ahead } })
+      return response.data
+    } catch (error) {
+      throw new Error(`Error fetching upcoming executions: ${error}`)
+    }
   }
 }
 
