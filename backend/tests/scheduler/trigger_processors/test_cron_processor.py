@@ -17,6 +17,9 @@ class TestCronTriggerProcessor:
         """Set up test fixtures."""
         # Create mock services
         self.mock_services = MagicMock(spec=ProcessingServices)
+        # Add required attributes for the new tests
+        self.mock_services.trigger_repository = MagicMock()
+        self.mock_services.session_service = MagicMock()
         self.processor = CronTriggerProcessor(self.mock_services)
     
     def create_mock_trigger(self, cron_expr="0 0 * * *", process_id=1, parameters=""):
@@ -157,3 +160,107 @@ class TestCronTriggerProcessor:
                 
                 # Reset mock for next iteration
                 mock_create.reset_mock()
+
+    def test_process_trigger_only_once_per_minute_first_time(self):
+        """Test that a trigger fires for the first time (last_triggered is None)."""
+        now = datetime(2023, 1, 1, 0, 0, 0)
+        
+        # Create trigger with last_triggered = None (never fired)
+        trigger = self.create_mock_trigger(cron_expr="0 0 * * *")
+        trigger.last_triggered = None
+        
+        with patch.object(self.processor, '_create_session', return_value=True) as mock_create:
+            result = self.processor._process_trigger(trigger, "params", now)
+            
+        # Should fire for first time
+        assert result is True
+        mock_create.assert_called_once()
+    
+    def test_process_trigger_only_once_per_minute_already_fired(self):
+        """Test that a trigger doesn't fire again in the same minute."""
+        now = datetime(2023, 1, 1, 0, 0, 0)
+        
+        # Create trigger that was already fired in the current minute
+        trigger = self.create_mock_trigger(cron_expr="0 0 * * *")
+        trigger.last_triggered = datetime(2023, 1, 1, 0, 0, 15)  # 15 seconds ago
+        
+        with patch.object(self.processor, '_create_session', return_value=True) as mock_create:
+            result = self.processor._process_trigger(trigger, "params", now)
+            
+        # Should NOT fire again in same minute
+        assert result is True
+        mock_create.assert_not_called()
+    
+    def test_process_trigger_only_once_per_minute_next_minute(self):
+        """Test that a trigger fires again after minute boundary."""
+        now = datetime(2023, 1, 1, 0, 1, 0)  # Next minute
+        
+        # Create trigger that was fired in previous minute
+        trigger = self.create_mock_trigger(cron_expr="*/1 * * * *")  # Every minute
+        trigger.last_triggered = datetime(2023, 1, 1, 0, 0, 30)  # Previous minute
+        
+        with patch.object(self.processor, '_create_session', return_value=True) as mock_create:
+            result = self.processor._process_trigger(trigger, "params", now)
+            
+        # Should fire in new minute
+        assert result is True
+        mock_create.assert_called_once()
+    
+    def test_process_trigger_updates_last_triggered_on_success(self):
+        """Test that last_triggered is updated when session is created successfully."""
+        now = datetime(2023, 1, 1, 0, 0, 0)
+        
+        # Create trigger with no last_triggered
+        trigger = self.create_mock_trigger(cron_expr="0 0 * * *")
+        trigger.last_triggered = None
+        
+        # Mock the repository update
+        with patch.object(self.processor.services.trigger_repository, 'update') as mock_update:
+            with patch.object(self.processor.services.session_service, 'create_session') as mock_session_service:
+                mock_session_service.return_value = type('MockSession', (), {'id': 123})()
+                
+                result = self.processor._process_trigger(trigger, "params", now)
+                
+        # Should update last_triggered
+        assert result is True
+        mock_update.assert_called_once()
+        # Verify that last_triggered was set to current time
+        update_call = mock_update.call_args
+        assert update_call[0][0] == trigger  # First argument is the trigger
+        assert "last_triggered" in update_call[0][1]  # Second argument contains last_triggered
+    
+    def test_process_trigger_multiple_calls_same_minute(self):
+        """Test that multiple calls within the same minute only trigger once."""
+        base_time = datetime(2023, 1, 1, 0, 0, 0)
+        
+        # Create trigger with no last_triggered
+        trigger = self.create_mock_trigger(cron_expr="0 0 * * *")
+        trigger.last_triggered = None
+        
+        session_create_count = 0
+        
+        def mock_create_session_side_effect(*args, **kwargs):
+            nonlocal session_create_count
+            session_create_count += 1
+            # Update last_triggered to simulate the real behavior
+            trigger.last_triggered = base_time
+            return type('MockSession', (), {'id': 123})()
+        
+        with patch.object(self.processor.services.session_service, 'create_session', side_effect=mock_create_session_side_effect):
+            with patch.object(self.processor.services.trigger_repository, 'update'):
+                # First call should trigger
+                result1 = self.processor._process_trigger(trigger, "params", base_time)
+                
+                # Second call in same minute should not trigger
+                result2 = self.processor._process_trigger(trigger, "params", base_time.replace(second=30))
+                
+                # Third call in same minute should not trigger
+                result3 = self.processor._process_trigger(trigger, "params", base_time.replace(second=45))
+        
+        # All calls should return True (success)
+        assert result1 is True
+        assert result2 is True
+        assert result3 is True
+        
+        # But session should only be created once
+        assert session_create_count == 1

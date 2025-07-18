@@ -102,6 +102,27 @@ class AbstractTriggerProcessor(ABC):
         """
         pass
     
+    def _should_trigger_in_current_minute(self, trigger: Trigger, now: datetime) -> bool:
+        """Check if a trigger should fire based on last_triggered time.
+        
+        Args:
+            trigger: The trigger to check
+            now: Current datetime
+            
+        Returns:
+            True if trigger should fire (hasn't been triggered in current minute), False otherwise
+        """
+        if trigger.last_triggered is None:
+            # Never been triggered, should fire
+            return True
+        
+        # Compare at minute level (ignore seconds and microseconds)
+        current_minute = now.replace(second=0, microsecond=0)
+        last_triggered_minute = trigger.last_triggered.replace(second=0, microsecond=0)
+        
+        # Only trigger if it hasn't been triggered in the current minute
+        return current_minute != last_triggered_minute
+    
     def _create_session(self, trigger: Trigger, validated_params: str, force: bool = False) -> bool:
         """Helper method to create a session for a trigger.
         
@@ -121,6 +142,11 @@ class AbstractTriggerProcessor(ABC):
             )
             
             if session:
+                # Update last_triggered timestamp after successful session creation
+                self.services.trigger_repository.update(
+                    trigger, 
+                    {"last_triggered": datetime.now()}
+                )
                 logger.info(f"Created session {session.id} for trigger {trigger.id}")
                 return True
             else:

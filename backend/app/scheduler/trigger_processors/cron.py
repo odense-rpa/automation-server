@@ -44,8 +44,13 @@ class CronTriggerProcessor(AbstractTriggerProcessor):
                 cron_sim = CronSim(validated_cron, start_time)
                 next_time = next(cron_sim)
                 
-                # If the next scheduled time matches the current minute, trigger
+                # If the next scheduled time matches the current minute, check if we should trigger
                 if next_time.replace(second=0, microsecond=0) == current_minute:
+                    # Check if this trigger has already been fired in the current minute
+                    if not self._should_trigger_in_current_minute(trigger, now):
+                        logger.debug(f"Cron trigger {trigger.id} already fired in current minute, skipping")
+                        return True
+                    
                     logger.info(f"Triggering cron trigger {trigger.id} at {now}")
                     return self._create_session(trigger, validated_params)
                 else:
