@@ -30,6 +30,8 @@ class WorkItem(Base, table=True):
     status: enums.WorkItemStatus
     message: str = ""
     workqueue_id: int = Field(foreign_key="workqueue.id")
+    started_at: datetime | None = Field(default=None)
+    work_duration_seconds: int | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 

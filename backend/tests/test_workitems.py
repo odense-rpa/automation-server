@@ -230,3 +230,109 @@ def test_update_workitem_validation_valid_data_types(session: Session, client: T
         assert response_data["id"] == 1
 
 
+def test_update_workitem_status_sets_started_at_on_in_progress(session: Session, client: TestClient):
+    """Test that started_at is set when manually updating status to IN_PROGRESS."""
+    import time
+    from datetime import datetime
+    
+    generate_basic_data(session)
+    
+    # Get a work item that starts as NEW
+    response = client.get("/workitems/1")
+    assert response.status_code == 200
+    initial_data = response.json()
+    assert initial_data["status"] == WorkItemStatus.NEW
+    assert initial_data["started_at"] is None
+    
+    # Update status to IN_PROGRESS
+    before_update = datetime.now()
+    response = client.put(
+        "/workitems/1/status",
+        json={"status": WorkItemStatus.IN_PROGRESS}
+    )
+    after_update = datetime.now()
+    
+    assert response.status_code == 200
+    data = response.json()
+    
+    # Verify started_at is set
+    assert data["started_at"] is not None
+    started_at = datetime.fromisoformat(data["started_at"].replace('Z', '+00:00'))
+    
+    # Verify timestamp is reasonable (within our test window)
+    assert before_update <= started_at.replace(tzinfo=None) <= after_update
+    
+    # Test overwrite behavior - update to IN_PROGRESS again
+    time.sleep(0.1)  # Small delay to ensure different timestamp
+    
+    response = client.put(
+        "/workitems/1/status",
+        json={"status": WorkItemStatus.IN_PROGRESS}
+    )
+    assert response.status_code == 200
+    new_data = response.json()
+    
+    # Verify started_at was updated (overwritten)
+    new_started_at = datetime.fromisoformat(new_data["started_at"].replace('Z', '+00:00'))
+    assert new_started_at > started_at
+
+
+def test_update_workitem_status_calculates_duration_on_completion(session: Session, client: TestClient):
+    """Test that work_duration_seconds is calculated correctly on completion."""
+    import time
+    from datetime import datetime
+    
+    generate_basic_data(session)
+    
+    # Set work item to IN_PROGRESS to establish started_at
+    response = client.put(
+        "/workitems/1/status",
+        json={"status": WorkItemStatus.IN_PROGRESS}
+    )
+    assert response.status_code == 200
+    in_progress_data = response.json()
+    assert in_progress_data["started_at"] is not None
+    assert in_progress_data["work_duration_seconds"] is None
+    
+    # Wait a brief moment to ensure measurable duration
+    time.sleep(2)
+    
+    # Update status to COMPLETED
+    response = client.put(
+        "/workitems/1/status",
+        json={"status": WorkItemStatus.COMPLETED}
+    )
+    assert response.status_code == 200
+    completed_data = response.json()
+    
+    # Verify work_duration_seconds is calculated
+    assert completed_data["work_duration_seconds"] is not None
+    duration = completed_data["work_duration_seconds"]
+    
+    # Should be approximately 2 seconds (allowing for some variance)
+    assert 1 <= duration <= 4, f"Expected duration ~2 seconds, got {duration}"
+    
+    # Test that FAILED status also calculates duration
+    # First set another item to IN_PROGRESS
+    response = client.put(
+        "/workitems/2/status",
+        json={"status": WorkItemStatus.IN_PROGRESS}
+    )
+    assert response.status_code == 200
+    
+    time.sleep(1)
+    
+    # Update status to FAILED
+    response = client.put(
+        "/workitems/2/status",
+        json={"status": WorkItemStatus.FAILED}
+    )
+    assert response.status_code == 200
+    failed_data = response.json()
+    
+    # Verify work_duration_seconds is also calculated for failed items
+    assert failed_data["work_duration_seconds"] is not None
+    failed_duration = failed_data["work_duration_seconds"]
+    assert 0 <= failed_duration <= 3, f"Expected duration ~1 second, got {failed_duration}"
+
+
