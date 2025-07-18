@@ -20,8 +20,9 @@ def acquire_resource(fqdn: str, name: str, capabilities: str):
 
 
 def register_resource(fqdn: str, name: str, capabilities: str) -> dict:
+    logger.info(f"Registering resource on url {base_url} with name={name}, capabilities={capabilities}")
     response = requests.post(
-        f"{base_url}/",
+        f"{base_url}",
         json={"fqdn": fqdn, "name": name, "capabilities": capabilities},
         headers=headers,
     )

@@ -75,7 +75,7 @@ def create_process(
     token: AccessToken = Depends(resolve_access_token),
 ) -> Process:
     with uow:
-        data = process.model_dump()
+        data = process.model_dump(exclude_unset=True)
         data["deleted"] = False
 
         return uow.processes.create(data)

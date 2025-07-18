@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Query
 from fastapi.exceptions import HTTPException
 from time import sleep
 
@@ -200,16 +200,8 @@ def gets_next_workitem(
         return Response(status_code=204)
 
     with uow:
-        for retry_count in range(6):
-            try:
-                item = uow.work_items.get_next_item(workqueue.id)
-                return item if item is not None else Response(status_code=204)
-            except IntegrityError:
-                if retry_count == 5:
-                    return Response(
-                        status_code=503, detail="Service is busy, please come back later"
-                    )
-                sleep(0.1)
+        item = uow.work_items.get_next_item(workqueue.id)
+        return item if item is not None else Response(status_code=204)
 
 
 @router.get("/{workqueue_id}/items")
@@ -225,3 +217,15 @@ def get_work_items(
         paginated_search.pagination.size,
         paginated_search.search,
     )
+
+
+@router.get("/{workqueue_id}/by_reference/{reference}")
+def get_workitems_by_reference_in_workqueue(
+    reference: str,
+    workqueue: Workqueue = Depends(get_workqueue),
+    status: enums.WorkItemStatus | None = Query(None, description="Optional status filter"),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> list[WorkItem]:
+    with uow:
+        return uow.workqueues.get_by_reference(workqueue.id, reference, status)

@@ -5,7 +5,9 @@ from typing_extensions import Self
 from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import field_validator, model_validator
-from croniter import croniter
+from cronsim import CronSim, CronSimError
+
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Base(SQLModel):
     pass
@@ -13,16 +15,16 @@ class Base(SQLModel):
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
-    data: typing.Optional[str] = Field(default="{}")
+    data: typing.Dict = Field(default={},sa_type=JSONB)
     username: str | None = Field()
     password: str | None = Field()
-    deleted: typing.Optional[bool] = False
+    deleted: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
 class WorkItem(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    data: str
+    data: typing.Dict = Field(default={},sa_type=JSONB)
     reference: str | None = Field(default="")
     locked: bool
     status: enums.WorkItemStatus
@@ -37,7 +39,7 @@ class Workqueue(Base, table=True):
     description: typing.Optional[str]
     enabled: bool = Field(default=True)
 
-    deleted: bool = Field(default=False)
+    deleted: bool = False
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -63,7 +65,7 @@ class Process(Base, table=True):
     workqueue_id: int | None = Field(default=None, foreign_key="workqueue.id")
     workqueue: typing.Optional[Workqueue] = Relationship()
 
-    deleted: typing.Optional[bool] = False
+    deleted: bool = False
 
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -107,7 +109,10 @@ class Trigger(Base, table=True):
         if cls.type != enums.TriggerType.CRON:
             return ""
 
-        if not croniter.is_valid(v):
+        try:
+            # We use a dummy datetime just for validation
+            CronSim(v, datetime.now())
+        except CronSimError:
             raise ValueError("Invalid cron string")
         return v
 

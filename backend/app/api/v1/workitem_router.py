@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 
 from app.database.unit_of_work import AbstractUnitOfWork
@@ -50,7 +50,7 @@ def update_workitem(
     token: AccessToken = Depends(resolve_access_token),
 ) -> WorkItem:
     with uow:
-        return uow.work_items.update(workitem, item.model_dump())
+        return uow.work_items.update(workitem, item.model_dump(exclude_unset=True))
 
 
 @router.put("/{item_id}/status", responses=RESPONSE_STATES)
@@ -61,7 +61,7 @@ def update_workitem_status(
     token: AccessToken = Depends(resolve_access_token),
 ) -> WorkItem:
     with uow:
-        data = status.model_dump()
+        data = status.model_dump(exclude_unset=True)
 
 
         # We clear the locked flag because these statuses indicate that we have stopped working on the item
@@ -70,3 +70,14 @@ def update_workitem_status(
 
 
         return uow.work_items.update(workitem, data)
+
+
+@router.get("/by-reference/{reference}")
+def get_workitems_by_reference(
+    reference: str,
+    status: WorkItemStatus | None = Query(None, description="Optional status filter"),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> list[WorkItem]:
+    with uow:
+        return uow.work_items.get_by_reference(reference, status)

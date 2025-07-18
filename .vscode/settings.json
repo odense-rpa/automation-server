@@ -1,0 +1,18 @@
+{
+    "python.defaultInterpreterPath": "./backend/.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.cwd": "${workspaceFolder}/backend",
+    "python.envFile": "${workspaceFolder}/backend/.env",
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "files.associations": {
+        "*.py": "python"
+    },
+    "terminal.integrated.cwd": "${workspaceFolder}/backend"
+}

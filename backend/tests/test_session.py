@@ -3,7 +3,7 @@ from sqlmodel import Session
 
 import app.enums as enums
 
-from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
+from . import generate_basic_data  # noqa: F401
 
 def test_get_sessions(session: Session, client: TestClient):
     generate_basic_data(session)
@@ -135,3 +135,30 @@ def test_get_session_by_resource_id(session: Session, client: TestClient):
     assert data["process_id"] == 1
     assert data["resource_id"] == 3
     assert data["status"] == enums.SessionStatus.NEW
+
+
+def test_get_paginated_sessions(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/sessions/?page=1&size=2")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_items"] == 3
+    assert len(data["items"]) == 2
+
+    # Check pagination with include_deleted
+    response = client.get("/sessions/?include_deleted=true&page=1&size=2")
+    data = response.json()
+    assert data["total_items"] == 4
+
+def test_get_paginated_sessions_with_search(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/sessions/?search=cess&page=1&size=2")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_items"] == 3
+    
+

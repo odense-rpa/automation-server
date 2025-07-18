@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from app.database.repository import SessionRepository, ResourceRepository
-from app.database.models import Session, Resource
+from app.database.models import Resource
 
 from app.enums import SessionStatus
 
@@ -95,11 +95,3 @@ class ResourceService:
                     session, {"resource_id": None, "dispatched_at": None}
                 )
 
-    def assign_session_to_resource(self, session: Session, resource: Resource):
-        data = session.model_dump()
-
-        data["resource_id"] = resource.id
-        data["dispatched_at"] = datetime.now()
-
-        self.session_repository.update(session, data)
-        self.repository.update(resource, {"available": False})

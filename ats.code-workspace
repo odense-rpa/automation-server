@@ -10,5 +10,6 @@
         "path": "worker"
       }
     ],
-    "settings": {}
+    "settings": {
+    }
   }

@@ -4,7 +4,7 @@ from sqlmodel import Session
 from app.database.models import Workqueue, WorkItem
 
 
-from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
+from . import generate_basic_data  # noqa: F401
 from app.enums import WorkItemStatus
 
 
@@ -100,20 +100,20 @@ def test_add_workitem(session: Session, client: TestClient):
 
     response = client.post(
         "/workqueues/1/add",
-        json={"data": "{}", "reference": "My reference"},
+        json={"data": {}, "reference": "My reference"},
     )
 
     assert response.status_code == 200
 
     data = response.json()
-    assert data["data"] == "{}"
+    assert data["data"] == {}
     assert data["reference"] == "My reference"
     assert data["status"] == WorkItemStatus.NEW
     assert data["locked"] is False
 
     data = session.get(WorkItem, 2)
 
-    assert data.data == "{}"
+    assert data.data == {}
     assert data.reference == "Embedded workitem"
     assert data.status == WorkItemStatus.IN_PROGRESS
     assert data.locked is False
@@ -127,14 +127,14 @@ def test_next_item(session: Session, client: TestClient):
     assert response.status_code == 200
 
     data = response.json()
-    assert data["data"] == "{}"
+    assert data["data"] == {}
     assert data["reference"] == "Embedded workitem"
     assert data["status"] == WorkItemStatus.IN_PROGRESS
     assert data["locked"] is True
 
     data = session.get(WorkItem, 1)
 
-    assert data.data == "{}"
+    assert data.data == {}
     assert data.reference == "Embedded workitem"
     assert data.status == WorkItemStatus.IN_PROGRESS
     assert data.locked is True
@@ -256,3 +256,83 @@ def test_clear_queue_no_parameters(session: Session, client: TestClient):
     response = client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 0
+
+
+def test_workitems_paging(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/workqueues/1/items?page=1&size=2")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_items"] == 5
+    assert len(data["items"]) == 2
+    assert data["total_pages"] == 3
+
+
+def test_workitems_paging_with_search(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    response = client.get("/workqueues/1/items?page=1&size=2&search=emBed")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_items"] == 5
+
+
+def test_get_workitems_by_reference_in_workqueue(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # Test getting items by reference within a specific workqueue
+    response = client.get("/workqueues/1/by_reference/Embedded workitem")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 5  # All 5 items have the same reference and are in workqueue 1
+    
+    # Verify all items have the correct reference and workqueue
+    for item in data:
+        assert item["reference"] == "Embedded workitem"
+        assert item["workqueue_id"] == 1
+    
+    # Verify sorting (newest to oldest by created_at)
+    created_times = [item["created_at"] for item in data]
+    assert created_times == sorted(created_times, reverse=True)
+
+    # Test with non-existent reference
+    response = client.get("/workqueues/1/by_reference/NonExistentReference")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 0
+
+
+def test_get_workitems_by_reference_in_workqueue_with_status_filter(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    # Test filtering by COMPLETED status within workqueue
+    response = client.get("/workqueues/1/by_reference/Embedded workitem?status=completed")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 1  # Only one COMPLETED item in workqueue 1
+    assert data[0]["status"] == WorkItemStatus.COMPLETED
+    assert data[0]["reference"] == "Embedded workitem"
+    assert data[0]["workqueue_id"] == 1
+
+    # Test filtering by NEW status within workqueue
+    response = client.get("/workqueues/1/by_reference/Embedded workitem?status=new")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 1  # Only one NEW item in workqueue 1
+    assert data[0]["status"] == WorkItemStatus.NEW
+    assert data[0]["reference"] == "Embedded workitem"
+    assert data[0]["workqueue_id"] == 1
+
+    # Test filtering by status that doesn't exist for this reference in this workqueue
+    response = client.get("/workqueues/1/by_reference/NonExistentReference?status=completed")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert len(data) == 0

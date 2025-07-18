@@ -3,7 +3,7 @@ from sqlmodel import Session
 
 import app.database.models as models
 
-from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
+from . import generate_basic_data  # noqa: F401
 
 
 def test_get_processes(session: Session, client: TestClient):
@@ -82,9 +82,8 @@ def test_create_process(session: Session, client: TestClient):
             "workqueue_id": 1,
             "target_type": "python",
             "target_source": "Test url",
-            "target_credentials_id": 0,
-            "credentials_id": 0
-
+            "target_credentials_id": None,
+            "credentials_id": None
         },
     )
 

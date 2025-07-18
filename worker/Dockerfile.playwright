@@ -1,0 +1,54 @@
+FROM python:3.13-slim
+
+# Install uv and uvx
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PLAYWRIGHT_BROWSERS_PATH=/playwright
+
+# Set working directory in the container
+WORKDIR /app
+
+# Install system dependencies for Playwright
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
+    apt-get install -y \
+        git \
+        wget \
+        ca-certificates \
+        fonts-liberation \
+        libappindicator3-1 \
+        libasound2 \
+        libatk-bridge2.0-0 \
+        libatspi2.0-0 \
+        libdrm2 \
+        libgtk-3-0 \
+        libnspr4 \
+        libnss3 \
+        libx11-xcb1 \
+        libxcomposite1 \
+        libxdamage1 \
+        libxrandr2 \
+        xdg-utils \
+        libxss1 \
+        libgconf-2-4 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip
+RUN pip install --upgrade pip
+
+# Install Playwright globally first
+RUN pip install playwright
+
+# Install browsers to fixed path
+RUN playwright install chromium --with-deps
+
+# Copy application code
+COPY . .
+
+# Install Python dependencies
+RUN uv sync
+
+# Run the main Python script
+CMD ["uv", "run", "main.py"]

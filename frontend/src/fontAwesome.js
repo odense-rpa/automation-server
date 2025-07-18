@@ -28,6 +28,7 @@ import {
   faBroom,
   faInfo,
   faLock,
+  faPlay
 } from '@fortawesome/free-solid-svg-icons'
 
 // Add icons to the library
@@ -51,7 +52,8 @@ library.add(
   faCaretDown,
   faBroom,
   faInfo,
-  faLock
+  faLock,
+  faPlay
 )
 
 // Export the FontAwesomeIcon component

@@ -3,14 +3,14 @@
     <content-card :title="contentCardTitle" class="mb-3">
       <template v-slot:header-right>
         <button @click="isEditing = true" class="btn btn-primary btn-sm" v-if="!isEditing && !showClearForm">
-          <font-awesome-icon :icon="['fas', 'pencil-alt']" />
+          <font-awesome-icon :icon="['fas', 'pencil-alt']" /> Edit
         </button>
       </template>
       <div class="card-body">
         <workqueue-info :workqueue="workqueue" v-if="workqueue && !isEditing && !showClearForm" />
-        <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit"
-          v-if="workqueue && isEditing" />
-        <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue"  @back="showClearForm = false" />
+        <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit" @delete="deleteWorkqueue" 
+          v-if="workqueue && isEditing" />          
+        <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue" @back="showClearForm = false" />
       </div>
     </content-card>
     <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable" @clearWorkQueueItems="clearQueue"  @workitems-refreshed="onWorkitemsRefreshed" :size="50" v-if="workqueue" />  
@@ -83,6 +83,22 @@ export default {
       } catch (error) {
         alertStore.addAlert({ type: 'error', message: error.message });
       }     
+    },
+    async deleteWorkqueue(workqueue) {
+      const confirmed = confirm(`Are you sure you want to delete '${workqueue.name}'?`)
+        if (!confirmed) return
+        
+      try {
+        await workqueuesAPI.deleteWorkqueue(workqueue.id)
+        alertStore.addAlert({
+          type: 'success',
+          message: "'" + this.workqueue.name + "' was deleted"
+        })
+        // Redirect to the overview
+        this.$router.push({ name: 'workqueues' })
+      } catch (error) {
+        alertStore.addAlert({ type: 'error', message: error })
+      }
     },
   },
   computed: {

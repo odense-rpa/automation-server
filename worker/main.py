@@ -68,8 +68,9 @@ if __name__ == "__main__":
                                 )
                                 continue
 
+                            params_info = f" with parameters: {session['parameters']}" if session.get('parameters') else " with no parameters"
                             logger.info(
-                                f"Running {process['name']} (type: {process['target_type']})"
+                                f"Running {process['name']} (type: {process['target_type']}){params_info}"
                             )
 
                             # TODO: Get the credentials associated with GIT.

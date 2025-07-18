@@ -1,9 +1,11 @@
 <template>
   <div class="dropdown dropdown-bottom dropdown-end">
     <!-- Dropdown Toggle Button -->
-    <button ref="dropdownButton" tabindex="0" class="btn btn-sm btn-accent-content m-1">
-      <font-awesome-icon :icon="icon" />
-    </button>
+     <slot>
+      <button ref="dropdownButton" tabindex="0" class="btn btn-sm btn-accent-content m-1">
+        <font-awesome-icon :icon="icon" />
+      </button>
+    </slot>
     
     <!-- Dropdown Menu -->
     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
@@ -14,7 +16,7 @@
         </a>
       </li>
     </ul>
-  </div>
+  </div>  
 </template>
 
 <script>

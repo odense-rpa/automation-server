@@ -14,12 +14,13 @@
           placeholder="Search workqueues..."
           class="join-item input input-bordered input-sm w-full max-w-xs" 
         />
-
-        <!-- Create New Workqueue Button -->
-        <router-link :to="{ name: 'workqueue.create' }" class="join-item btn btn-success btn-sm">+</router-link>
       </div>
+      <router-link :to="{ name: 'workqueue.create' }" class="join-item btn btn-primary btn-sm">+ Create</router-link>
     </template>
-    <div v-if="filteredWorkqueues.length === 0" class="text-center mb-4">
+    <div v-if="loading" class="text-center mb-4">
+      <p class="secondary-content font-semibold">Loading workqueues...</p>
+    </div>
+    <div v-else-if="filteredWorkqueues.length === 0" class="text-center mb-4">
       <p class="secondary-content font-semibold">No workqueues found matching search.</p>
     </div>
 
@@ -44,14 +45,15 @@ export default {
   data() {
     return {
       workqueues: [],
-      searchTerm: ''
+      searchTerm: '',
+      loading: true,
     }
   },
   computed: {
     filteredWorkqueues() {
       return this.workqueues.filter((workqueue) =>
         workqueue.name.toLowerCase().includes(this.searchTerm.toLowerCase())
-      )
+      ).sort((a, b) => a.name.localeCompare(b.name));
     }
   },
   // Load all workqueues on created
@@ -67,6 +69,9 @@ export default {
         this.workqueues.sort((a, b) => a.name.localeCompare(b.name))
       } catch (error) {
         alertStore.addAlert({ type: 'error', message: error })
+      }
+      finally {
+        this.loading = false;
       }
     }
   }

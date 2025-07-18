@@ -125,12 +125,21 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             query = query.filter(Session.deleted == False)  # noqa: E712
 
         if search:
-            query = query.join(Session.process).filter(Process.name.contains(search))
+            query = query.join(Session.process).filter(Process.name.ilike(f"%{search}%"))
 
         # Sort in descending order by default
         query = query.order_by(Session.id.desc())
 
-        return [
-            self.session.exec(query.offset(skip).limit(limit)).all(),
-            self.session.exec(select(func.count()).select_from(query)).first(),
-        ]
+        count_query = select(func.count()).select_from(Session)
+        if query.whereclause is not None:
+            if search: # If search is active, the join to Process is active
+                count_query = count_query.join(Session.process)
+
+            count_query = count_query.where(query.whereclause)
+        
+        total_count = self.session.exec(count_query).first()
+
+        return (
+            list(self.session.exec(query.offset(skip).limit(limit)).all()),
+            total_count,
+        )

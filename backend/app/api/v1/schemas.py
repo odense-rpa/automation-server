@@ -2,11 +2,10 @@ import json
 
 from typing import Optional, Dict
 from typing import Generic, TypeVar, List
-from pydantic.generics import GenericModel
 from typing_extensions import Self
 from datetime import datetime
-from pydantic import BaseModel, Field, model_validator, validator
-from croniter import croniter
+from pydantic import BaseModel, Field, model_validator
+from cronsim import CronSim, CronSimError
 from app import enums
 
 class AccessTokenCreate(BaseModel):
@@ -34,12 +33,12 @@ class WorkqueueInformation(BaseModel):
     pending_user_action: int
     
 class WorkItemCreate(BaseModel):
-    data: str
+    data: Dict
     reference: Optional[str] = ""
 
 class WorkItemUpdate(BaseModel):
-    data: str
-    reference: Optional[str] = ""
+    data: Optional[Dict] = None
+    reference: Optional[str] = None
 
 class WorkItemStatusUpdate(BaseModel):
     status: enums.WorkItemStatus
@@ -50,9 +49,9 @@ class ProcessCreate(BaseModel):
     requirements: Optional[str] = ""
     target_type: enums.TargetTypeEnum
     target_source: Optional[str] = ""
-    target_credentials_id: Optional[int]
-    credentials_id: Optional[int]
-    workqueue_id: int
+    target_credentials_id: Optional[int] = None
+    credentials_id: Optional[int] = None
+    workqueue_id: Optional[int] = None
     requirements: Optional[str] = ""
 
 class ProcessUpdate(ProcessCreate):
@@ -73,8 +72,14 @@ class TriggerCreate(BaseModel):
     @model_validator(mode='after')
     def validate_trigger_type(self) -> Self:
 
-        if self.type == enums.TriggerType.CRON and (self.cron is None or self.cron == "" or not croniter.is_valid(self.cron)):
-            raise ValueError("Cron must be set for cron triggers")
+        if self.type == enums.TriggerType.CRON:
+            if self.cron is None or self.cron == "":
+                raise ValueError("Cron must be set for cron triggers")
+            try:
+                # We use a dummy datetime just for validation
+                CronSim(self.cron, datetime.now())
+            except CronSimError:
+                raise ValueError("Invalid cron expression")
 
         if self.type == enums.TriggerType.DATE and self.date is None:
             raise ValueError("Date must be set for date triggers")
@@ -89,26 +94,11 @@ class TriggerUpdate(TriggerCreate):
 
 class CredentialCreate(BaseModel):
     name: str
-    data: Optional[str] = "{}"
+    data: Optional[Dict] = None
     username: Optional[str] = ""
     password: Optional[str] = ""
 
-    @validator("data")
-    def validate_json(cls, value):
-        if(value.strip() == ""):
-            return "{}"
-        
-        try:
-            # Parse the JSON string
-            parsed_data = json.loads(value)
-            # Optional: Perform additional checks on the parsed data
-            if not isinstance(parsed_data, dict):
-                raise ValueError("The 'data' field must be a JSON object (string).")
-            
-            prettified_json = json.dumps(parsed_data, indent=4)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON provided in 'data': {e}")
-        return prettified_json
+
 
 class CredentialUpdate(CredentialCreate):
     pass
@@ -123,6 +113,7 @@ class ResourceUpdate(ResourceCreate):
 
 class SessionCreate(BaseModel):
     process_id: int
+    parameters: Optional[str] = None
 
 class SessionStatusUpdate(BaseModel):
     status: Optional[enums.SessionStatus] = None
@@ -141,9 +132,6 @@ class AccessTokenRead(BaseModel):
     deleted: bool = Field(default=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
-class AccessTokenCreate(BaseModel):
-    identifier: str
-
 # Schemas for the API
 class PaginationParams(BaseModel):
     page: int = Field(1, ge=1, description="Page number, starting from 1")
@@ -158,7 +146,7 @@ class PaginatedSearchParams(BaseModel):
 
 T = TypeVar('T')
 
-class PaginatedResponse(GenericModel, Generic[T]):
+class PaginatedResponse(BaseModel, Generic[T]):
     page: int
     size: int
     total_items: int

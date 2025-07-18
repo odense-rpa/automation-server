@@ -1,7 +1,7 @@
 <template>
     <content-card title="Triggers" class="mb-3">
         <template v-slot:header-right>
-            <button class="btn btn-success btn-sm" @click="createTrigger">+</button>
+            <button class="btn btn-primary btn-sm" @click="createTrigger">+ Create</button>
         </template>
         <table class="table w-full mb-3 rounded-b-lg">
             <tbody>

@@ -10,10 +10,8 @@
         <!-- Input Field (Small) -->
         <input type="text" v-model="searchTerm" placeholder="Search credentials..."
           class="join-item input input-bordered input-sm w-full max-w-xs" />
-
-        <!-- Create New Credential Button -->
-        <button @click="showCreateForm = true" class="join-item btn btn-success btn-sm">+</button>
       </div>
+      <button @click="showCreateForm = true" class="join-item btn btn-primary btn-sm">+ Create</button>
     </template>
     <div v-if="filteredCredentials.length > 0">
       <table class="table w-full mb-3">
@@ -27,10 +25,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="credential in filteredCredentials" :key="credential.id" class="hover:bg-base-300 cursor-pointer">
+          <tr v-for="credential in filteredCredentials" :key="credential.id" class="hover:bg-base-300">
             <td class="text-center">{{ credential.id }}</td>
-            <td @click="editCredential(credential)">{{ credential.name }}</td>
-            <td @click="editCredential(credential)">{{ credential.username }}</td>
+            <td>{{ credential.name }}</td>
+            <td>{{ credential.username }}</td>
             <td><json-view :jsonData="credential.data" /></td>
             <td class="text-right">
               <dropdown-button :label="'Actions'" :items="[
@@ -93,7 +91,7 @@ export default {
           credential.username.toLowerCase().includes(term) ||
           credential.data.toLowerCase().includes(term)
         );
-      });
+      }).sort((a, b) => a.name.localeCompare(b.name));
     }
   },
   methods: {

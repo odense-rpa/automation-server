@@ -69,3 +69,33 @@ class SessionService:
                 if resource is None or resource.deleted:
                     self.repository.update(session, {"status": "failed"})
                     continue
+
+    def create_session(self, process_id: int, force: bool = False, parameters: str = None) -> Optional[Session]:
+        """Create a new session for the given process.
+        
+        Args:
+            process_id: ID of the process to create session for
+            force: If True, create session even if one already exists
+            parameters: Optional parameters for the session
+            
+        Returns:
+            Created session or None if session already exists and force=False
+        """
+        sessions = self.repository.get_new_sessions()
+
+        # If there is a new or in progress session for this process, return None unless forced
+        if any(session.process_id == process_id for session in sessions) and not force:
+            return None
+
+        # Create a new session
+        session = self.repository.create(
+            {
+                "process_id": process_id,
+                "status": SessionStatus.NEW,
+                "deleted": False,
+                "dispatched_at": None,
+                "parameters": parameters,
+            }
+        )
+
+        return session

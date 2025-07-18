@@ -3,7 +3,7 @@ from sqlmodel import Session
 
 import app.database.models as models
 
-from . import session_fixture, client_fixture, generate_basic_data  # noqa: F401
+from . import generate_basic_data  # noqa: F401
 
 
 def test_get_credentials(session: Session, client: TestClient):
@@ -177,7 +177,7 @@ def test_create_credential_with_empty_json_data(session: Session, client: TestCl
             "name": "New credential",
             "username": "New username",
             "password": "New password",
-            "data": "",
+            "data": {},
         },
     )
 
