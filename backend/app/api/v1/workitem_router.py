@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
+from datetime import datetime
 
 from app.database.unit_of_work import AbstractUnitOfWork
 from app.database.models import WorkItem, AccessToken
 from app.enums import WorkItemStatus
 
 from .dependencies import get_unit_of_work, resolve_access_token
-from .schemas import WorkItemUpdate, WorkItemStatusUpdate
+from .schemas import WorkItemUpdate, WorkItemStatusUpdate, WorkItemRead
 
 router = APIRouter(prefix="/workitems", tags=["Workitems"])
 
@@ -34,7 +35,7 @@ RESPONSE_STATES = {
 }
 
 
-@router.get("/{item_id}", responses=RESPONSE_STATES)
+@router.get("/{item_id}", responses=RESPONSE_STATES, response_model=WorkItemRead)
 def get_workitem(
     workitem: WorkItem = Depends(get_workitem),
     token: AccessToken = Depends(resolve_access_token),
@@ -42,7 +43,7 @@ def get_workitem(
     return workitem
 
 
-@router.put("/{item_id}", responses=RESPONSE_STATES)
+@router.put("/{item_id}", responses=RESPONSE_STATES, response_model=WorkItemRead)
 def update_workitem(
     item: WorkItemUpdate,
     workitem: WorkItem = Depends(get_workitem),
@@ -50,10 +51,14 @@ def update_workitem(
     token: AccessToken = Depends(resolve_access_token),
 ) -> WorkItem:
     with uow:
-        return uow.work_items.update(workitem, item.model_dump(exclude_unset=True))
+        update_data = item.model_dump(exclude_unset=True)
+        # Filter out None values for non-nullable fields
+        if update_data.get("data") is None:
+            update_data.pop("data", None)
+        return uow.work_items.update(workitem, update_data)
 
 
-@router.put("/{item_id}/status", responses=RESPONSE_STATES)
+@router.put("/{item_id}/status", responses=RESPONSE_STATES, response_model=WorkItemRead)
 def update_workitem_status(
     status: WorkItemStatusUpdate,
     workitem: WorkItem = Depends(get_workitem),
@@ -63,6 +68,14 @@ def update_workitem_status(
     with uow:
         data = status.model_dump(exclude_unset=True)
 
+        # Always set started_at when status is IN_PROGRESS
+        if status.status == WorkItemStatus.IN_PROGRESS:
+            data["started_at"] = datetime.now()
+
+        # Calculate work duration for terminal statuses if started_at is set
+        if workitem.started_at and status.status in [WorkItemStatus.COMPLETED, WorkItemStatus.FAILED]:
+            duration = (datetime.now() - workitem.started_at).total_seconds()
+            data["work_duration_seconds"] = int(duration)
 
         # We clear the locked flag because these statuses indicate that we have stopped working on the item
         if status.status in [WorkItemStatus.COMPLETED, WorkItemStatus.FAILED, WorkItemStatus.NEW, WorkItemStatus.PENDING_USER_ACTION]:
@@ -72,7 +85,7 @@ def update_workitem_status(
         return uow.work_items.update(workitem, data)
 
 
-@router.get("/by-reference/{reference}")
+@router.get("/by-reference/{reference}", response_model=list[WorkItemRead])
 def get_workitems_by_reference(
     reference: str,
     status: WorkItemStatus | None = Query(None, description="Optional status filter"),

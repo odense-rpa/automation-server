@@ -33,7 +33,7 @@ class WorkqueueInformation(BaseModel):
     pending_user_action: int
     
 class WorkItemCreate(BaseModel):
-    data: Dict
+    data: Dict = {}
     reference: Optional[str] = ""
 
 class WorkItemUpdate(BaseModel):
@@ -42,6 +42,19 @@ class WorkItemUpdate(BaseModel):
 
 class WorkItemStatusUpdate(BaseModel):
     status: enums.WorkItemStatus
+
+class WorkItemRead(BaseModel):
+    id: int
+    data: Dict
+    reference: str | None
+    locked: bool
+    status: enums.WorkItemStatus
+    message: str
+    workqueue_id: int
+    started_at: datetime | None
+    work_duration_seconds: int | None
+    created_at: datetime
+    updated_at: datetime
 
 class ProcessCreate(BaseModel):
     name: str
