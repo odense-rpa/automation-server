@@ -5,7 +5,7 @@ from typing_extensions import Self
 from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import field_validator, model_validator
-from croniter import croniter
+from cronsim import CronSim, CronSimError
 
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -109,7 +109,10 @@ class Trigger(Base, table=True):
         if cls.type != enums.TriggerType.CRON:
             return ""
 
-        if not croniter.is_valid(v):
+        try:
+            # We use a dummy datetime just for validation
+            CronSim(v, datetime.now())
+        except CronSimError:
             raise ValueError("Invalid cron string")
         return v
 

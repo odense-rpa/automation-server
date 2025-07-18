@@ -5,8 +5,8 @@ This module implements the trigger processor for cron-based scheduling.
 """
 
 import logging
-from datetime import datetime
-from croniter import croniter
+from datetime import datetime, timedelta
+from cronsim import CronSim
 
 from app.database.models import Trigger
 from app.scheduler.validators import validate_cron_expression
@@ -34,11 +34,25 @@ class CronTriggerProcessor(AbstractTriggerProcessor):
             validated_cron = validate_cron_expression(trigger.cron)
             
             # Check if it's time to trigger based on the cron expression
-            if croniter.match(validated_cron, now):
-                logger.info(f"Triggering cron trigger {trigger.id} at {now}")
-                return self._create_session(trigger, validated_params)
-            else:
-                # Not time to trigger yet, but processing was successful
+            # Simple approach: start from one minute before and check if next match is current minute
+            current_minute = now.replace(second=0, microsecond=0)
+            
+            # Start from one minute before to catch the current minute
+            start_time = current_minute - timedelta(minutes=1)
+            
+            try:
+                cron_sim = CronSim(validated_cron, start_time)
+                next_time = next(cron_sim)
+                
+                # If the next scheduled time matches the current minute, trigger
+                if next_time.replace(second=0, microsecond=0) == current_minute:
+                    logger.info(f"Triggering cron trigger {trigger.id} at {now}")
+                    return self._create_session(trigger, validated_params)
+                else:
+                    # Not time to trigger yet, but processing was successful
+                    return True
+            except StopIteration:
+                # No more matches in the next 50 years, so definitely not triggering now
                 return True
                 
         except Exception as e:

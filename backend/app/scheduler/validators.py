@@ -6,7 +6,8 @@ to provide reusable and testable validation functions.
 """
 
 import logging
-from croniter import croniter
+from datetime import datetime
+from cronsim import CronSim, CronSimError
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -52,9 +53,10 @@ def validate_cron_expression(cron_expr: str) -> str:
     cron_expr = cron_expr.strip()
     
     try:
-        # Let croniter handle all validation
-        croniter(cron_expr)
-    except Exception as e:
+        # Let cronsim handle all validation
+        # We use a dummy datetime just for validation
+        CronSim(cron_expr, datetime.now())
+    except CronSimError as e:
         raise ValueError(f"Invalid cron expression: {e}")
     
     return cron_expr

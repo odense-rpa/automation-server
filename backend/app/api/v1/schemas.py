@@ -5,7 +5,7 @@ from typing import Generic, TypeVar, List
 from typing_extensions import Self
 from datetime import datetime
 from pydantic import BaseModel, Field, model_validator
-from croniter import croniter
+from cronsim import CronSim, CronSimError
 from app import enums
 
 class AccessTokenCreate(BaseModel):
@@ -72,8 +72,14 @@ class TriggerCreate(BaseModel):
     @model_validator(mode='after')
     def validate_trigger_type(self) -> Self:
 
-        if self.type == enums.TriggerType.CRON and (self.cron is None or self.cron == "" or not croniter.is_valid(self.cron)):
-            raise ValueError("Cron must be set for cron triggers")
+        if self.type == enums.TriggerType.CRON:
+            if self.cron is None or self.cron == "":
+                raise ValueError("Cron must be set for cron triggers")
+            try:
+                # We use a dummy datetime just for validation
+                CronSim(self.cron, datetime.now())
+            except CronSimError:
+                raise ValueError("Invalid cron expression")
 
         if self.type == enums.TriggerType.DATE and self.date is None:
             raise ValueError("Date must be set for date triggers")

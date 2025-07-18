@@ -6,7 +6,7 @@ readme = "../README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>1.0.0,<2.0",
-    "croniter==5.0.1",
+    "cronsim",
     "fastapi>0.110.0,<1.0",
     "httpx<1.0",
     "psycopg2-binary>=2.9.10",
