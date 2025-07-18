@@ -1,113 +1,96 @@
 <template>
-  <div class="card bg-base-100 shadow-xl card-bordered card-compact">
-    <div class="card-body">
-      <!-- Header with title and controls -->
-      <div class="flex items-center justify-between">
-        <h2 class="card-title">
-          <font-awesome-icon :icon="['fas', 'clock']" class="mr-2"/>
-          Up Next ({{ filteredExecutions.length }})
-        </h2>
-        <div class="card-actions">
-          <div class="join">
-            <!-- Search input -->
-            <input 
-              type="text" 
-              v-model="searchTerm" 
-              placeholder="Search processes..."
-              class="join-item input input-bordered input-sm w-full max-w-xs" 
-            />
-            <!-- Collapse toggle button -->
-            <button 
-              @click="isCollapsed = !isCollapsed"
-              class="join-item btn btn-square btn-sm"
-              :class="{ 'btn-active': !isCollapsed }"
-            >
-              <font-awesome-icon :icon="['fas', isCollapsed ? 'chevron-down' : 'chevron-up']" />
-            </button>
-          </div>
-        </div>
+  <content-card title="Up Next">
+    <template v-slot:header-right>
+      <div class="join">
+        <!-- Font Awesome Icon Button (Small) -->
+        <button class="join-item btn btn-square btn-sm">
+          <font-awesome-icon :icon="['fas', 'search']" />
+        </button>
+
+        <!-- Input Field (Small) -->
+        <input type="text" v-model="searchTerm" placeholder="Search processes..."
+            class="join-item input input-bordered input-sm w-full max-w-xs" />
       </div>
+    </template>
 
-      <!-- Collapsible content -->
-      <div v-if="!isCollapsed" class="transition-all duration-300">
-        <!-- Loading state -->
-        <div v-if="isLoading" class="text-center py-4">
-          <span class="loading loading-spinner loading-md"></span>
-          <p class="mt-2">Loading upcoming executions...</p>
-        </div>
+    <!-- Loading state -->
+    <div v-if="isLoading" class="text-center py-4">
+      <span class="loading loading-spinner loading-md"></span>
+      <p class="mt-2">Loading upcoming executions...</p>
+    </div>
 
-        <!-- Error state -->
-        <div v-else-if="error" class="alert alert-error">
-          <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
-          <span>{{ error }}</span>
-        </div>
+    <!-- Error state -->
+    <div v-else-if="error" class="alert alert-error">
+      <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
+      <span>{{ error }}</span>
+    </div>
 
-        <!-- Empty state -->
-        <div v-else-if="filteredExecutions.length === 0" class="text-center py-4">
-          <font-awesome-icon :icon="['fas', 'calendar-check']" class="text-4xl text-base-300 mb-2" />
-          <p class="text-base-content/70">
-            {{ searchTerm ? 'No executions found matching your search.' : 'No executions scheduled for the next 24 hours.' }}
-          </p>
-        </div>
+    <!-- Empty state -->
+    <div v-else-if="filteredExecutions.length === 0" class="text-center mb-4">
+      <p class="secondary-content font-semibold">
+        {{ searchTerm ? 'No executions found matching your search.' : 'No executions scheduled for the next 24 hours.' }}
+      </p>
+    </div>
 
-        <!-- Executions list -->
-        <div v-else class="space-y-3">
-          <div 
+    <!-- Executions table -->
+    <div v-else>
+      <table class="table w-full mb-3">
+        <thead>
+          <tr>
+            <th class="text-left">Process</th>
+            <th class="text-center">Type</th>
+            <th class="text-center">Next Execution</th>
+            <th class="text-center">In</th>
+            <th class="text-left">Parameters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
             v-for="execution in filteredExecutions" 
             :key="`${execution.trigger_id}-${execution.next_execution}`"
-            class="flex items-center justify-between p-3 bg-base-200 rounded-lg hover:bg-base-300 transition-colors"
+            class="hover:bg-base-300 cursor-pointer"
+            @click="navigateToProcess(execution.process_id)"
           >
-            <!-- Execution info -->
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <span class="font-semibold text-primary">{{ execution.process_name }}</span>
-                <span class="badge badge-sm" :class="getTriggerTypeClass(execution.trigger_type)">
-                  {{ execution.trigger_type }}
-                </span>
-              </div>
-              <div class="text-sm text-base-content/70 mt-1">
-                {{ execution.process_description }}
-              </div>
-              <div v-if="execution.parameters" class="text-xs text-base-content/50 mt-1">
-                Parameters: {{ execution.parameters }}
-              </div>
-            </div>
-
-            <!-- Time info -->
-            <div class="text-right">
-              <div class="font-medium">{{ formatExecutionTime(execution.next_execution) }}</div>
-              <div class="text-sm text-base-content/70">{{ formatRelativeTime(execution.next_execution) }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Refresh info -->
-        <div v-if="!isLoading && !error" class="text-center mt-4 text-xs text-base-content/50">
-          Last updated: {{ formatDateTime(lastUpdated) }}
-          <button @click="refreshExecutions" class="btn btn-ghost btn-xs ml-2">
-            <font-awesome-icon :icon="['fas', 'refresh']" />
-            Refresh
-          </button>
-        </div>
-      </div>
+            <td class="text-left">
+              {{ execution.process_name }}
+            </td>
+            <td class="text-center">
+              <span class="badge badge-sm badge-ghost">
+                {{ execution.trigger_type }}
+              </span>
+            </td>
+            <td class="text-center">{{ formatExecutionTime(execution.next_execution) }}</td>
+            <td class="text-center">{{ formatRelativeTime(execution.next_execution) }}</td>
+            <td class="text-left">
+              <span v-if="execution.parameters" class="text-xs">{{ execution.parameters }}</span>
+              <span v-else class="text-base-content/50">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+  </content-card>
 </template>
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { triggersAPI } from '@/services/automationserver'
+import ContentCard from './ContentCard.vue'
 
 export default {
   name: 'UpNextDisplay',
+  components: {
+    ContentCard
+  },
   setup() {
+    const router = useRouter()
+    
     // Reactive state
     const executions = ref([])
     const isLoading = ref(false)
     const error = ref(null)
     const searchTerm = ref('')
-    const isCollapsed = ref(false)
-    const lastUpdated = ref(null)
     const refreshInterval = ref(null)
 
     // Computed properties
@@ -130,7 +113,6 @@ export default {
       try {
         const data = await triggersAPI.getUpcomingExecutions()
         executions.value = data
-        lastUpdated.value = new Date()
       } catch (err) {
         error.value = 'Failed to load upcoming executions'
         console.error('Error loading upcoming executions:', err)
@@ -169,27 +151,15 @@ export default {
       }
     }
 
-    const formatDateTime = (date) => {
-      if (!date) return ''
-      return date.toLocaleString()
+    const navigateToProcess = (processId) => {
+      router.push({ name: 'process.edit', params: { id: processId } })
     }
 
-    const getTriggerTypeClass = (type) => {
-      switch (type) {
-        case 'cron':
-          return 'badge-primary'
-        case 'date':
-          return 'badge-secondary'
-        case 'workqueue':
-          return 'badge-accent'
-        default:
-          return 'badge-neutral'
-      }
-    }
+
 
     const startAutoRefresh = () => {
-      // Refresh every 30 seconds
-      refreshInterval.value = setInterval(refreshExecutions, 30000)
+      // Refresh every 1 minute
+      refreshInterval.value = setInterval(refreshExecutions, 60000)
     }
 
     const stopAutoRefresh = () => {
@@ -214,14 +184,11 @@ export default {
       isLoading,
       error,
       searchTerm,
-      isCollapsed,
-      lastUpdated,
       filteredExecutions,
       refreshExecutions,
       formatExecutionTime,
       formatRelativeTime,
-      formatDateTime,
-      getTriggerTypeClass
+      navigateToProcess
     }
   }
 }
