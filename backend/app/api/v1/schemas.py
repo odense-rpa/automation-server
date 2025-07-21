@@ -169,3 +169,14 @@ class PaginatedResponse(BaseModel, Generic[T]):
 class WorkqueueClear(BaseModel):
     workitem_status: Optional[enums.WorkItemStatus] = None
     days_older_than: Optional[int] = None
+
+class UpcomingExecutionRead(BaseModel):
+    trigger_id: int = Field(description="Unique identifier for the trigger")
+    process_id: int = Field(description="Unique identifier for the associated process")
+    process_name: str = Field(description="Name of the process")
+    process_description: str = Field(description="Description of the process")
+    next_execution: str = Field(description="Next execution time in ISO format")
+    trigger_type: enums.TriggerType = Field(description="Type of trigger (cron, date, workqueue)")
+    parameters: Optional[str] = Field(None, description="Optional parameters for the trigger")
+    cron: Optional[str] = Field(None, description="Cron expression for cron triggers")
+    date: Optional[str] = Field(None, description="Target date in ISO format for date triggers")

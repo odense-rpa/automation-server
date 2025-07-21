@@ -7,7 +7,7 @@ from app.database.models import Trigger, AccessToken
 
 from app.database.unit_of_work import AbstractUnitOfWork
 
-from .schemas import TriggerUpdate
+from .schemas import TriggerUpdate, UpcomingExecutionRead
 from .dependencies import get_unit_of_work, resolve_access_token
 
 from . import error_descriptions
@@ -82,7 +82,7 @@ async def delete_trigger(
 # Get upcoming executions
 @router.get(
     "/upcoming",
-    response_model=List[Dict[str, Any]],
+    response_model=List[UpcomingExecutionRead],
     responses=error_descriptions("Trigger", _403=True),
 )
 async def get_upcoming_trigger_executions(
