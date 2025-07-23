@@ -3,28 +3,31 @@ import typing
 
 from typing_extensions import Self
 from datetime import datetime
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 from pydantic import field_validator, model_validator
 from cronsim import CronSim, CronSimError
 
 from sqlalchemy.dialects.postgresql import JSONB
 
+
 class Base(SQLModel):
     pass
+
 
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
-    data: typing.Dict = Field(default={},sa_type=JSONB)
+    data: typing.Dict = Field(default={}, sa_type=JSONB)
     username: str | None = Field()
     password: str | None = Field()
     deleted: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
+
 class WorkItem(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    data: typing.Dict = Field(default={},sa_type=JSONB)
+    data: typing.Dict = Field(default={}, sa_type=JSONB)
     reference: str | None = Field(default="")
     locked: bool
     status: enums.WorkItemStatus
@@ -34,6 +37,7 @@ class WorkItem(Base, table=True):
     work_duration_seconds: int | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
+
 
 class Workqueue(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -192,13 +196,37 @@ class SystemLog(Base, table=True):
 
 class SessionLog(Base, table=True):
     id: typing.Optional[int] = Field(default=None, primary_key=True)
-    session_id: int = Field(foreign_key="session.id")
-    session: Session = Relationship()
 
-    workitem_id: typing.Optional[int] = Field(foreign_key="workitem.id")
+    # Foreign key relationships (both nullable for development flexibility)
+    session_id: typing.Optional[int] = Field(foreign_key="session.id", nullable=True)
+    session: typing.Optional[Session] = Relationship()
+
+    workitem_id: typing.Optional[int] = Field(foreign_key="workitem.id", nullable=True)
     workitem: typing.Optional[WorkItem] = Relationship()
+
+    # Core logging fields
     message: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now())
+    level: str = Field(default="INFO")
+    logger_name: str = Field(default="")
+
+    # Source location fields
+    module: typing.Optional[str] = None
+    function_name: typing.Optional[str] = None
+    line_number: typing.Optional[int] = None
+
+    # Exception fields
+    exception_type: typing.Optional[str] = None
+    exception_message: typing.Optional[str] = None
+    traceback: typing.Optional[str] = None
+
+    # Structured data for audit trail
+    structured_data: typing.Optional[dict] = Field(default=None, sa_column=Column(JSON))
+
+    # Timestamps
+    event_timestamp: datetime  # When the logged event actually occurred
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now()
+    )  # DB insertion time
 
 
 class AccessToken(Base, table=True):

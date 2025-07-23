@@ -87,6 +87,7 @@ def session_fixture(docker_postgresql_container):
     container_info = docker_postgresql_container
     settings.test_database_url = f"postgresql://{container_info['user']}:{container_info['password']}@{container_info['host']}:{container_info['port']}/postgres"
     settings.database_url = settings.test_database_url
+    os.environ["DATABASE_URL"] = settings.test_database_url
 
     engine = create_engine(url=settings.test_database_url)
 

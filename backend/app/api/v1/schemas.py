@@ -1,6 +1,6 @@
 import json
 
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from typing import Generic, TypeVar, List
 from typing_extensions import Self
 from datetime import datetime
@@ -135,8 +135,54 @@ class SessionResourceUpdate(BaseModel):
     resource_id: Optional[int] = None
 
 class SessionLogCreate(BaseModel):
+    # Foreign key relationships (both nullable)
+    session_id: Optional[int] = None
     workitem_id: Optional[int] = None
+    
+    # Core logging fields
     message: str
+    level: str = Field(default="INFO")
+    logger_name: str = Field(default="")
+    
+    # Source location fields (from Python LogRecord)
+    module: Optional[str] = None
+    function_name: Optional[str] = None
+    line_number: Optional[int] = None
+    
+    # Exception fields
+    exception_type: Optional[str] = None
+    exception_message: Optional[str] = None
+    traceback: Optional[str] = None
+    
+    # Structured data for audit trail (HTTP calls, UI automation, etc.)
+    structured_data: Optional[Dict[str, Any]] = None
+    
+    # Event timestamp (when the log event actually occurred)
+    event_timestamp: datetime
+    
+    class Config:
+        # Example for API documentation
+        json_schema_extra = {
+            "example": {
+                "session_id": 123,
+                "workitem_id": 456,
+                "message": "API call completed successfully",
+                "level": "INFO",
+                "logger_name": "myapp.api",
+                "module": "payment_processor.py",
+                "function_name": "process_payment",
+                "line_number": 45,
+                "structured_data": {
+                    "http": {
+                        "method": "POST",
+                        "url": "https://api.example.com/payment",
+                        "response_status": 200,
+                        "duration_ms": 1250
+                    }
+                },
+                "event_timestamp": "2025-07-23T10:30:00Z"
+            }
+        }
 
 class AccessTokenRead(BaseModel):
     id: int = Field(default=None, primary_key=True)

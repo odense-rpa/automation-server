@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
 
-from app.api.v1.schemas import PaginatedSearchParams
+from app.api.v1.schemas import PaginatedSearchParams, SessionLogCreate
 
 from app.database.models import SessionLog, WorkItem, Session, AccessToken
+from app.database.unit_of_work import AbstractUnitOfWork
 
 from app.services import SessionLogService
 
@@ -14,6 +15,7 @@ from .dependencies import (
     get_paginated_search_params,
     get_sessionlog_service,
     resolve_access_token,
+    get_unit_of_work,
 )
 
 from .session_router import (
@@ -24,7 +26,16 @@ from .workitem_router import (
     get_workitem as get_workitem_dependency,
 )
 
-router = APIRouter(prefix="/sessionlogs", tags=["Sessionlogs"])
+router = APIRouter(prefix="/logs", tags=["Logs"])
+
+
+@router.post("", status_code=204)
+def create_log(
+    log: SessionLogCreate,
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> None:
+    pass
 
 
 @router.get("/{session_id}", responses=error_descriptions("Session", _403=True, _404=True))
