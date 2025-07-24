@@ -3,11 +3,11 @@ from typing import List, Optional
 from sqlalchemy.sql import func
 from sqlmodel import Session, select
 
-from app.database.models import SessionLog
+from app.database.models import AuditLog
 
 from .database_repository import DatabaseRepository, AbstractRepository
 
-class AbstractSessionLogRepository(AbstractRepository[SessionLog]):
+class AbstractAuditLogRepository(AbstractRepository[AuditLog]):
     def get_paginated(
         self,
         session_id: int,
@@ -15,7 +15,7 @@ class AbstractSessionLogRepository(AbstractRepository[SessionLog]):
         skip: int = 0,
         limit: int = 10,
         include_deleted: bool = False,
-    ) -> tuple[List[SessionLog], int]:
+    ) -> tuple[List[AuditLog], int]:
         raise NotImplementedError
     
     def get_logs_by_session_id(
@@ -24,7 +24,7 @@ class AbstractSessionLogRepository(AbstractRepository[SessionLog]):
         search: Optional[str] = None,
         skip: int = 0,
         limit: int = 10,
-    ) -> List[SessionLog]:
+    ) -> List[AuditLog]:
         raise NotImplementedError
     
     def count_logs_by_session_id(
@@ -32,13 +32,13 @@ class AbstractSessionLogRepository(AbstractRepository[SessionLog]):
     ) -> int:
         raise NotImplementedError
     
-    def get_logs_by_workitem_id(self, workitem_id: int) -> List[SessionLog]:
+    def get_logs_by_workitem_id(self, workitem_id: int) -> List[AuditLog]:
         raise NotImplementedError
 
 
-class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[SessionLog]):
+class AuditLogRepository(AbstractAuditLogRepository, DatabaseRepository[AuditLog]):
     def __init__(self, session: Session) -> None:
-        super().__init__(SessionLog, session)
+        super().__init__(AuditLog, session)
 
     def get_paginated(
         self,
@@ -47,17 +47,17 @@ class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[Sess
         skip: int = 0,
         limit: int = 10,
         include_deleted: bool = False,
-    ) -> tuple[List[SessionLog], int]:
-        query = select(SessionLog).where(
-            SessionLog.session_id == session_id
+    ) -> tuple[List[AuditLog], int]:
+        query = select(AuditLog).where(
+            AuditLog.session_id == session_id
         )
 
         if search:
-            query = query.where(SessionLog.message.ilike(f"%{search}%"))
+            query = query.where(AuditLog.message.ilike(f"%{search}%"))
 
         # The original query for items already includes filters for session_id and search.
-        # We create a new count_query based on SessionLog and apply the same filters.
-        count_query = select(func.count()).select_from(SessionLog)
+        # We create a new count_query based on AuditLog and apply the same filters.
+        count_query = select(func.count()).select_from(AuditLog)
         if query.whereclause is not None:
             count_query = count_query.where(query.whereclause)
             
@@ -74,13 +74,13 @@ class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[Sess
         search: Optional[str] = None,
         skip: int = 0,
         limit: int = 10,
-    ) -> List[SessionLog]:
-        query = select(SessionLog).where(
-            SessionLog.session_id == session_id
+    ) -> List[AuditLog]:
+        query = select(AuditLog).where(
+            AuditLog.session_id == session_id
         )
 
         if search:
-            query = query.where(SessionLog.message.contains(search))
+            query = query.where(AuditLog.message.contains(search))
 
         logs = self.session.exec(query.offset(skip).limit(limit)).all()
         return logs
@@ -88,16 +88,16 @@ class SessionLogRepository(AbstractSessionLogRepository, DatabaseRepository[Sess
     def count_logs_by_session_id(
         self, session_id: int, search: Optional[str] = None
     ) -> int:
-        query = select(func.count()).where(SessionLog.session_id == session_id)
+        query = select(func.count()).where(AuditLog.session_id == session_id)
 
         if search:
-            query = query.where(SessionLog.message.contains(search))
+            query = query.where(AuditLog.message.contains(search))
 
         return self.session.exec(query).first()
 
-    def get_logs_by_workitem_id(self, workitem_id: int) -> List[SessionLog]:
+    def get_logs_by_workitem_id(self, workitem_id: int) -> List[AuditLog]:
         return self.session.scalars(
-            select(SessionLog)
-            .where(SessionLog.workitem_id == workitem_id)
-            .order_by(SessionLog.created_at)
+            select(AuditLog)
+            .where(AuditLog.workitem_id == workitem_id)
+            .order_by(AuditLog.created_at)
         ).all()

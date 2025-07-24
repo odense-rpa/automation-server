@@ -36,7 +36,7 @@
 import ContentCard from '@/components/ContentCard.vue';
 import WorkitemInfo from '@/components/WorkitemInfo.vue';
 
-import { sessionLogsAPI, sessionsAPI, workitemsApi } from '@/services/automationserver.js';
+import { auditLogsAPI, sessionsAPI, workitemsApi } from '@/services/automationserver.js';
 
 export default {
     name: 'WorkItemView',
@@ -61,7 +61,7 @@ export default {
         // lifecycle hook
         this.workItem = await workitemsApi.getWorkItem(this.$route.params.itemId);
 
-        this.logs = await sessionLogsAPI.getByWorkItemId(this.$route.params.itemId);
+        this.logs = await auditLogsAPI.getByWorkItemId(this.$route.params.itemId);
 
         // Map sessionIds and make them distinct
 
@@ -70,7 +70,7 @@ export default {
         for (const id of sessions)
             this.sessions.push(await sessionsAPI.getSession(id));
 
-        //this.sessions = sessions.map(id =>await sessionLogsAPI.getBySessionId(session_id));
+        //this.sessions = sessions.map(id =>await auditLogsAPI.getBySessionId(session_id));
         //this.sessions = [...new Set(sessions)];
     }
     , computed: {

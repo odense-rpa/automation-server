@@ -1,14 +1,15 @@
 import requests
 import logging
-
+import traceback
 from contextlib import contextmanager
+from datetime import datetime
 
 from . import automationserver_url
 from . import headers
 
 logger = logging.getLogger(__name__)
 
-base_url = f"{automationserver_url}/sessions"
+sessions_base_url = f"{automationserver_url}/sessions"
 
 
 class SessionLoggingHandler(logging.Handler):
@@ -17,15 +18,42 @@ class SessionLoggingHandler(logging.Handler):
         self.session_id = session_id
 
     def emit(self, record):
-        log_entry = self.format(record)
-
         if self.session_id is None:
             return
 
         try:
-            add_log_message(session_id=self.session_id, message=log_entry)
+            # Create structured audit log data
+            log_data = {
+                "session_id": self.session_id,
+                "message": self.format(record),
+                "level": record.levelname,
+                "logger_name": record.name,
+                "event_timestamp": datetime.fromtimestamp(record.created).isoformat()
+            }
+            
+            # Add source location info
+            if hasattr(record, 'module') and record.module:
+                log_data["module"] = record.module
+            if hasattr(record, 'funcName') and record.funcName:
+                log_data["function_name"] = record.funcName
+            if hasattr(record, 'lineno') and record.lineno:
+                log_data["line_number"] = record.lineno
+                
+            # Add exception info if present
+            if record.exc_info:
+                exc_type, exc_value, exc_traceback = record.exc_info
+                log_data["exception_type"] = exc_type.__name__ if exc_type else None
+                log_data["exception_message"] = str(exc_value) if exc_value else None
+                log_data["traceback"] = ''.join(traceback.format_exception(*record.exc_info))
+            
+            # Make direct API call to new audit logs endpoint
+            response = requests.post(f"{automationserver_url}/audit-logs", json=log_data, headers=headers)
+            
+            if response.status_code != 204:
+                response.raise_for_status()
+                
         except Exception as e:
-            print(f"Failed to send log to session: {e}")
+            print(f"Failed to send log to audit system: {e}")
 
 
 @contextmanager
@@ -55,7 +83,7 @@ def acquire_session(resource_id: int):
 
 
 def get_pending_session(resource_id: int) -> dict:
-    response = requests.get(f"{base_url}/by_resource_id/{resource_id}", headers=headers)
+    response = requests.get(f"{sessions_base_url}/by_resource_id/{resource_id}", headers=headers)
 
     if response.status_code == 204:
         return None
@@ -71,7 +99,7 @@ def update_session_status(session_id: str, status: str) -> dict:
         raise ValueError(f"Status must be one of {allowed_status}")
 
     response = requests.put(
-        f"{base_url}/{session_id}/status", json={"status": status}, headers=headers
+        f"{sessions_base_url}/{session_id}/status", json={"status": status}, headers=headers
     )
     response.raise_for_status()
     return response.json()
@@ -91,13 +119,3 @@ def get_credential(credential_id: int) -> dict:
     )
     response.raise_for_status()
     return response.json()
-
-def add_log_message(session_id: int, message: str, workqueue_id=None) -> dict:
-    json = {"message": message}
-    if workqueue_id is not None:
-        json["workqueue_id"] = workqueue_id
-
-    response = requests.post(f"{base_url}/{session_id}/log", json=json, headers=headers)
-
-    if response.status_code != 204:
-        response.raise_for_status()

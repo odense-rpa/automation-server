@@ -45,4 +45,4 @@ def update_resource(resource_id: int, fqdn: str, name: str, capabilities: str) -
 def ping_resource(resource_id: int):
     response = requests.put(f"{base_url}/{resource_id}/ping", headers=headers)
     response.raise_for_status()
-    logger.info(f"#{resource_id} has sent a ping")
+    logger.debug(f"#{resource_id} has sent a ping")

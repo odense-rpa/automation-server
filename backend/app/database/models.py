@@ -194,7 +194,7 @@ class SystemLog(Base, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
-class SessionLog(Base, table=True):
+class AuditLog(Base, table=True):
     id: typing.Optional[int] = Field(default=None, primary_key=True)
 
     # Foreign key relationships (both nullable for development flexibility)

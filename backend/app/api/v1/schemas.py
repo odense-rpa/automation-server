@@ -134,7 +134,7 @@ class SessionStatusUpdate(BaseModel):
 class SessionResourceUpdate(BaseModel):
     resource_id: Optional[int] = None
 
-class SessionLogCreate(BaseModel):
+class AuditLogCreate(BaseModel):
     # Foreign key relationships (both nullable)
     session_id: Optional[int] = None
     workitem_id: Optional[int] = None

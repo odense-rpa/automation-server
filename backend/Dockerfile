@@ -9,11 +9,6 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install sqlite3 and clean up afterwards
-RUN apt-get update && \
-    apt-get install -y sqlite3 && \
-    rm -rf /var/lib/apt/lists/*
-
 # Set the working directory
 WORKDIR /app
 

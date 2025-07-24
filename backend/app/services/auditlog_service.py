@@ -1,13 +1,13 @@
 from typing import Optional
 
 from app.api.v1.schemas import PaginatedResponse
-from app.database.repository import SessionLogRepository
-from app.database.models import SessionLog
+from app.database.repository import AuditLogRepository
+from app.database.models import AuditLog
 
 
-class SessionLogService:
-    def __init__(self, session_repository: SessionLogRepository):
-        self.repository = session_repository
+class AuditLogService:
+    def __init__(self, audit_repository: AuditLogRepository):
+        self.repository = audit_repository
 
     def search_logs(
         self,
@@ -15,23 +15,23 @@ class SessionLogService:
         page: int = 1,
         size: int = 10,
         search: Optional[str] = None,
-    ) -> PaginatedResponse[SessionLog]:
+    ) -> PaginatedResponse[AuditLog]:
         skip = (page - 1) * size
-        sessions, total_items = self.repository.get_paginated(
+        logs, total_items = self.repository.get_paginated(
             session_id, search, skip, size
         )
 
         total_pages = (total_items + size - 1) // size
 
-        response = PaginatedResponse[SessionLog](
+        response = PaginatedResponse[AuditLog](
             page=page,
             size=size,
             total_items=total_items,
             total_pages=total_pages,
-            items=sessions,
+            items=logs,
         )
 
         return response
 
-    def get_by_workitem(self, workitem_id: int) -> list[SessionLog]:
+    def get_by_workitem(self, workitem_id: int) -> list[AuditLog]:
         return self.repository.get_logs_by_workitem_id(workitem_id)

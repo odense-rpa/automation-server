@@ -11,7 +11,7 @@ class AbstractUnitOfWork(AbstractContextManager):
     credentials: repository.AbstractCredentialRepository
     resources: repository.AbstractResourceRepository
     sessions: repository.AbstractSessionRepository
-    sessionlogs: repository.AbstractSessionLogRepository
+    auditlogs: repository.AbstractAuditLogRepository
     work_items: repository.AbstractWorkItemRepository
     workqueues: repository.AbstractWorkqueueRepository
 
@@ -39,7 +39,7 @@ class UnitOfWork(AbstractUnitOfWork):
         self.credentials = repository.CredentialRepository(session)
         self.resources = repository.ResourceRepository(session)
         self.sessions = repository.SessionRepository(session)
-        self.sessionlogs = repository.SessionLogRepository(session)
+        self.auditlogs = repository.AuditLogRepository(session)
         self.work_items = repository.WorkItemRepository(session)
         self.workqueues = repository.WorkqueueRepository(session)
 

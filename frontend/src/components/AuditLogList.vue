@@ -1,5 +1,5 @@
 <template>
-    <content-card title="Session Log">
+    <content-card title="Audit Log">
         <template v-slot:header-right>
             <div class="join">
                 <!-- Search Icon Button as part of join group -->
@@ -43,7 +43,7 @@
 <script>
 import ContentCard from "./ContentCard.vue";
 import PageNavigation from "@/components/PageNavigation.vue";
-import { sessionLogsAPI } from "@/services/automationserver";
+import { auditLogsAPI } from "@/services/automationserver";
 
 export default {
     name: "SessionsList",
@@ -86,7 +86,7 @@ export default {
     },
     methods: {
         async fetchLogs() {
-            const response = await sessionLogsAPI.getSessionLogs(
+            const response = await auditLogsAPI.getAuditLogs(
                 this.session_id,
                 this.page,
                 this.size,

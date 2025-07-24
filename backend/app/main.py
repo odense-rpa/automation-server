@@ -12,12 +12,11 @@ from app.api.v1.credentials_router import router as v1_credentials_router
 from app.api.v1.resource_router import router as v1_resource_router
 from app.api.v1.session_router import router as v1_session_router
 from app.api.v1.trigger_router import router as v1_trigger_router
-from app.api.v1.log_router import router as v1_log_router
+from app.api.v1.audit_log_router import router as v1_audit_log_router
 from app.api.v1.accesstoken_router import router as v1_accesstoken_router
 
 from app.api.token_router import router as token_router
 
-from app.database.session import create_db_and_tables
 from app.config import settings
 from app.scheduler import scheduler_background_task
 
@@ -27,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    
     # Create and store scheduler task reference to prevent garbage collection
     scheduler_task = asyncio.create_task(scheduler_background_task())
     
@@ -72,7 +69,7 @@ app.include_router(v1_credentials_router, prefix="")
 app.include_router(v1_process_router, prefix="")
 app.include_router(v1_resource_router, prefix="")
 app.include_router(v1_session_router, prefix="")
-app.include_router(v1_log_router, prefix="")
+app.include_router(v1_audit_log_router, prefix="")
 app.include_router(v1_trigger_router, prefix="")
 app.include_router(v1_workitem_router, prefix="")
 app.include_router(v1_workqueue_router, prefix="")
