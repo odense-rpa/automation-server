@@ -95,3 +95,4 @@ test.db
 automation.db
 tmp
 .aider*
+.env
