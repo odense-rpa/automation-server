@@ -1,34 +1,48 @@
-# Stage 1: Build the Vue.js app
-FROM node:18-alpine AS build
+# Build stage
+FROM node:20-alpine AS builder
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --no-audit
 
-# Copy the rest of the application code
+# Copy application code
 COPY . .
 
-# Build the Vue.js application
+# Build arguments for environment configuration
+ARG VITE_ATS_API_BASE_URL=/api
+ENV VITE_ATS_API_BASE_URL=$VITE_ATS_API_BASE_URL
+
+# Build the application
 RUN npm run build
 
-# Stage 2: Serve the built app with Nginx
+# Production stage
 FROM nginx:stable-alpine
 
-# Copy the built files from the previous stage
-COPY --from=build /app/dist /usr/share/nginx/html
+# Install curl for health checks
+RUN apk add --no-cache curl
 
-# Copy custom Nginx configuration, if you have one
+# Copy built application from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-ENV VITE_ATS_API_BASE_URL=http://localhost:8000
-
-# Expose port 80
+# Expose port
 EXPOSE 80
 
-# Start Nginx server
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD curl -f http://localhost/health || exit 1
+
+# Add metadata labels
+LABEL maintainer="miwn@odense.dk" \
+      version="0.2.0" \
+      description="Automation Server Frontend"
+
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
