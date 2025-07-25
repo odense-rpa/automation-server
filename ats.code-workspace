@@ -8,8 +8,13 @@
       },
       {
         "path": "worker"
+      },
+      {
+        "name": "root",
+        "path": ".",
       }
     ],
     "settings": {
+      
     }
   }
