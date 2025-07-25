@@ -11,7 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        component: [backend, frontend, worker]
+        include:
+          - component: backend
+            target: ""
+          - component: frontend
+            target: ""
+          - component: worker
+            target: worker
+          - component: worker
+            target: worker-playwright
+            suffix: -playwright
     
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +39,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/ats-${{ matrix.component }}
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.component }}${{ matrix.suffix }}
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
@@ -40,6 +49,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./${{ matrix.component }}
+          target: ${{ matrix.target }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -6,8 +6,9 @@ x-worker-common: &worker-template
   build:
     context: ./worker
     # Uncomment the specific line to choose between including playwright or not
-    #dockerfile: Dockerfile
-    dockerfile: Dockerfile.playwright
+    dockerfile: Dockerfile
+    target: worker-playwright
+    
   environment:
     - ATS_URL=http://api:8000
     - ATS_TOKEN=
