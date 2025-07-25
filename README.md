@@ -6,6 +6,8 @@
 
 **A complete environment for running and managing Python-based automations with a REST API, web interface, and isolated worker environment.**
 
+<img src="docs/images/main-interface.png">
+
 ## ✨ Features
 
 - 🚀 **REST API** - Complete FastAPI backend for automation management
@@ -14,6 +16,8 @@
 - 📊 **Scheduling** - Cron-based and event-driven task scheduling
 - 🐳 **Docker Ready** - Production-ready containerized deployment
 - 🎭 **Playwright Support** - Web automation capabilities built-in
+- 📋 **Process template** -- Speeds up development of automations. ([Template + instructions](https://github.com/odense-rpa/process-template))
+
 
 ## 🚀 Quick Start
 
