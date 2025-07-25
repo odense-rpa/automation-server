@@ -16,6 +16,7 @@ from app.api.v1.audit_log_router import router as v1_audit_log_router
 from app.api.v1.accesstoken_router import router as v1_accesstoken_router
 
 from app.api.token_router import router as token_router
+from app.api.health_router import router as health_router
 
 from app.config import settings
 from app.scheduler import scheduler_background_task
@@ -49,7 +50,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Automation server",
     description="Automation server",
-    version="1.0.0",
+    version="0.2.0",
     docs_url="/docs",
     openapi_url="/openapi.json",
     lifespan=lifespan,
@@ -74,6 +75,7 @@ app.include_router(v1_trigger_router, prefix="")
 app.include_router(v1_workitem_router, prefix="")
 app.include_router(v1_workqueue_router, prefix="")
 app.include_router(token_router, prefix="")
+app.include_router(health_router, prefix="")
 
 
 #async def background_task():
