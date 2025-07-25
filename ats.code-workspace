@@ -1,20 +1,28 @@
 {
-    "folders": [
-      {
-        "path": "backend"
-      },
-      {
-        "path": "frontend"
-      },
-      {
-        "path": "worker"
-      },
-      {
-        "name": "root",
-        "path": ".",
-      }
-    ],
-    "settings": {
-      
+  "folders": [
+    {
+      "path": "backend"
+    },
+    {
+      "path": "frontend"
+    },
+    {
+      "path": "worker"
+    },
+    {
+      "name": "root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "backend": true,
+      "frontend": true,
+      "worker": true,
+      "**/node_modules": true,
+      "**/.pytest_cache": true,
+      "**/.git": true,
+      "**/.aider*": true
     }
   }
+}
