@@ -51,7 +51,6 @@ COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 COPY --from=builder --chown=appuser:appuser /app /app
 
 # Copy configuration files
-COPY --chown=appuser:appuser ./alembic.ini.docker /app/alembic.ini
 COPY --chown=appuser:appuser scripts/entry-point.sh /app/entry-point.sh
 
 # Remove any .env file that might have been copied
