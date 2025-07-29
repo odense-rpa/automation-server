@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
+from datetime import datetime, timezone
 
 import app.database.models as models
 
@@ -280,7 +281,6 @@ def test_update_workitem_status_sets_started_at_on_in_progress(session: Session,
 def test_update_workitem_status_calculates_duration_on_completion(session: Session, client: TestClient):
     """Test that work_duration_seconds is calculated correctly on completion."""
     import time
-    from datetime import datetime
     
     generate_basic_data(session)
     
@@ -334,5 +334,41 @@ def test_update_workitem_status_calculates_duration_on_completion(session: Sessi
     assert failed_data["work_duration_seconds"] is not None
     failed_duration = failed_data["work_duration_seconds"]
     assert 0 <= failed_duration <= 3, f"Expected duration ~1 second, got {failed_duration}"
+
+
+def test_update_workitem_status_timezone_aware_handling(session: Session, client: TestClient):
+    """Test that timezone-aware started_at is handled correctly in duration calculation."""
+    generate_basic_data(session)
+    
+    # Set work item to IN_PROGRESS to establish started_at
+    response = client.put(
+        "/workitems/1/status",
+        json={"status": WorkItemStatus.IN_PROGRESS}
+    )
+    assert response.status_code == 200
+    
+    # Get the workitem from database and manually set started_at to timezone-aware
+    workitem = session.get(models.WorkItem, 1)
+    assert workitem is not None
+    
+    # Force started_at to be timezone-aware (simulates production scenario)
+    workitem.started_at = datetime.now(timezone.utc)
+    session.add(workitem)
+    session.commit()
+    session.refresh(workitem)
+    
+    # Attempt to update status to COMPLETED
+    response = client.put(
+        "/workitems/1/status",
+        json={"status": WorkItemStatus.COMPLETED}
+    )
+    
+    # The timezone hypothesis was disproven - the operation actually succeeds
+    assert response.status_code == 200, f"Expected 200 success, got {response.status_code}: {response.text}"
+    
+    # Verify the duration was calculated successfully
+    completed_data = response.json()
+    assert completed_data["work_duration_seconds"] is not None
+    assert completed_data["status"] == WorkItemStatus.COMPLETED
 
 
