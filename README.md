@@ -4,22 +4,24 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/odense-rpa/automation-server/issues)
 
-**A complete environment for running and managing Python-based automations with a REST API, web interface, and isolated worker environment.**
+<a href="docs/images/main-interface.png"><img src="docs/images/main-interface.png" width="400px" style="float: right; margin: 0.5em;"></a>
 
-<img src="docs/images/main-interface.png">
-
-## ✨ Features
-
-- 🚀 **REST API** - Complete FastAPI backend for automation management
-- 🎯 **Web Interface** - Vue.js frontend for easy task management  
-- 🔒 **Isolated Workers** - Secure Python script execution environment
-- 📊 **Scheduling** - Cron-based and event-driven task scheduling
-- 🐳 **Docker Ready** - Production-ready containerized deployment
-- 🎭 **Playwright Support** - Web automation capabilities built-in
-- 📋 **Process template** -- Speeds up development of automations. ([Template + instructions](https://github.com/odense-rpa/process-template))
+Automation Server allows you to build, run and monitor automations written in python. Easily orchestrate your automations and deploy them on workers dynamically. Jobs get routed to workers based on their capabilities and resources are automatically utilized.
 
 
-## 🚀 Quick Start
+- **Web Interface:** At a single glance you can monitor status, trigger automations and see the overall health of your cluster. Manage all aspects of your automations
+- **Automations on time:** Use powerful cron based triggers to ensure your automations run when you want them to. You can also trigger on specific date and times. Workqueues provide flexible triggering based on the amount of work to do.
+- **Audit your automations:** Built-in logging and integration with Pythons logging system provides a clear audit-trail. All logs are grouped by their sessions and associated workitems allowing for ease if access and operations.
+- **Templates for automations:** Automation Server provides a framework for interacting with the server from your processes. There is also a [template](https://github.com/odense-rpa/process-template) to get you started.
+- **Isolated execution:** Each worker runs a single automation at the time and it is isolated in it's private environment, thus ensuring stability and package integrity.
+
+## Requirements
+
+- Docker and Docker-compose installed.
+
+## Get started
+
+To setup a local copy of Automation Server follows the steps below. If you wish to run this in production we recommend you follow our [deployment guide](docs/deployment.md).
 
 1. **Clone and setup environment**:
    ```bash
@@ -33,174 +35,25 @@
    docker-compose up -d
    ```
 
-3. **Access the application**:
+3. **Access the  local application**:
    - **Web Interface**: http://localhost
    - **API Documentation**: http://localhost/api/docs
    - **Database Admin** (optional): http://localhost:8080
 
-The system is now running with PostgreSQL database, REST API, web interface, and 2 worker nodes.
 
-## 🏗️ What You Get
+## Next steps
 
-The Automation Server consists of three main components:
-
-### 🖥️ Backend API
-- Authentication and authorization
-- Task scheduling and management
-- Resource management
-- Health monitoring and logging
-
-### 🌐 Frontend Interface  
-- Task creation and monitoring
-- Real-time execution status
-- Workqueue monitoring
-- Worker management dashboard
-
-### ⚙️ Worker Environment
-- Isolated Python script execution
-- Support for web automation (Playwright)
-- Scalable worker deployment
-
-## 📦 Installation Options
-
-### Development Setup
-
-Use this setup for local development and testing:
-
-```bash
-# Start with database admin tools
-docker-compose --profile tools up -d
-
-# Or standard setup
-docker-compose up -d
-```
-
-### Production Setup
-
-For production deployments:
-
-```bash
-# Copy and customize production config
-cp docker-compose.prod-example.yml docker-compose.prod.yml
-cp .env.example .env
-
-# Edit .env with your production values
-# Then start
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-You should also consider adding SSL certificates to your production environment. Also setup tokens in the administration interface 
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-Key configuration options in `.env`:
-
-```bash
-# Database
-POSTGRES_USER=ats_user
-POSTGRES_PASSWORD=your_secure_password
-POSTGRES_DB=ats
-
-# Workers  
-ATS_TOKEN=your-api-token-here   # Can be left blank for development
-ATS_CAPABILITIES=playwright     # If using the built-in worker with playwright 
-
-# Timezone
-TZ=Europe/Copenhagen
-```
-
-### Adding More Workers
-
-Scale workers by adding to `docker-compose.yml`:
-
-```yaml
-worker03:
-  <<: *worker-template
-  hostname: worker-03
-```
-
-## 📝 Usage Examples
-
-TODO: Write a process development guide.
+To get started with developing your own automations take a look at our [template](https://github.com/odense-rpa/process-template). You can also add our [test process](https://github.com/odense-rpa/test-process) to your local installation and try the scheduling features.
 
 
-## 📚 API Documentation
+If you require assistance feel free to create a [discussion](https://github.com/odense-rpa/automation-server/discussions) or open an [issue](https://github.com/odense-rpa/automation-server/issues).
 
-- **Interactive Documentation**: http://localhost/api/docs
-- **OpenAPI Spec**: http://localhost/api/openapi.json
 
-## 🛠️ Development
-
-### Local Development
-
-```bash
-# Backend
-cd backend
-uv sync
-uv run uvicorn app.main:app --reload
-
-# Frontend  
-cd frontend
-npm install
-npm run dev
-
-# Worker
-cd worker
-uv sync
-uv run main.py
-```
-
-### Running Tests
-
-```bash
-# Backend tests
-cd backend && uv run pytest
-
-# Frontend tests
-cd frontend && npm test
-```
-
-Be aware that the backend tests require docker to be available as it will spin up a local postgresql container for e2e testing.
-
-## 🚀 Deployment
-
-### Building Images
-
-```bash
-# Build all images
-docker-compose build
-
-# Or build individual components
-cd worker && ./build-standard.sh      # Standard worker
-cd worker && ./build-playwright.sh    # Playwright-enabled worker
-```
-
-### Production Considerations
-
-- Use specific image tags instead of `latest`
-- Set up SSL certificates for HTTPS
-- Configure proper database backups
-- Monitor with health checks
-- Use Docker secrets for sensitive data
-
-## 🔧 Troubleshooting  
-
-**Worker not processing tasks**:
-```bash
-# Check worker logs
-docker-compose logs worker01
-
-# Verify API connectivity
-docker-compose exec worker01 curl http://api:8000/health
-```
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 1. Check our [issues](https://github.com/odense-rpa/automation-server/issues) for planned features
 2. Open an issue to discuss your idea
