@@ -63,9 +63,6 @@ if __name__ == "__main__":
 
                             if process is None:
                                 logger.error(f"Process not found for session {session}")
-                                sessions.add_log_message(
-                                    session_id=session["id"], message="Process not found"
-                                )
                                 continue
 
                             params_info = f" with parameters: {session['parameters']}" if session.get('parameters') else " with no parameters"

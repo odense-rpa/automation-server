@@ -20,9 +20,9 @@ from .session_repository import (
     AbstractSessionRepository as AbstractSessionRepository,
 )
 
-from .sessionlog_repository import (
-    SessionLogRepository as SessionLogRepository,
-    AbstractSessionLogRepository as AbstractSessionLogRepository,
+from .auditlog_repository import (
+    AuditLogRepository as AuditLogRepository,
+    AbstractAuditLogRepository as AbstractAuditLogRepository,
 )
 
 

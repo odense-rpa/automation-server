@@ -28,7 +28,7 @@
             </div>
         </content-card>
 
-        <session-log-list :session_id="session.id" v-if="session" />
+        <audit-log-list :session_id="session.id" v-if="session" />
     </div>
 </template>
 
@@ -36,14 +36,14 @@
 import ContentCard from '@/components/ContentCard.vue'
 import { sessionsAPI } from "@/services/automationserver";
 import ProcessLabel from '@/components/ProcessLabel.vue'
-import SessionLogList from '@/components/SessionLogList.vue';
+import AuditLogList from '@/components/AuditLogList.vue';
 
 export default {
     name: "EditSessionView",
     components: {
         ContentCard,
         ProcessLabel,
-        SessionLogList
+        AuditLogList
     },
     mounted() {
         this.loadSession();

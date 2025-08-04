@@ -15,7 +15,7 @@ export default defineConfig({
   server: {
     proxy: {
       // string shorthand: http://localhost:5173/foo -> http://localhost:4567/foo
-      '/api': 'http://localhost:8000'
+      '/api': process.env.VITE_DEV_API_URL || 'http://localhost:8000'
       /*    // with options: http://localhost:5173/api/bar-> http://jsonplaceholder.typicode.com/bar
     '/api': {
       target: 'http://jsonplaceholder.typicode.com',

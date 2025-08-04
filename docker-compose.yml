@@ -1,49 +1,55 @@
-version: '3.8'
-
-# This docker-compose file sets up a development environment. It can be used as a base for production use.
+# Development environment setup
+# For production use, see docker-compose.prod-example.yml
 
 x-worker-common: &worker-template
   build:
     context: ./worker
-    # Uncomment the specific line to choose between including playwright or not
-    #dockerfile: Dockerfile
-    dockerfile: Dockerfile.playwright
+    dockerfile: Dockerfile
+    target: worker-playwright
   environment:
     - ATS_URL=http://api:8000
-    - ATS_TOKEN=
-    - TZ=Europe/Copenhagen
+    - ATS_TOKEN=${ATS_TOKEN:-}
+    - TZ=${TZ:-Europe/Copenhagen}
     - ATS_CAPABILITIES=playwright
   networks:
     - app-network
   depends_on:
-    - api
+    api:
+      condition: service_healthy
 
 services:
+  # Infrastructure services
   db:
-    image: postgres:latest
+    image: postgres:17-alpine
     environment:
-      # Set a default user / password for the api. Change this for production use.
-      POSTGRES_USER: ats_user 
-      POSTGRES_PASSWORD: ats_password
-      POSTGRES_DB: ats
+      POSTGRES_USER: ${POSTGRES_USER:-ats_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ats_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ats}
     ports:
       - "5432:5432"
     networks:
       - app-network
     volumes:
-      - db-data:/var/lib/postgresql/data  # Mount named volume to /var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ats_user}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Application services
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     environment:
-      - TZ=Europe/Copenhagen
-      # Remember to set username and password for production use
-      - DATABASE_URL=postgresql://ats_user:ats_password@db:5432/ats
+      - TZ=${TZ:-Europe/Copenhagen}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-ats_user}:${POSTGRES_PASSWORD:-ats_password}@db:5432/${POSTGRES_DB:-ats}
     networks:
       - app-network
 
@@ -51,27 +57,29 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_ATS_API_BASE_URL: /api
     ports:
       - "80"
+    environment:
+      - TZ=${TZ:-Europe/Copenhagen}
     networks:
       - app-network
-    environment:
-      - VITE_ATS_API_BASE_URL=/api  # Set environment variable
-      - TZ=Europe/Copenhagen
 
   proxy:
-    image: nginx:latest
+    image: nginx:1.25-alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - api
       - frontend
     networks:
       - app-network
 
+  # Worker services
   worker01:
     <<: *worker-template
     hostname: worker-01
@@ -80,8 +88,9 @@ services:
     <<: *worker-template
     hostname: worker-02
 
+  # Development tools (optional)
   adminer:
-    image: adminer:latest
+    image: adminer:4.8.1
     ports:
       - "8080:8080"
     environment:
@@ -90,7 +99,10 @@ services:
     networks:
       - app-network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    profiles:
+      - tools
 
 networks:
   app-network:

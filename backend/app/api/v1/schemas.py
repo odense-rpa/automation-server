@@ -1,6 +1,6 @@
 import json
 
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from typing import Generic, TypeVar, List
 from typing_extensions import Self
 from datetime import datetime
@@ -33,7 +33,7 @@ class WorkqueueInformation(BaseModel):
     pending_user_action: int
     
 class WorkItemCreate(BaseModel):
-    data: Dict
+    data: Dict = {}
     reference: Optional[str] = ""
 
 class WorkItemUpdate(BaseModel):
@@ -42,6 +42,19 @@ class WorkItemUpdate(BaseModel):
 
 class WorkItemStatusUpdate(BaseModel):
     status: enums.WorkItemStatus
+
+class WorkItemRead(BaseModel):
+    id: int
+    data: Dict
+    reference: str | None
+    locked: bool
+    status: enums.WorkItemStatus
+    message: str
+    workqueue_id: int
+    started_at: datetime | None
+    work_duration_seconds: int | None
+    created_at: datetime
+    updated_at: datetime
 
 class ProcessCreate(BaseModel):
     name: str
@@ -121,9 +134,55 @@ class SessionStatusUpdate(BaseModel):
 class SessionResourceUpdate(BaseModel):
     resource_id: Optional[int] = None
 
-class SessionLogCreate(BaseModel):
+class AuditLogCreate(BaseModel):
+    # Foreign key relationships (both nullable)
+    session_id: Optional[int] = None
     workitem_id: Optional[int] = None
+    
+    # Core logging fields
     message: str
+    level: str = Field(default="INFO")
+    logger_name: str = Field(default="")
+    
+    # Source location fields (from Python LogRecord)
+    module: Optional[str] = None
+    function_name: Optional[str] = None
+    line_number: Optional[int] = None
+    
+    # Exception fields
+    exception_type: Optional[str] = None
+    exception_message: Optional[str] = None
+    traceback: Optional[str] = None
+    
+    # Structured data for audit trail (HTTP calls, UI automation, etc.)
+    structured_data: Optional[Dict[str, Any]] = None
+    
+    # Event timestamp (when the log event actually occurred)
+    event_timestamp: datetime
+    
+    class Config:
+        # Example for API documentation
+        json_schema_extra = {
+            "example": {
+                "session_id": 123,
+                "workitem_id": 456,
+                "message": "API call completed successfully",
+                "level": "INFO",
+                "logger_name": "myapp.api",
+                "module": "payment_processor.py",
+                "function_name": "process_payment",
+                "line_number": 45,
+                "structured_data": {
+                    "http": {
+                        "method": "POST",
+                        "url": "https://api.example.com/payment",
+                        "response_status": 200,
+                        "duration_ms": 1250
+                    }
+                },
+                "event_timestamp": "2025-07-23T10:30:00Z"
+            }
+        }
 
 class AccessTokenRead(BaseModel):
     id: int = Field(default=None, primary_key=True)
@@ -156,3 +215,14 @@ class PaginatedResponse(BaseModel, Generic[T]):
 class WorkqueueClear(BaseModel):
     workitem_status: Optional[enums.WorkItemStatus] = None
     days_older_than: Optional[int] = None
+
+class UpcomingExecutionRead(BaseModel):
+    trigger_id: int = Field(description="Unique identifier for the trigger")
+    process_id: int = Field(description="Unique identifier for the associated process")
+    process_name: str = Field(description="Name of the process")
+    process_description: str = Field(description="Description of the process")
+    next_execution: str = Field(description="Next execution time in ISO format")
+    trigger_type: enums.TriggerType = Field(description="Type of trigger (cron, date, workqueue)")
+    parameters: Optional[str] = Field(None, description="Optional parameters for the trigger")
+    cron: Optional[str] = Field(None, description="Cron expression for cron triggers")
+    date: Optional[str] = Field(None, description="Target date in ISO format for date triggers")

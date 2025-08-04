@@ -86,7 +86,8 @@ def session_fixture(docker_postgresql_container):
     # Build the db URL for the test database
     container_info = docker_postgresql_container
     settings.test_database_url = f"postgresql://{container_info['user']}:{container_info['password']}@{container_info['host']}:{container_info['port']}/postgres"
-
+    settings.database_url = settings.test_database_url
+    os.environ["DATABASE_URL"] = settings.test_database_url
 
     engine = create_engine(url=settings.test_database_url)
 
@@ -105,7 +106,7 @@ def session_fixture(docker_postgresql_container):
 @pytest.fixture(name="client")
 def client_fixture(session: Session):
     def get_session_override():
-        return session
+        yield session
 
     app.dependency_overrides[get_session] = get_session_override
 

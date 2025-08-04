@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useSettingsStore = defineStore('settings', {
   state: () => ({
-    apiUrl: 'http://localhost:8000/',
+    apiUrl: import.meta.env.VITE_ATS_API_BASE_URL || '/api/',
     token: ''
   }),
   persist: {

@@ -17,7 +17,7 @@ import app.api.v1.schemas as schemas
 from app.security import oauth2_scheme
 
 from app.services import (
-    SessionLogService,
+    AuditLogService,
     SessionService,
     ResourceService,
     WorkqueueService,
@@ -48,8 +48,8 @@ def get_repository(model):
         if model == models.Trigger:
             return repositories.TriggerRepository(session)
 
-        if model == models.SessionLog:
-            return repositories.SessionLogRepository(session)
+        if model == models.AuditLog:
+            return repositories.AuditLogRepository(session)
 
         if model == models.AccessToken:
             return repositories.AccessTokenRepository(session)
@@ -70,12 +70,12 @@ def get_workqueue_service(
     return WorkqueueService(repository)
 
 
-def get_sessionlog_service(
-    repository: repositories.SessionLogRepository = Depends(
-        get_repository(models.SessionLog)
+def get_auditlog_service(
+    repository: repositories.AuditLogRepository = Depends(
+        get_repository(models.AuditLog)
     ),
-) -> SessionLogService:
-    return SessionLogService(repository)
+) -> AuditLogService:
+    return AuditLogService(repository)
 
 
 def get_session_service(

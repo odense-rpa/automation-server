@@ -330,13 +330,21 @@ const triggersAPI = {
     } catch (error) {
       throw new Error(`Error deleting trigger: ${error}`)
     }
+  },
+  getUpcomingExecutions: async (hours_ahead = 24) => {
+    try {
+      const response = await axios.get(`/triggers/upcoming`, { params: { hours_ahead } })
+      return response.data
+    } catch (error) {
+      throw new Error(`Error fetching upcoming executions: ${error}`)
+    }
   }
 }
 
-const sessionLogsAPI = {
-  getSessionLogs: async (session_id, page = 1, size = 20, search = '') => {
+const auditLogsAPI = {
+  getAuditLogs: async (session_id, page = 1, size = 20, search = '') => {
     try {
-      const response = await axios.get(`/sessionlogs/${session_id}`, {
+      const response = await axios.get(`/audit-logs/${session_id}`, {
         params: { page: page, size: size, search: search }
       })
       return response.data
@@ -346,7 +354,7 @@ const sessionLogsAPI = {
   },
   getByWorkItemId: async (workitem_id) => {
     try {
-      const response = await axios.get(`/sessionlogs/by_workitem/${workitem_id}`)
+      const response = await axios.get(`/audit-logs/by_workitem/${workitem_id}`)
       return response.data
     } catch (error) {
       throw new Error(`Error fetching session logs by workitem: ${error}`)
@@ -425,7 +433,7 @@ export {
   credentialsAPI,
   resourcesAPI,
   sessionsAPI,
-  sessionLogsAPI,
+  auditLogsAPI,
   triggersAPI,
   workitemsApi,
   accessTokensApi

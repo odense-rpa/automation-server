@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy.sql import func
 from sqlmodel import Session as SqlSession, select, or_
 
-from app.database.models import Process, Session, SessionLog
+from app.database.models import Process, Session, AuditLog
 import app.enums as enums
 
 from .database_repository import DatabaseRepository, AbstractRepository
@@ -19,7 +19,7 @@ class AbstractSessionRepository(AbstractRepository[Session]):
     def get_active_sessions(self) -> list[Session]:
         raise NotImplementedError
 
-    def create_log(self, log_entry: dict) -> SessionLog:
+    def create_log(self, log_entry: dict) -> AuditLog:
         raise NotImplementedError
 
     def get_paginated(
@@ -93,7 +93,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             .order_by(Session.created_at)
         ).all()
 
-    def create_log(self, log_entry: dict) -> SessionLog:
+    def create_log(self, log_entry: dict) -> AuditLog:
         """
         Creates a new session log entry.
 
@@ -104,9 +104,9 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             message (str): The message to include in the log entry.
 
         Returns:
-            models.SessionLog: The newly created session log entry.
+            models.AuditLog: The newly created session log entry.
         """
-        log_entry = SessionLog(**log_entry)
+        log_entry = AuditLog(**log_entry)
         self.session.add(log_entry)
         self.session.commit()
 

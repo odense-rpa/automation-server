@@ -60,6 +60,7 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
 
             item.locked = True
             item.status = enums.WorkItemStatus.IN_PROGRESS
+            item.started_at = datetime.now()
             item.updated_at = datetime.now()
             self.session.add(item)
             self.session.commit()

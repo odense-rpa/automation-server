@@ -6,11 +6,11 @@ from . import generate_basic_data  # noqa: F401
 def test_get_session_logs(session: Session, client: TestClient):
     generate_basic_data(session)
 
-    response = client.get("/sessionlogs/525")
+    response = client.get("/audit-logs/525")
     assert response.status_code == 404
 
     
-    response = client.get("/sessionlogs/1")
+    response = client.get("/audit-logs/1")
     assert response.status_code == 200
     
     data = response.json()
@@ -19,7 +19,7 @@ def test_get_session_logs(session: Session, client: TestClient):
     assert data["total_items"] == 2
     assert data["total_pages"] == 1
 
-    response = client.get("/sessionlogs/1?size=1")
+    response = client.get("/audit-logs/1?size=1")
     assert response.status_code == 200
     
     data = response.json()
@@ -32,10 +32,10 @@ def test_get_session_logs(session: Session, client: TestClient):
 def test_get_sessionlog_by_workitem(session: Session, client: TestClient):
     generate_basic_data(session)
     
-    response = client.get("/sessionlogs/by_workitem/525")
+    response = client.get("/audit-logs/by_workitem/525")
     assert response.status_code == 404
     
-    response = client.get("/sessionlogs/by_workitem/1")
+    response = client.get("/audit-logs/by_workitem/1")
     assert response.status_code == 200
     
     data = response.json()

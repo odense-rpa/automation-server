@@ -1,74 +1,81 @@
-version: '3.8'
-
-# This docker-compose file sets up a development environment. It can be used as a base for production use.
+# Production environment example
+# Copy this file to docker-compose.prod.yml and customize for your environment
+# Use environment variables or Docker secrets for sensitive data
 
 x-worker-common: &worker-template
-  build:
-    context: ./worker
-    # Uncomment the specific line to choose between including playwright or not
-    dockerfile: Dockerfile
-    #dockerfile: Dockerfile.playwright
+  image: ghcr.io/odense-rpa/ats-worker:v0.2.0
   environment:
-    - ATS_URL=http://api:8000
-    - ATS_TOKEN=
-    - TZ=Europe/Copenhagen
+    - ATS_URL=${ATS_URL:-http://api:8000}
+    - ATS_TOKEN=${ATS_TOKEN}
+    - TZ=${TZ:-UTC}
+    - ATS_CAPABILITIES=${ATS_CAPABILITIES:-}
   networks:
     - app-network
   depends_on:
-    - api
+    api:
+      condition: service_healthy
+  restart: unless-stopped
 
 services:
+  # Infrastructure services
   db:
-    image: postgres:latest
+    image: postgres:17-alpine
     environment:
-      # Set a default user / password for the api. Change this for production use.
-      POSTGRES_USER: ats_user 
-      POSTGRES_PASSWORD: ats_password
-      POSTGRES_DB: ats
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     networks:
       - app-network
     volumes:
-      - db-data:/var/lib/postgresql/data  # Mount named volume to /var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Application services
   api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/odense-rpa/ats-backend:v0.2.0
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000"
     environment:
-      - TZ=Europe/Copenhagen
-      # Remember to set username and password for production use
-      - DATABASE_URL=postgresql://ats_user:ats_password@db:5432/ats
+      - TZ=${TZ:-UTC}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     networks:
       - app-network
+    restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/odense-rpa/ats-frontend:v0.2.0
     ports:
       - "80"
+    environment:
+      - TZ=${TZ:-UTC}
     networks:
       - app-network
-    environment:
-      - VITE_ATS_API_BASE_URL=/api  # Set environment variable
-      - TZ=Europe/Copenhagen
+    restart: unless-stopped
 
   proxy:
-    image: nginx:latest
+    image: nginx:1.25-alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${SSL_CERT_PATH:-./ssl}:/etc/ssl/certs:ro
     depends_on:
       - api
       - frontend
     networks:
       - app-network
+    restart: unless-stopped
 
+  # Worker services - scale as needed
   worker01:
     <<: *worker-template
     hostname: worker-01
@@ -76,6 +83,11 @@ services:
   worker02:
     <<: *worker-template
     hostname: worker-02
+
+  # Add more workers as needed:
+  # worker03:
+  #   <<: *worker-template
+  #   hostname: worker-03
 
 networks:
   app-network:

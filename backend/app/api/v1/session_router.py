@@ -12,7 +12,6 @@ import app.enums as enums
 from .schemas import (
     SessionCreate,
     SessionStatusUpdate,
-    SessionLogCreate,
 )
 
 from app.api.v1.schemas import PaginatedResponse, PaginatedSearchParams
@@ -175,30 +174,3 @@ def get_active_sessions_by_resource(
         return session
 
 
-@router.post(
-    "/{session_id}/log",
-    status_code=204,
-    responses={
-        204: {
-            "description": "Log has been created",
-            "content": {
-                "application/json": {"example": {"detail": "The log has been created"}}
-            },
-        }
-    }
-    | error_descriptions("Session", _404=True),
-)
-def add_session_log(
-    log: SessionLogCreate,
-    session: Session = Depends(get_session),
-    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
-    token: AccessToken = Depends(resolve_access_token),
-) -> None:
-    with uow:
-        data = log.model_dump()
-        data["session_id"] = session.id
-        data["created_at"] = datetime.now()
-
-        uow.sessionlogs.create(data)
-
-    return

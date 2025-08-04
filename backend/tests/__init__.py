@@ -229,7 +229,8 @@ def generate_basic_data(session: Session):
     )
 
     session.add(
-        models.SessionLog(
+        models.AuditLog(
+            event_timestamp=datetime.now(),
             session_id=1,
             message="Test log",
             created_at=datetime.now(),
@@ -237,7 +238,8 @@ def generate_basic_data(session: Session):
     )
     
     session.add(
-        models.SessionLog(
+        models.AuditLog(
+            event_timestamp=datetime.now(),
             session_id=1,
             workitem_id=1,
             message="Test log 2",
@@ -245,8 +247,8 @@ def generate_basic_data(session: Session):
         )
     )
 
-    session.add(models.SessionLog(session_id=3, message="Test log 3", created_at=datetime.now()))
-    session.add(models.SessionLog(session_id=3, message="Test log 3 - nothing to see here", created_at=datetime.now()))
-    session.add(models.SessionLog(session_id=3, message="Test log 3", created_at=datetime.now()))
+    session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
+    session.add(models.AuditLog(session_id=3, message="Test log 3 - nothing to see here", created_at=datetime.now(), event_timestamp=datetime.now()))
+    session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
 
     session.commit()
