@@ -39,7 +39,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.component }}${{ matrix.suffix }}
+          images: ghcr.io/${{ github.repository_owner }}/ats-${{ matrix.component }}${{ matrix.suffix }}
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
