@@ -1,3 +1,4 @@
+from email import message
 import json
 
 from typing import Optional, Dict, Any
@@ -31,7 +32,7 @@ class WorkqueueInformation(BaseModel):
     completed: int
     failed: int
     pending_user_action: int
-    
+
 class WorkItemCreate(BaseModel):
     data: Dict = {}
     reference: Optional[str] = ""
@@ -42,6 +43,7 @@ class WorkItemUpdate(BaseModel):
 
 class WorkItemStatusUpdate(BaseModel):
     status: enums.WorkItemStatus
+    message: Optional[str] = None
 
 class WorkItemRead(BaseModel):
     id: int
