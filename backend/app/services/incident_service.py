@@ -65,20 +65,15 @@ class IncidentService:
 
         Returns the number of incidents created.
         """
-        failed_sessions = self.session_repository.filter(
-            Session.status == SessionStatus.FAILED,
-            Session.deleted == False,  # noqa: E712
-        )
+        failed_sessions = self.session_repository.get_failed_without_incident()
 
         count = 0
         for session in failed_sessions:
-            existing = self.repository.get_by_session_id(session.id)
-            if existing is None:
-                try:
-                    self.create_incident_for_session(session)
-                    count += 1
-                except Exception as e:
-                    logger.error(f"Failed to create incident for session {session.id}: {e}")
+            try:
+                self.create_incident_for_session(session)
+                count += 1
+            except Exception as e:
+                logger.error(f"Failed to create incident for session {session.id}: {e}")
 
         return count
 
