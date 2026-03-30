@@ -69,7 +69,8 @@ async def get_new_sessions(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Session]:
-    return await uow.sessions.get_new_sessions()
+    async with uow:
+        return await uow.sessions.get_new_sessions()
 
 
 @router.get("/activity-summary", responses=error_descriptions("Session", _403=True))

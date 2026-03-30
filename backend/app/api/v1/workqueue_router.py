@@ -63,10 +63,11 @@ async def get_workqueues(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Workqueue]:
-    workqueues = await uow.workqueues.get_all(include_deleted)
-    sorted_workqueues = sorted(workqueues, key=lambda wq: wq.name)
+    async with uow:
+        workqueues = await uow.workqueues.get_all(include_deleted)
+        sorted_workqueues = sorted(workqueues, key=lambda wq: wq.name)
 
-    return sorted_workqueues
+        return sorted_workqueues
 
 
 @router.get("/information")
