@@ -1,8 +1,8 @@
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.enums as enums
 import app.database.models as models
+import app.enums as enums
 
 from . import generate_basic_data  # noqa: F401
 
@@ -71,12 +71,12 @@ async def test_incident_creation_is_idempotent(
 
     # Creating a second incident for the same session via the service
     from app.database.repository import (
-        IncidentRepository,
         AuditLogRepository,
-        SessionRepository,
+        IncidentRepository,
         ResourceRepository,
+        SessionRepository,
     )
-    from app.services import SessionService, IncidentService
+    from app.services import IncidentService, SessionService
 
     repo = IncidentRepository(session)
     auditlog_repo = AuditLogRepository(session)
@@ -255,8 +255,9 @@ async def test_error_trace_captured(session: AsyncSession, client: AsyncClient):
 
     # Create a session with process_id=1 and assign resource
     # Then add audit logs to it and fail it
-    from app.database.repository import SessionRepository
     from datetime import datetime
+
+    from app.database.repository import SessionRepository
 
     session_repo = SessionRepository(session)
 

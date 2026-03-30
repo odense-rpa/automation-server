@@ -1,9 +1,11 @@
 import secrets
 from datetime import datetime, timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.database.models import AccessToken
+
 from .database_repository import DatabaseRepository
 
 

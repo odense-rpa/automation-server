@@ -1,17 +1,17 @@
-import pytest
-import docker
+import os
 import random
 import time
-import os
-from alembic import command
+
+import docker
+import pytest
 from alembic.config import Config
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-
-from app.main import app
+from alembic import command
 from app.config import settings
 from app.database.session import get_session
+from app.main import app
 
 
 @pytest.fixture(scope="session")

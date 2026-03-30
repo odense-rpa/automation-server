@@ -1,16 +1,16 @@
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy.sql import func, case
-from sqlalchemy.types import String
 from sqlalchemy.ext.asyncio import AsyncSession as SqlAsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import cast, select, or_
+from sqlalchemy.sql import case, func
+from sqlalchemy.types import String
+from sqlmodel import cast, or_, select
 
-from app.database.models import Incident, Process, Session, AuditLog
 import app.enums as enums
+from app.database.models import AuditLog, Incident, Process, Session
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractSessionRepository(AbstractRepository[Session]):

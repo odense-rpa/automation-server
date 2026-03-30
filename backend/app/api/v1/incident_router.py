@@ -3,18 +3,18 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 
-from app.database.models import Incident, AccessToken
+from app.database.models import AccessToken, Incident
 from app.database.unit_of_work import AbstractUnitOfWork
 from app.enums import IncidentStatus
 from app.services import IncidentService
 
-from .schemas import IncidentResolve, PaginatedResponse
+from . import error_descriptions
 from .dependencies import (
-    get_unit_of_work,
     get_incident_service,
+    get_unit_of_work,
     resolve_access_token,
 )
-from . import error_descriptions
+from .schemas import IncidentResolve, PaginatedResponse
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 

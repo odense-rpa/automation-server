@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-from importlib.metadata import PackageNotFoundError, version as get_version
-from typing import Dict, Any
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as get_version
+from typing import Any, Dict
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,14 +1,14 @@
 from typing import List, Optional
 
 from sqlalchemy import update
-from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func
 from sqlmodel import select
 
-from app.database.models import Incident, Process
 import app.enums as enums
+from app.database.models import Incident, Process
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractIncidentRepository(AbstractRepository[Incident]):

@@ -1,7 +1,8 @@
-import pytest
 from datetime import datetime, timedelta
 
-from app.database.models import Session, Resource
+import pytest
+
+from app.database.models import Resource, Session
 from app.enums import SessionStatus
 from app.services import SessionService
 

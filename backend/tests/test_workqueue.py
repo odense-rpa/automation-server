@@ -1,11 +1,10 @@
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import Workqueue, WorkItem
-
+from app.database.models import WorkItem, Workqueue
+from app.enums import WorkItemStatus
 
 from . import generate_basic_data  # noqa: F401
-from app.enums import WorkItemStatus
 
 
 async def test_get_workqueues_information(session: AsyncSession, client: AsyncClient):

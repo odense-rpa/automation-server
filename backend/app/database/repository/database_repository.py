@@ -1,5 +1,5 @@
-from typing import Generic, TypeVar
 from datetime import datetime
+from typing import Generic, TypeVar
 
 from sqlalchemy import BinaryExpression
 from sqlalchemy.ext.asyncio import AsyncSession

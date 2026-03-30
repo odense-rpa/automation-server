@@ -1,7 +1,6 @@
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 from . import generate_basic_data  # noqa: F401
 
 

@@ -7,7 +7,8 @@ primarily used for the "Up Next" display feature.
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from cronsim import CronSim, CronSimError
 
 from app.database.models import Trigger

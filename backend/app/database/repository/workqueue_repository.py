@@ -1,20 +1,18 @@
 import abc
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import List, Optional
-from sqlalchemy.types import String
-
-from collections import defaultdict
 
 from sqlalchemy import or_
-from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, delete, cast
-
-from app.database.models import Workqueue, WorkItem
+from sqlalchemy.sql import func
+from sqlalchemy.types import String
+from sqlmodel import cast, delete, select
 
 import app.enums as enums
+from app.database.models import WorkItem, Workqueue
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):

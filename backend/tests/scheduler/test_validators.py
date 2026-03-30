@@ -2,12 +2,14 @@
 Tests for scheduler validators module.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from app.scheduler.validators import (
-    validate_parameters,
-    validate_cron_expression,
     process_trigger_with_validation,
+    validate_cron_expression,
+    validate_parameters,
 )
 
 

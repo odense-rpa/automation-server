@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Trigger
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractTriggerRepository(AbstractRepository[Trigger]):

@@ -1,9 +1,9 @@
-from typing import Optional
 from datetime import datetime, timedelta
+from typing import Optional
 
 from app.api.v1.schemas import PaginatedResponse
-from app.database.repository import SessionRepository, ResourceRepository
 from app.database.models import Session
+from app.database.repository import ResourceRepository, SessionRepository
 from app.enums import SessionStatus
 
 

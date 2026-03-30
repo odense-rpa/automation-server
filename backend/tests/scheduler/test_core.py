@@ -2,9 +2,10 @@
 Tests for scheduler core module.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 
 from app.scheduler.core import AutomationScheduler, scheduler_background_task
 

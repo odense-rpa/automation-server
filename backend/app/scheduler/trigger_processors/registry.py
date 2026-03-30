@@ -8,6 +8,7 @@ import logging
 from typing import Dict, Type
 
 from app.enums import TriggerType
+
 from .base import AbstractTriggerProcessor, ProcessingServices
 from .cron import CronTriggerProcessor
 from .date import DateTriggerProcessor

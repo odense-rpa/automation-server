@@ -1,30 +1,27 @@
-from fastapi import APIRouter, Depends, Response, Query
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi.exceptions import HTTPException
-
 from sqlalchemy.exc import IntegrityError
 
-from app.database.models import Workqueue, WorkItem, AccessToken
 import app.enums as enums
-
+from app.api.v1.schemas import PaginatedResponse
+from app.database.models import AccessToken, WorkItem, Workqueue
 from app.database.unit_of_work import AbstractUnitOfWork
+from app.services import WorkqueueService
 
-from .schemas import (
-    WorkqueueClear,
-    WorkqueueUpdate,
-    WorkqueueCreate,
-    WorkItemCreate,
-    WorkqueueInformation,
-    PaginatedSearchParams,
-)
 from .dependencies import (
-    get_unit_of_work,
     get_paginated_search_params,
+    get_unit_of_work,
     get_workqueue_service,
     resolve_access_token,
 )
-
-from app.api.v1.schemas import PaginatedResponse
-from app.services import WorkqueueService
+from .schemas import (
+    PaginatedSearchParams,
+    WorkItemCreate,
+    WorkqueueClear,
+    WorkqueueCreate,
+    WorkqueueInformation,
+    WorkqueueUpdate,
+)
 
 router = APIRouter(prefix="/workqueues", tags=["Workqueues"])
 

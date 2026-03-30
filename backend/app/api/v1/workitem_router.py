@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, Query
-from fastapi.exceptions import HTTPException
 from datetime import datetime
 
+from fastapi import APIRouter, Depends, Query
+from fastapi.exceptions import HTTPException
+
+from app.database.models import AccessToken, WorkItem
 from app.database.unit_of_work import AbstractUnitOfWork
-from app.database.models import WorkItem, AccessToken
 from app.enums import WorkItemStatus
 
 from .dependencies import get_unit_of_work, resolve_access_token
-from .schemas import WorkItemUpdate, WorkItemStatusUpdate, WorkItemRead
+from .schemas import WorkItemRead, WorkItemStatusUpdate, WorkItemUpdate
 
 router = APIRouter(prefix="/workitems", tags=["Workitems"])
 

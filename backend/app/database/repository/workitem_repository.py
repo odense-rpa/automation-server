@@ -1,15 +1,14 @@
 import abc
-
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, desc
+from sqlmodel import desc, select
 
-from app.database.models import WorkItem
 import app.enums as enums
+from app.database.models import WorkItem
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractWorkItemRepository(AbstractRepository[WorkItem]):

@@ -4,8 +4,8 @@ from typing import Optional
 from app.api.v1.schemas import PaginatedResponse
 from app.database.models import Incident, Session
 from app.database.repository import (
-    IncidentRepository,
     AuditLogRepository,
+    IncidentRepository,
     SessionRepository,
 )
 from app.enums import IncidentStatus

@@ -1,26 +1,21 @@
-from typing import Optional
 from datetime import datetime, timedelta
-from fastapi import Depends, Query, HTTPException, status
+from typing import Annotated, Optional
 
-from app.database.unit_of_work import AbstractUnitOfWork, UnitOfWork
+from fastapi import Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Annotated
 
-
-from app.database.session import get_session
-
-import app.database.repository as repositories
-import app.database.models as models
 import app.api.v1.schemas as schemas
-
+import app.database.models as models
+import app.database.repository as repositories
+from app.database.session import get_session
+from app.database.unit_of_work import AbstractUnitOfWork, UnitOfWork
 from app.security import oauth2_scheme
-
 from app.services import (
     AuditLogService,
-    SessionService,
-    ResourceService,
-    WorkqueueService,
     IncidentService,
+    ResourceService,
+    SessionService,
+    WorkqueueService,
 )
 
 

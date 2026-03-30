@@ -1,12 +1,12 @@
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 
-import app.database.models as models
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
+import app.database.models as models
+from app.enums import WorkItemStatus
 
 from . import generate_basic_data  # noqa: F401
-from app.enums import WorkItemStatus
 
 
 async def test_get_workitem(session: AsyncSession, client: AsyncClient):

@@ -1,15 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.database.models import Resource, AccessToken
-
-
-from app.services import ResourceService
+from app.database.models import AccessToken, Resource
 from app.database.unit_of_work import AbstractUnitOfWork
-
-from .schemas import ResourceCreate, ResourceUpdate
-from .dependencies import get_resource_service, resolve_access_token, get_unit_of_work
+from app.services import ResourceService
 
 from . import error_descriptions
+from .dependencies import get_resource_service, get_unit_of_work, resolve_access_token
+from .schemas import ResourceCreate, ResourceUpdate
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
 

@@ -1,9 +1,8 @@
 from typing import Optional
 
 from app.api.v1.schemas import PaginatedResponse
-from app.database.repository import WorkqueueRepository
-
 from app.database.models import WorkItem
+from app.database.repository import WorkqueueRepository
 from app.enums import WorkItemStatus
 
 

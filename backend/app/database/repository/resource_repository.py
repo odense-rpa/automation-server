@@ -1,12 +1,12 @@
 import abc
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select, or_
+from sqlmodel import or_, select
 
 from app.database.models import Resource, Session
 from app.enums import SessionStatus
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractResourceRepository(AbstractRepository[Resource]):

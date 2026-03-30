@@ -6,10 +6,11 @@ This module handles complex session-to-resource dispatching logic for the schedu
 
 import logging
 from datetime import datetime
-from app.services import ResourceService
+
+from app.database.models import Resource, Session
 from app.database.repository import SessionRepository
-from app.database.models import Session, Resource
 from app.enums import SessionStatus
+from app.services import ResourceService
 
 logger = logging.getLogger(__name__)
 

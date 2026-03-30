@@ -1,10 +1,10 @@
-from fastapi import Depends, HTTPException, APIRouter, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 
-from app.database.repository import AccessTokenRepository
 from app.database.models import AccessToken
+from app.database.repository import AccessTokenRepository
 
 from .dependencies import get_repository, resolve_access_token
-from .schemas import AccessTokenRead, AccessTokenCreate
+from .schemas import AccessTokenCreate, AccessTokenRead
 
 router = APIRouter(prefix="/accesstokens", tags=["Access Tokens"])
 

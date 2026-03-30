@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Depends, Query
-from fastapi.exceptions import HTTPException
 from typing import List
 
-from app.database.models import Trigger, AccessToken
+from fastapi import APIRouter, Depends, Query
+from fastapi.exceptions import HTTPException
 
+from app.database.models import AccessToken, Trigger
 from app.database.unit_of_work import AbstractUnitOfWork
-
-from .schemas import TriggerUpdate, UpcomingExecutionRead
-from .dependencies import get_unit_of_work, resolve_access_token
+from app.scheduler.upcoming_calculator import get_upcoming_executions
 
 from . import error_descriptions
-from app.scheduler.upcoming_calculator import get_upcoming_executions
+from .dependencies import get_unit_of_work, resolve_access_token
+from .schemas import TriggerUpdate, UpcomingExecutionRead
 
 router = APIRouter(prefix="/triggers", tags=["Triggers"])
 

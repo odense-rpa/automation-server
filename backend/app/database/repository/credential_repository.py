@@ -3,7 +3,7 @@ from sqlmodel import select
 
 from app.database.models import Credential
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
 
 
 class AbstractCredentialRepository(AbstractRepository[Credential]):

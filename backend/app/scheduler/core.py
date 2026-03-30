@@ -4,31 +4,32 @@ Core scheduler implementation.
 This module contains the refactored AutomationScheduler class using the modular architecture.
 """
 
-import logging
 import asyncio
+import logging
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.session import async_engine
+from app.config import settings
 from app.database.repository import (
-    TriggerRepository,
-    SessionRepository,
-    ResourceRepository,
-    WorkqueueRepository,
-    ProcessRepository,
     AuditLogRepository,
     IncidentRepository,
+    ProcessRepository,
+    ResourceRepository,
+    SessionRepository,
+    TriggerRepository,
+    WorkqueueRepository,
 )
+from app.database.session import async_engine
 from app.services import (
+    IncidentService,
     ResourceService,
     SessionService,
     WorkqueueService,
-    IncidentService,
 )
-from app.config import settings
-from .trigger_processors import ProcessingServices, TriggerProcessorRegistry
+
 from .dispatcher import ResourceDispatcher
+from .trigger_processors import ProcessingServices, TriggerProcessorRegistry
 
 logger = logging.getLogger(__name__)
 

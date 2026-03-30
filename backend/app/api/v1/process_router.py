@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-from app.database.models import Process, Trigger, AccessToken
-
-from .schemas import ProcessCreate, ProcessUpdate, TriggerCreate
-from .dependencies import resolve_access_token, get_unit_of_work
+import app.enums as enums
+from app.database.models import AccessToken, Process, Trigger
 from app.database.unit_of_work import AbstractUnitOfWork
 
-import app.enums as enums
 from . import error_descriptions
-
+from .dependencies import get_unit_of_work, resolve_access_token
+from .schemas import ProcessCreate, ProcessUpdate, TriggerCreate
 
 router = APIRouter(prefix="/processes", tags=["Processes"])
 

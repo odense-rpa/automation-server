@@ -1,27 +1,20 @@
 from fastapi import APIRouter, Depends
 
-from app.api.v1.schemas import PaginatedSearchParams, AuditLogCreate
-
-from app.database.models import AuditLog, WorkItem, Session, AccessToken
+from app.api.v1.schemas import AuditLogCreate, PaginatedResponse, PaginatedSearchParams
+from app.database.models import AccessToken, AuditLog, Session, WorkItem
 from app.database.unit_of_work import AbstractUnitOfWork
-
 from app.services import AuditLogService
 
 from . import error_descriptions
-
-from app.api.v1.schemas import PaginatedResponse
-
 from .dependencies import (
-    get_paginated_search_params,
     get_auditlog_service,
-    resolve_access_token,
+    get_paginated_search_params,
     get_unit_of_work,
+    resolve_access_token,
 )
-
 from .session_router import (
     get_session as get_session_dependency,
 )
-
 from .workitem_router import (
     get_workitem as get_workitem_dependency,
 )

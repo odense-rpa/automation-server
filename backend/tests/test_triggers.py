@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.enums as enums
 
-
 from . import generate_basic_data  # noqa: F401
 
 

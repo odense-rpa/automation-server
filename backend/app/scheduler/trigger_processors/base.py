@@ -10,14 +10,14 @@ from datetime import datetime
 
 from app.database.models import Trigger
 from app.database.repository import (
-    TriggerRepository,
-    SessionRepository,
-    ResourceRepository,
-    WorkqueueRepository,
     ProcessRepository,
+    ResourceRepository,
+    SessionRepository,
+    TriggerRepository,
+    WorkqueueRepository,
 )
-from app.services import SessionService, ResourceService, WorkqueueService
 from app.scheduler.validators import validate_parameters
+from app.services import ResourceService, SessionService, WorkqueueService
 
 logger = logging.getLogger(__name__)
 

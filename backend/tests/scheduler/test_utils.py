@@ -3,10 +3,11 @@ Tests for scheduler utils module.
 """
 
 from unittest.mock import MagicMock
+
 from app.scheduler.utils import (
-    parse_capabilities_or_requirements,
-    find_best_resource,
     calculate_required_sessions,
+    find_best_resource,
+    parse_capabilities_or_requirements,
     should_scale_up,
 )
 

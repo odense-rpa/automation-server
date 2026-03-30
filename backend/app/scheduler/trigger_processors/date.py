@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 
 from app.database.models import Trigger
+
 from .base import AbstractTriggerProcessor
 
 logger = logging.getLogger(__name__)

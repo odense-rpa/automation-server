@@ -6,10 +6,12 @@ This module implements the trigger processor for cron-based scheduling.
 
 import logging
 from datetime import datetime, timedelta
+
 from cronsim import CronSim
 
 from app.database.models import Trigger
 from app.scheduler.validators import validate_cron_expression
+
 from .base import AbstractTriggerProcessor
 
 logger = logging.getLogger(__name__)

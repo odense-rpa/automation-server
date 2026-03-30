@@ -1,15 +1,13 @@
-from typing import Annotated
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-
-from app.database.repository import AccessTokenRepository
-from app.database.models import AccessToken
 
 # from .schemas import CredentialCreate, CredentialUpdate
 from app.api.v1.dependencies import get_repository
-
+from app.database.models import AccessToken
+from app.database.repository import AccessTokenRepository
 
 router = APIRouter(prefix="/token", tags=["Oauth2"])
 

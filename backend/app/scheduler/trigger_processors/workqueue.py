@@ -11,9 +11,10 @@ from typing import List
 from app.database.models import Trigger
 from app.scheduler.utils import (
     calculate_required_sessions,
-    should_scale_up,
     find_best_resource,
+    should_scale_up,
 )
+
 from .base import AbstractTriggerProcessor
 
 logger = logging.getLogger(__name__)

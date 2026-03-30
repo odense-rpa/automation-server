@@ -3,34 +3,28 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-
-from app.database.unit_of_work import AbstractUnitOfWork
-
-from app.database.models import Session, Process, Resource, AccessToken
 import app.enums as enums
-
-from .schemas import (
-    SessionCreate,
-    SessionStatusUpdate,
-    ProcessActivitySummary,
-)
-
 from app.api.v1.schemas import PaginatedResponse, PaginatedSearchParams
-from app.services import SessionService
-
-from .dependencies import (
-    get_unit_of_work,
-    get_session_service,
-    get_incident_service,
-    get_paginated_search_params,
-    resolve_access_token,
-)
-from app.services import IncidentService
+from app.database.models import AccessToken, Process, Resource, Session
+from app.database.unit_of_work import AbstractUnitOfWork
+from app.services import IncidentService, SessionService
 
 from . import error_descriptions
+from .dependencies import (
+    get_incident_service,
+    get_paginated_search_params,
+    get_session_service,
+    get_unit_of_work,
+    resolve_access_token,
+)
 
 # We borrow the get_resource function from the resource_router module to check for a valid resource
 from .resource_router import get_resource
+from .schemas import (
+    ProcessActivitySummary,
+    SessionCreate,
+    SessionStatusUpdate,
+)
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 

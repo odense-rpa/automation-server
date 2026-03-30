@@ -1,5 +1,4 @@
 import abc
-
 from contextlib import AbstractAsyncContextManager
 
 from app.database import repository

@@ -1,10 +1,12 @@
-from fastapi import Depends, APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
-from app.database.models import Credential, AccessToken
+
+from app.database.models import AccessToken, Credential
 from app.database.unit_of_work import AbstractUnitOfWork
-from .schemas import CredentialCreate, CredentialUpdate
-from .dependencies import get_unit_of_work, resolve_access_token
+
 from . import error_descriptions
+from .dependencies import get_unit_of_work, resolve_access_token
+from .schemas import CredentialCreate, CredentialUpdate
 
 # Dependency Injection local to this router
 

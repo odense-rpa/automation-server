@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 
-from app.database.repository import SessionRepository, ResourceRepository
 from app.database.models import Resource
-
+from app.database.repository import ResourceRepository, SessionRepository
 from app.enums import SessionStatus
 
 
