@@ -1,7 +1,6 @@
 from typing import Optional
 from datetime import datetime, timedelta
-from fastapi import Depends, Query, HTTPException, status, Security
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, Query, HTTPException, status
 
 from app.database.unit_of_work import AbstractUnitOfWork, UnitOfWork
 from sqlalchemy.ext.asyncio import AsyncSession

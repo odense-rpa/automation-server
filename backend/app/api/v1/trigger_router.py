@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
-from typing import List, Dict, Any
-from datetime import datetime
+from typing import List
 
 from app.database.models import Trigger, AccessToken
 

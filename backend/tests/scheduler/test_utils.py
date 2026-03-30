@@ -2,7 +2,6 @@
 Tests for scheduler utils module.
 """
 
-import pytest
 from unittest.mock import MagicMock
 from app.scheduler.utils import (
     parse_capabilities_or_requirements,
