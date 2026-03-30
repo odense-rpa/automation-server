@@ -8,6 +8,7 @@ from app.database.models import AuditLog
 
 from .database_repository import DatabaseRepository, AbstractRepository
 
+
 class AbstractAuditLogRepository(AbstractRepository[AuditLog]):
     async def get_paginated(
         self,
@@ -36,7 +37,9 @@ class AbstractAuditLogRepository(AbstractRepository[AuditLog]):
     async def get_logs_by_workitem_id(self, workitem_id: int) -> List[AuditLog]:
         raise NotImplementedError
 
-    async def get_recent_logs_by_session_id(self, session_id: int, limit: int = 20) -> List[AuditLog]:
+    async def get_recent_logs_by_session_id(
+        self, session_id: int, limit: int = 20
+    ) -> List[AuditLog]:
         raise NotImplementedError
 
 
@@ -52,9 +55,7 @@ class AuditLogRepository(AbstractAuditLogRepository, DatabaseRepository[AuditLog
         limit: int = 10,
         include_deleted: bool = False,
     ) -> tuple[List[AuditLog], int]:
-        query = select(AuditLog).where(
-            AuditLog.session_id == session_id
-        )
+        query = select(AuditLog).where(AuditLog.session_id == session_id)
 
         if search:
             query = query.where(AuditLog.message.ilike(f"%{search}%"))
@@ -76,9 +77,7 @@ class AuditLogRepository(AbstractAuditLogRepository, DatabaseRepository[AuditLog
         skip: int = 0,
         limit: int = 10,
     ) -> List[AuditLog]:
-        query = select(AuditLog).where(
-            AuditLog.session_id == session_id
-        )
+        query = select(AuditLog).where(AuditLog.session_id == session_id)
 
         if search:
             query = query.where(AuditLog.message.contains(search))
@@ -97,16 +96,26 @@ class AuditLogRepository(AbstractAuditLogRepository, DatabaseRepository[AuditLog
         return (await self.session.execute(query)).scalar_one()
 
     async def get_logs_by_workitem_id(self, workitem_id: int) -> List[AuditLog]:
-        return list((await self.session.scalars(
-            select(AuditLog)
-            .where(AuditLog.workitem_id == workitem_id)
-            .order_by(AuditLog.created_at)
-        )).all())
+        return list(
+            (
+                await self.session.scalars(
+                    select(AuditLog)
+                    .where(AuditLog.workitem_id == workitem_id)
+                    .order_by(AuditLog.created_at)
+                )
+            ).all()
+        )
 
-    async def get_recent_logs_by_session_id(self, session_id: int, limit: int = 20) -> List[AuditLog]:
-        return list((await self.session.scalars(
-            select(AuditLog)
-            .where(AuditLog.session_id == session_id)
-            .order_by(AuditLog.event_timestamp.desc())
-            .limit(limit)
-        )).all())
+    async def get_recent_logs_by_session_id(
+        self, session_id: int, limit: int = 20
+    ) -> List[AuditLog]:
+        return list(
+            (
+                await self.session.scalars(
+                    select(AuditLog)
+                    .where(AuditLog.session_id == session_id)
+                    .order_by(AuditLog.event_timestamp.desc())
+                    .limit(limit)
+                )
+            ).all()
+        )

@@ -32,8 +32,6 @@ async def get_trigger(
         return trigger
 
 
-
-
 # Get triggers
 @router.get(
     "", response_model=list[Trigger], responses=error_descriptions("Trigger", _403=True)
@@ -85,7 +83,9 @@ async def delete_trigger(
     responses=error_descriptions("Trigger", _403=True),
 )
 async def get_upcoming_trigger_executions(
-    hours_ahead: int = Query(24, description="Hours ahead to look for executions", ge=1, le=168),
+    hours_ahead: int = Query(
+        24, description="Hours ahead to look for executions", ge=1, le=168
+    ),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ):
@@ -101,20 +101,22 @@ async def get_upcoming_trigger_executions(
         # Enhance with process information
         result = []
         for execution in upcoming:
-            trigger = execution['trigger']
+            trigger = execution["trigger"]
             process = await uow.processes.get(trigger.process_id)
 
             if process and not process.deleted:
-                result.append({
-                    'trigger_id': trigger.id,
-                    'process_id': trigger.process_id,
-                    'process_name': process.name,
-                    'process_description': process.description,
-                    'next_execution': execution['next_execution'].isoformat(),
-                    'trigger_type': execution['trigger_type'],
-                    'parameters': execution['parameters'],
-                    'cron': trigger.cron if trigger.type.value == 'cron' else None,
-                    'date': trigger.date.isoformat() if trigger.date else None
-                })
+                result.append(
+                    {
+                        "trigger_id": trigger.id,
+                        "process_id": trigger.process_id,
+                        "process_name": process.name,
+                        "process_description": process.description,
+                        "next_execution": execution["next_execution"].isoformat(),
+                        "trigger_type": execution["trigger_type"],
+                        "parameters": execution["parameters"],
+                        "cron": trigger.cron if trigger.type.value == "cron" else None,
+                        "date": trigger.date.isoformat() if trigger.date else None,
+                    }
+                )
 
         return result

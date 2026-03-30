@@ -55,7 +55,6 @@ async def get_session(
 # Error responses
 
 
-
 @router.get("", responses=error_descriptions("Session", _403=True))
 async def get_sessions(
     include_deleted: bool = False,

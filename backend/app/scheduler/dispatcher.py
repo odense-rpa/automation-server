@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 class ResourceDispatcher:
     """Handles dispatching of pending sessions to available resources."""
 
-    def __init__(self, resource_service: ResourceService, session_repository: SessionRepository):
+    def __init__(
+        self, resource_service: ResourceService, session_repository: SessionRepository
+    ):
         """Initialize the dispatcher with required services.
 
         Args:
@@ -63,7 +65,9 @@ class ResourceDispatcher:
 
         # Process each pending session
         for session in pending_sessions:
-            available_resources = await self.resource_service.repository.get_available_resources()
+            available_resources = (
+                await self.resource_service.repository.get_available_resources()
+            )
             requirements = session.process.requirements if session.process else ""
 
             best_resource = find_best_resource(requirements, available_resources)

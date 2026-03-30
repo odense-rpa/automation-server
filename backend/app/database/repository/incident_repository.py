@@ -39,17 +39,23 @@ class IncidentRepository(AbstractIncidentRepository, DatabaseRepository[Incident
         super().__init__(Incident, session)
 
     async def get_by_session_id(self, session_id: int) -> Optional[Incident]:
-        return (await self.session.scalars(
-            select(Incident).where(Incident.session_id == session_id)
-        )).first()
+        return (
+            await self.session.scalars(
+                select(Incident).where(Incident.session_id == session_id)
+            )
+        ).first()
 
     async def get_open_incidents(self) -> List[Incident]:
-        return list((await self.session.scalars(
-            select(Incident)
-            .where(Incident.status == enums.IncidentStatus.NEW)
-            .where(Incident.deleted == False)  # noqa: E712
-            .order_by(Incident.created_at.desc())
-        )).all())
+        return list(
+            (
+                await self.session.scalars(
+                    select(Incident)
+                    .where(Incident.status == enums.IncidentStatus.NEW)
+                    .where(Incident.deleted == False)  # noqa: E712
+                    .order_by(Incident.created_at.desc())
+                )
+            ).all()
+        )
 
     async def count_open_incidents(self) -> int:
         result = await self.session.execute(
@@ -83,21 +89,29 @@ class IncidentRepository(AbstractIncidentRepository, DatabaseRepository[Incident
             query = query.where(Incident.status == status)
 
         if search:
-            query = query.join(Incident.session).join(
-                Process, Process.id == Incident.process_id
-            ).filter(Process.name.ilike(f"%{search}%"))
+            query = (
+                query.join(Incident.session)
+                .join(Process, Process.id == Incident.process_id)
+                .filter(Process.name.ilike(f"%{search}%"))
+            )
 
         query = query.order_by(Incident.created_at.desc())
 
-        count_query = select(func.count()).select_from(Incident).where(
-            Incident.deleted == False  # noqa: E712
+        count_query = (
+            select(func.count())
+            .select_from(Incident)
+            .where(
+                Incident.deleted == False  # noqa: E712
+            )
         )
         if status is not None:
             count_query = count_query.where(Incident.status == status)
         if search:
-            count_query = count_query.join(Incident.session).join(
-                Process, Process.id == Incident.process_id
-            ).filter(Process.name.ilike(f"%{search}%"))
+            count_query = (
+                count_query.join(Incident.session)
+                .join(Process, Process.id == Incident.process_id)
+                .filter(Process.name.ilike(f"%{search}%"))
+            )
 
         total_count = (await self.session.execute(count_query)).scalar_one()
 

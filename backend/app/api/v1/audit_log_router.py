@@ -36,12 +36,13 @@ async def create_log(
     token: AccessToken = Depends(resolve_access_token),
 ) -> None:
     async with uow:
-
         await uow.auditlogs.create(log.model_dump())
         await uow.commit()
 
 
-@router.get("/{session_id}", responses=error_descriptions("Session", _403=True, _404=True))
+@router.get(
+    "/{session_id}", responses=error_descriptions("Session", _403=True, _404=True)
+)
 async def get_auditlogs(
     paginated_search: PaginatedSearchParams = Depends(get_paginated_search_params),
     session: Session = Depends(get_session_dependency),
@@ -56,7 +57,10 @@ async def get_auditlogs(
     )
 
 
-@router.get("/by_workitem/{item_id}", responses=error_descriptions("WorkItem", _403=True, _404=True, _410=True))
+@router.get(
+    "/by_workitem/{item_id}",
+    responses=error_descriptions("WorkItem", _403=True, _404=True, _410=True),
+)
 async def get_by_workitem(
     workitem: WorkItem = Depends(get_workitem_dependency),
     service: AuditLogService = Depends(get_auditlog_service),

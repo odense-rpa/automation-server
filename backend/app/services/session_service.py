@@ -8,7 +8,11 @@ from app.enums import SessionStatus
 
 
 class SessionService:
-    def __init__(self, session_repository: SessionRepository, resource_repository: ResourceRepository):
+    def __init__(
+        self,
+        session_repository: SessionRepository,
+        resource_repository: ResourceRepository,
+    ):
         self.repository = session_repository
         self.resource_repository = resource_repository
 
@@ -57,19 +61,23 @@ class SessionService:
         The sessions needs to have been dispatched at least 4 hours ago."""
         sessions = await self.repository.get_active_sessions()
 
-        sessions = [session for session in sessions if session.status == SessionStatus.IN_PROGRESS]
+        sessions = [
+            session
+            for session in sessions
+            if session.status == SessionStatus.IN_PROGRESS
+        ]
 
         for session in sessions:
-            if (
-                session.dispatched_at < datetime.now() - timedelta(hours=4)
-            ):
+            if session.dispatched_at < datetime.now() - timedelta(hours=4):
                 resource = await self.resource_repository.get(session.resource_id)
 
                 if resource is None or resource.deleted:
                     await self.repository.update(session, {"status": "failed"})
                     continue
 
-    async def create_session(self, process_id: int, force: bool = False, parameters: str = None) -> Optional[Session]:
+    async def create_session(
+        self, process_id: int, force: bool = False, parameters: str = None
+    ) -> Optional[Session]:
         """Create a new session for the given process.
 
         Args:

@@ -11,15 +11,17 @@ import app.enums as enums
 
 from .database_repository import DatabaseRepository, AbstractRepository
 
+
 class AbstractWorkItemRepository(AbstractRepository[WorkItem]):
     @abc.abstractmethod
     async def get_next_item(self, queue_id: int):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_by_reference(self, reference: str, status: enums.WorkItemStatus | None = None) -> list[WorkItem]:
+    async def get_by_reference(
+        self, reference: str, status: enums.WorkItemStatus | None = None
+    ) -> list[WorkItem]:
         raise NotImplementedError
-
 
 
 class WorkItemRepository(DatabaseRepository[WorkItem]):
@@ -46,15 +48,19 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
                     transaction handling, after rolling back any changes.
         """
         try:
-            item = (await self.session.scalars(
-                select(WorkItem)
-                .where(WorkItem.workqueue_id == queue_id)
-                .where(WorkItem.locked == False)  # noqa: E712
-                .where(WorkItem.status == enums.WorkItemStatus.NEW)
-                .order_by(WorkItem.created_at)
-                .limit(1)
-                .with_for_update(skip_locked=True)  # Use skip_locked to avoid waiting for locked rows
-            )).first()
+            item = (
+                await self.session.scalars(
+                    select(WorkItem)
+                    .where(WorkItem.workqueue_id == queue_id)
+                    .where(WorkItem.locked == False)  # noqa: E712
+                    .where(WorkItem.status == enums.WorkItemStatus.NEW)
+                    .order_by(WorkItem.created_at)
+                    .limit(1)
+                    .with_for_update(
+                        skip_locked=True
+                    )  # Use skip_locked to avoid waiting for locked rows
+                )
+            ).first()
 
             if item is None:
                 return None
@@ -71,14 +77,14 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
             await self.session.rollback()
             raise
 
-    async def get_by_reference(self, reference: str, status: enums.WorkItemStatus | None = None) -> list[WorkItem]:
+    async def get_by_reference(
+        self, reference: str, status: enums.WorkItemStatus | None = None
+    ) -> list[WorkItem]:
         """Get work items by reference value, optionally filtered by status, sorted newest to oldest."""
         if not reference or reference.strip() == "":
             return []
 
-        query = select(WorkItem).where(
-            WorkItem.reference == reference
-        )
+        query = select(WorkItem).where(WorkItem.reference == reference)
 
         if status is not None:
             query = query.where(WorkItem.status == status)

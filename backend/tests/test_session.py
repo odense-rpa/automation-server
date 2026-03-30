@@ -5,6 +5,7 @@ import app.enums as enums
 
 from . import generate_basic_data  # noqa: F401
 
+
 async def test_get_sessions(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -26,6 +27,7 @@ async def test_get_sessions(session: AsyncSession, client: AsyncClient):
     data = response.json()
     assert len(data["items"]) == 4
 
+
 async def test_get_session(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -39,6 +41,7 @@ async def test_get_session(session: AsyncSession, client: AsyncClient):
     assert data["status"] == enums.SessionStatus.NEW
     assert data["dispatched_at"] is None
 
+
 async def test_update_status_fail(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -50,7 +53,7 @@ async def test_update_status_fail(session: AsyncSession, client: AsyncClient):
         },
     )
     assert response.status_code == 400
-    assert response.json()['detail'] == "Resource must be assigned to update status"
+    assert response.json()["detail"] == "Resource must be assigned to update status"
 
     # Change status to FAILED from NEW which is invalid
     response = await client.put(
@@ -60,7 +63,7 @@ async def test_update_status_fail(session: AsyncSession, client: AsyncClient):
         },
     )
     assert response.status_code == 400
-    assert response.json()['detail'] == "Invalid status transition"
+    assert response.json()["detail"] == "Invalid status transition"
 
     # Attempt to change status of a non-existent session
     response = await client.put(
@@ -70,6 +73,7 @@ async def test_update_status_fail(session: AsyncSession, client: AsyncClient):
         },
     )
     assert response.status_code == 404
+
 
 async def test_get_new_sessions(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -84,7 +88,9 @@ async def test_get_new_sessions(session: AsyncSession, client: AsyncClient):
     assert data[0]["status"] == enums.SessionStatus.NEW
 
 
-async def test_session_reset_on_resource_detach(session: AsyncSession, client: AsyncClient):
+async def test_session_reset_on_resource_detach(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     response = await client.get("/sessions/4")
@@ -105,6 +111,7 @@ async def test_session_reset_on_resource_detach(session: AsyncSession, client: A
     assert data["status"] == enums.SessionStatus.NEW
     assert data["dispatched_at"] is None
 
+
 async def test_create_session(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -124,6 +131,7 @@ async def test_create_session(session: AsyncSession, client: AsyncClient):
     data = response.json()
     assert data["process_id"] == 1
     assert data["status"] == enums.SessionStatus.NEW
+
 
 async def test_get_session_by_resource_id(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -152,7 +160,10 @@ async def test_get_paginated_sessions(session: AsyncSession, client: AsyncClient
     data = response.json()
     assert data["total_items"] == 4
 
-async def test_get_paginated_sessions_with_search(session: AsyncSession, client: AsyncClient):
+
+async def test_get_paginated_sessions_with_search(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     response = await client.get("/sessions/?search=cess&page=1&size=2")
@@ -160,5 +171,3 @@ async def test_get_paginated_sessions_with_search(session: AsyncSession, client:
 
     data = response.json()
     assert data["total_items"] == 3
-
-

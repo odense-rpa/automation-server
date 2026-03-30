@@ -92,7 +92,7 @@ def upgrade() -> None:
         sa.Column("capabilities", sa.String(), nullable=False),
         sa.Column("available", sa.Boolean(), nullable=False),
         sa.Column("last_seen", sa.DateTime(), nullable=True),
-        sa.Column("deleted", sa.Boolean(), nullable=False,default=False),
+        sa.Column("deleted", sa.Boolean(), nullable=False, default=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),

@@ -12,9 +12,11 @@ class AccessTokenRepository(DatabaseRepository[AccessToken]):
         super().__init__(AccessToken, session)
 
     async def get_by_identifier(self, identifier: str) -> AccessToken:
-        return (await self.session.scalars(
-            select(AccessToken).filter(AccessToken.identifier == identifier)
-        )).first()
+        return (
+            await self.session.scalars(
+                select(AccessToken).filter(AccessToken.identifier == identifier)
+            )
+        ).first()
 
     async def create(self, identifier: str) -> AccessToken:
         # Generate a random 128 character string for the token

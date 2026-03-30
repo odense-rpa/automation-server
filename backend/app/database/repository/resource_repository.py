@@ -22,20 +22,22 @@ class AbstractResourceRepository(AbstractRepository[Resource]):
     async def is_resource_available(self, resource: Resource) -> bool:
         raise NotImplementedError
 
+
 class ResourceRepository(AbstractResourceRepository, DatabaseRepository[Resource]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(Resource, session)
 
     async def get_by_fqdn(self, fqdn: str) -> Resource | None:
-        return (await self.session.scalars(
-            select(Resource).where(Resource.fqdn == fqdn)
-        )).first()
+        return (
+            await self.session.scalars(select(Resource).where(Resource.fqdn == fqdn))
+        ).first()
 
     async def get_available_resources(self) -> list[Resource]:
-        resources = (await self.session.scalars(
-            select(Resource)
-            .where(Resource.deleted == False)  # noqa: E712
-        )).all()
+        resources = (
+            await self.session.scalars(
+                select(Resource).where(Resource.deleted == False)  # noqa: E712
+            )
+        ).all()
 
         result = []
         for resource in resources:
@@ -45,10 +47,17 @@ class ResourceRepository(AbstractResourceRepository, DatabaseRepository[Resource
 
     async def is_resource_available(self, resource: Resource) -> bool:
 
-        sessions = (await self.session.scalars(
-            select(Session)
-            .where(Session.resource_id == resource.id)
-            .where(or_(Session.status == SessionStatus.NEW, Session.status == SessionStatus.IN_PROGRESS))
-        )).all()
+        sessions = (
+            await self.session.scalars(
+                select(Session)
+                .where(Session.resource_id == resource.id)
+                .where(
+                    or_(
+                        Session.status == SessionStatus.NEW,
+                        Session.status == SessionStatus.IN_PROGRESS,
+                    )
+                )
+            )
+        ).all()
 
         return len(sessions) == 0

@@ -25,18 +25,20 @@ async def health_check() -> Dict[str, Any]:
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "version": APP_VERSION
+        "version": APP_VERSION,
     }
 
 
 @router.get("/ready", response_model=Dict[str, Any])
-async def readiness_check(session: AsyncSession = Depends(get_session)) -> Dict[str, Any]:
+async def readiness_check(
+    session: AsyncSession = Depends(get_session),
+) -> Dict[str, Any]:
     """Readiness check that includes database connectivity."""
     response = {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": APP_VERSION,
-        "database": "unknown"
+        "database": "unknown",
     }
 
     try:

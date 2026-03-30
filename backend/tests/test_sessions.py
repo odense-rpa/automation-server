@@ -3,12 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import generate_basic_data  # noqa: F401
 
+
 async def test_get_session_logs(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
     response = await client.get("/audit-logs/525")
     assert response.status_code == 404
-
 
     response = await client.get("/audit-logs/1")
     assert response.status_code == 200

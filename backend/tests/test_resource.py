@@ -21,6 +21,7 @@ async def test_get_resources(session: AsyncSession, client: AsyncClient):
     data = response.json()
     assert len(data) == 4
 
+
 async def test_get_resource(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -31,6 +32,7 @@ async def test_get_resource(session: AsyncSession, client: AsyncClient):
     assert data["name"] == "resource"
     assert data["fqdn"] == "resource.example.com"
     assert data["deleted"] is False
+
 
 async def test_create_resource(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -51,6 +53,7 @@ async def test_create_resource(session: AsyncSession, client: AsyncClient):
     assert data["fqdn"] == "resource3.example.com"
     assert data["available"] is True
     assert data["last_seen"] is not None
+
 
 async def test_resource_should_expire(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -92,7 +95,10 @@ async def test_update_resource(session: AsyncSession, client: AsyncClient):
     assert data["available"] is True
     assert data["last_seen"] is not None
 
-async def test_update_resource_preserve_available(session: AsyncSession, client: AsyncClient):
+
+async def test_update_resource_preserve_available(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     response = await client.put(

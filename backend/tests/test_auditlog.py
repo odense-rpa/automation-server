@@ -27,11 +27,13 @@ async def test_get_nonexistant_session(session: AsyncSession, client: AsyncClien
     assert response.status_code == 404
     assert data["detail"] == "Session not found"
 
+
 async def test_get_deleted_session(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
     response = await client.get("/audit-logs/2?page=1&size=10")
     assert response.status_code == 410
+
 
 async def test_search_sessionlogs(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -60,10 +62,13 @@ async def test_create_audit_log(session: AsyncSession, client: AsyncClient):
 
     try:
         # Test minimal required fields
-        response = await client.post("/audit-logs", json={
-            "message": "Test log message",
-            "event_timestamp": datetime.now().isoformat()
-        })
+        response = await client.post(
+            "/audit-logs",
+            json={
+                "message": "Test log message",
+                "event_timestamp": datetime.now().isoformat(),
+            },
+        )
 
         if response.status_code != 204:
             print(f"Response status: {response.status_code}")
@@ -72,43 +77,49 @@ async def test_create_audit_log(session: AsyncSession, client: AsyncClient):
         assert response.status_code == 204
 
         # Test with session_id
-        response = await client.post("/audit-logs", json={
-            "message": "Test log message with session",
-            "session_id": 1,
-            "event_timestamp": datetime.now().isoformat()
-        })
+        response = await client.post(
+            "/audit-logs",
+            json={
+                "message": "Test log message with session",
+                "session_id": 1,
+                "event_timestamp": datetime.now().isoformat(),
+            },
+        )
 
         assert response.status_code == 204
     except Exception as e:
         print(f"Exception: {type(e).__name__}: {e}")
         import traceback
+
         traceback.print_exc()
         raise
 
 
-async def test_create_audit_log_with_all_fields(session: AsyncSession, client: AsyncClient):
+async def test_create_audit_log_with_all_fields(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
-    response = await client.post("/audit-logs", json={
-        "message": "Detailed log message",
-        "session_id": 1,
-        "workitem_id": 1,
-        "level": "ERROR",
-        "logger_name": "test.logger",
-        "module": "test_module",
-        "function_name": "test_function",
-        "line_number": 42,
-        "event_timestamp": datetime.now().isoformat(),
-        "exception_type": "ValueError",
-        "exception_message": "Invalid value",
-        "traceback": "Traceback...",
-        "structured_data": {
-            "http_call": {
-                "method": "POST",
-                "url": "https://api.example.com/test"
-            }
-        }
-    })
+    response = await client.post(
+        "/audit-logs",
+        json={
+            "message": "Detailed log message",
+            "session_id": 1,
+            "workitem_id": 1,
+            "level": "ERROR",
+            "logger_name": "test.logger",
+            "module": "test_module",
+            "function_name": "test_function",
+            "line_number": 42,
+            "event_timestamp": datetime.now().isoformat(),
+            "exception_type": "ValueError",
+            "exception_message": "Invalid value",
+            "traceback": "Traceback...",
+            "structured_data": {
+                "http_call": {"method": "POST", "url": "https://api.example.com/test"}
+            },
+        },
+    )
 
     assert response.status_code == 204
 
@@ -117,9 +128,7 @@ async def test_create_audit_log_validation(session: AsyncSession, client: AsyncC
     await generate_basic_data(session)
 
     # Missing required field 'message'
-    response = await client.post("/audit-logs", json={
-        "session_id": 1
-    })
+    response = await client.post("/audit-logs", json={"session_id": 1})
 
     assert response.status_code == 422
 

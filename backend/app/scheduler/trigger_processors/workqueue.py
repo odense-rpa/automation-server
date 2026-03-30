@@ -9,7 +9,11 @@ from datetime import datetime
 from typing import List
 
 from app.database.models import Trigger
-from app.scheduler.utils import calculate_required_sessions, should_scale_up, find_best_resource
+from app.scheduler.utils import (
+    calculate_required_sessions,
+    should_scale_up,
+    find_best_resource,
+)
 from .base import AbstractTriggerProcessor
 
 logger = logging.getLogger(__name__)
@@ -18,7 +22,9 @@ logger = logging.getLogger(__name__)
 class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
     """Processor for workqueue-based triggers."""
 
-    async def _process_trigger(self, trigger: Trigger, validated_params: str, now: datetime) -> bool:
+    async def _process_trigger(
+        self, trigger: Trigger, validated_params: str, now: datetime
+    ) -> bool:
         """Process a workqueue trigger.
 
         Args:
@@ -39,7 +45,9 @@ class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
                 return True  # Skip disabled workqueues
 
             # Check for pending work items
-            pending_items = await self.services.workqueue_service.count_pending_items(trigger.workqueue_id)
+            pending_items = await self.services.workqueue_service.count_pending_items(
+                trigger.workqueue_id
+            )
 
             # Calculate how many sessions we need
             required_sessions = calculate_required_sessions(
@@ -50,10 +58,14 @@ class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
                 return True  # No work to do
 
             # Check current active sessions for this process
-            active_sessions = await self._get_active_sessions_for_process(trigger.process_id)
+            active_sessions = await self._get_active_sessions_for_process(
+                trigger.process_id
+            )
 
             # Decide if we should scale up
-            if should_scale_up(active_sessions, required_sessions, trigger.workqueue_resource_limit):
+            if should_scale_up(
+                active_sessions, required_sessions, trigger.workqueue_resource_limit
+            ):
                 logger.info(
                     f"Triggering workqueue trigger {trigger.id}. "
                     f"Required: {min(required_sessions, trigger.workqueue_resource_limit)}, "
@@ -63,9 +75,13 @@ class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
                 # Check if resources are available before creating session
                 if await self._are_resources_available(trigger):
                     # Only trigger one session per tick to allow other processes to scale
-                    return await self._create_session(trigger, validated_params, force=True)
+                    return await self._create_session(
+                        trigger, validated_params, force=True
+                    )
                 else:
-                    logger.debug(f"No resources available for workqueue trigger {trigger.id}")
+                    logger.debug(
+                        f"No resources available for workqueue trigger {trigger.id}"
+                    )
                     return True
 
             return True
@@ -88,7 +104,9 @@ class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
                 logger.error(f"Workqueue trigger {trigger.id} has no workqueue_id")
                 return None
 
-            workqueue = await self.services.workqueue_repository.get(trigger.workqueue_id)
+            workqueue = await self.services.workqueue_repository.get(
+                trigger.workqueue_id
+            )
 
             if workqueue is None:
                 logger.error(f"Workqueue {trigger.workqueue_id} does not exist")
@@ -110,9 +128,12 @@ class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
             List of active sessions for the process
         """
         try:
-            active_sessions = await self.services.session_repository.get_active_sessions()
+            active_sessions = (
+                await self.services.session_repository.get_active_sessions()
+            )
             return [
-                session for session in active_sessions
+                session
+                for session in active_sessions
                 if session.process_id == process_id
             ]
 
@@ -133,14 +154,20 @@ class WorkqueueTriggerProcessor(AbstractTriggerProcessor):
             # Get the process to check its requirements
             process = await self.services.process_repository.get(trigger.process_id)
             if process is None:
-                logger.error(f"Process {trigger.process_id} not found for trigger {trigger.id}")
+                logger.error(
+                    f"Process {trigger.process_id} not found for trigger {trigger.id}"
+                )
                 return False
 
             # Get available resources
-            available_resources = await self.services.resource_repository.get_available_resources()
+            available_resources = (
+                await self.services.resource_repository.get_available_resources()
+            )
 
             # Check if any resource can satisfy the requirements
-            best_resource = find_best_resource(process.requirements, available_resources)
+            best_resource = find_best_resource(
+                process.requirements, available_resources
+            )
 
             return best_resource is not None
 

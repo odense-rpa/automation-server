@@ -46,6 +46,7 @@ async def create_access_token(
 ) -> AccessToken:
     return await repository.create(identifier.identifier)
 
+
 @router.delete("/{access_token_id}")
 async def delete_access_token(
     access_token_id: str,

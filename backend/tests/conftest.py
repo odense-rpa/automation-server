@@ -13,6 +13,7 @@ from app.main import app
 from app.config import settings
 from app.database.session import get_session
 
+
 @pytest.fixture(scope="session")
 def docker_postgresql_container():
     """Create PostgreSQL Docker container for testing session."""
@@ -47,12 +48,13 @@ def docker_postgresql_container():
             try:
                 # Try to connect using psycopg2
                 import psycopg2
+
                 conn = psycopg2.connect(
                     host="localhost",
                     port=port,
                     database="postgres",
                     user="test_user",
-                    password="test_password"
+                    password="test_password",
                 )
                 conn.close()
                 break
@@ -116,9 +118,7 @@ async def client_fixture(session: AsyncSession):
     app.dependency_overrides[get_session] = get_session_override
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test",
-        follow_redirects=True
+        transport=ASGITransport(app=app), base_url="http://test", follow_redirects=True
     ) as client:
         yield client
 

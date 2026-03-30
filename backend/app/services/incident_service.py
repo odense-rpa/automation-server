@@ -33,7 +33,11 @@ class IncidentService:
         if existing is not None:
             return existing
 
-        logs = list(reversed(await self.auditlog_repository.get_recent_logs_by_session_id(session.id)))
+        logs = list(
+            reversed(
+                await self.auditlog_repository.get_recent_logs_by_session_id(session.id)
+            )
+        )
         error_trace = [
             {
                 "message": log.message,
@@ -45,7 +49,9 @@ class IncidentService:
                 "exception_type": log.exception_type,
                 "exception_message": log.exception_message,
                 "traceback": log.traceback,
-                "event_timestamp": log.event_timestamp.isoformat() if log.event_timestamp else None,
+                "event_timestamp": log.event_timestamp.isoformat()
+                if log.event_timestamp
+                else None,
             }
             for log in logs
         ]
@@ -120,7 +126,9 @@ class IncidentService:
         status: Optional[IncidentStatus] = None,
     ) -> PaginatedResponse[Incident]:
         skip = (page - 1) * size
-        incidents, total_items = await self.repository.get_paginated(search, status, skip, size)
+        incidents, total_items = await self.repository.get_paginated(
+            search, status, skip, size
+        )
         total_pages = (total_items + size - 1) // size
 
         return PaginatedResponse[Incident](

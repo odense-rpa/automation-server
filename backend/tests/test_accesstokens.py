@@ -2,7 +2,6 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-
 from . import generate_basic_data  # noqa: F401
 
 
@@ -10,8 +9,9 @@ async def test_get_accesstoken_no_token(session: AsyncSession, client: AsyncClie
     await generate_basic_data(session)
     response = await client.get("/accesstokens/")
 
-    assert response.text == '[]'
+    assert response.text == "[]"
     assert response.status_code == 200
+
 
 async def test_get_accesstokens(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -53,7 +53,10 @@ async def test_get_accesstokens(session: AsyncSession, client: AsyncClient):
     assert data[1]["identifier"] == "UnusedAccessToken2"
     assert len(data) == 2
 
-async def test_create_and_access_without_token(session: AsyncSession, client: AsyncClient):
+
+async def test_create_and_access_without_token(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     # Create a new access token
@@ -74,6 +77,7 @@ async def test_create_and_access_without_token(session: AsyncSession, client: As
 
     assert response.status_code == 401
 
+
 async def test_delete_accesstoken(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -92,8 +96,7 @@ async def test_delete_accesstoken(session: AsyncSession, client: AsyncClient):
     # Delete the access token
     response = await client.delete(
         "/accesstokens/1",
-        headers={"Authorization": f"Bearer {access_token}"},)
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
 
     assert response.status_code == 204
-
-

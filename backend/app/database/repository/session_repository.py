@@ -59,12 +59,14 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         Returns:
             models.Session | None: The first active session for the given resource ID, or None if no such session exists.
         """
-        return (await self.session.scalars(
-            select(Session)
-            .where(Session.resource_id == resource_id)
-            .where(Session.status != enums.SessionStatus.COMPLETED)
-            .where(Session.status != enums.SessionStatus.FAILED)
-        )).first()
+        return (
+            await self.session.scalars(
+                select(Session)
+                .where(Session.resource_id == resource_id)
+                .where(Session.status != enums.SessionStatus.COMPLETED)
+                .where(Session.status != enums.SessionStatus.FAILED)
+            )
+        ).first()
 
     async def get_new_sessions(self) -> list[Session]:
         """
@@ -75,13 +77,17 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         Returns:
             list[models.Session]: A list of all new sessions. Even if they are assigned to a resource.
         """
-        return list((await self.session.scalars(
-            select(Session)
-            .where(Session.status == enums.SessionStatus.NEW)
-            .where(Session.deleted == False)  # noqa: E712
-            .order_by(Session.created_at)
-            .options(selectinload(Session.process))
-        )).all())
+        return list(
+            (
+                await self.session.scalars(
+                    select(Session)
+                    .where(Session.status == enums.SessionStatus.NEW)
+                    .where(Session.deleted == False)  # noqa: E712
+                    .order_by(Session.created_at)
+                    .options(selectinload(Session.process))
+                )
+            ).all()
+        )
 
     async def get_active_sessions(self) -> list[Session]:
         """
@@ -92,27 +98,35 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         Returns:
             list[models.Session]: A list of all active sessions. Even if they are assigned to a resource.
         """
-        return list((await self.session.scalars(
-            select(Session)
-            .where(
-                or_(
-                    Session.status == enums.SessionStatus.NEW,
-                    Session.status == enums.SessionStatus.IN_PROGRESS,
+        return list(
+            (
+                await self.session.scalars(
+                    select(Session)
+                    .where(
+                        or_(
+                            Session.status == enums.SessionStatus.NEW,
+                            Session.status == enums.SessionStatus.IN_PROGRESS,
+                        )
+                    )
+                    .where(Session.deleted == False)  # noqa: E712
+                    .order_by(Session.created_at)
                 )
-            )
-            .where(Session.deleted == False)  # noqa: E712
-            .order_by(Session.created_at)
-        )).all())
+            ).all()
+        )
 
     async def get_failed_without_incident(self) -> list[Session]:
         """Return all failed, non-deleted sessions that have no corresponding incident."""
-        return list((await self.session.scalars(
-            select(Session)
-            .outerjoin(Incident, Incident.session_id == Session.id)
-            .where(Session.status == enums.SessionStatus.FAILED)
-            .where(Session.deleted == False)  # noqa: E712
-            .where(Incident.id.is_(None))
-        )).all())
+        return list(
+            (
+                await self.session.scalars(
+                    select(Session)
+                    .outerjoin(Incident, Incident.session_id == Session.id)
+                    .where(Session.status == enums.SessionStatus.FAILED)
+                    .where(Session.deleted == False)  # noqa: E712
+                    .where(Incident.id.is_(None))
+                )
+            ).all()
+        )
 
     async def create_log(self, log_entry: dict) -> AuditLog:
         """
@@ -138,10 +152,18 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             select(
                 Session.process_id,
                 Process.name,
-                func.count(case((Session.status == enums.SessionStatus.COMPLETED, 1))).label("completed"),
-                func.count(case((Session.status == enums.SessionStatus.FAILED, 1))).label("failed"),
-                func.count(case((Session.status == enums.SessionStatus.IN_PROGRESS, 1))).label("in_progress"),
-                func.count(case((Session.status == enums.SessionStatus.NEW, 1))).label("new"),
+                func.count(
+                    case((Session.status == enums.SessionStatus.COMPLETED, 1))
+                ).label("completed"),
+                func.count(
+                    case((Session.status == enums.SessionStatus.FAILED, 1))
+                ).label("failed"),
+                func.count(
+                    case((Session.status == enums.SessionStatus.IN_PROGRESS, 1))
+                ).label("in_progress"),
+                func.count(case((Session.status == enums.SessionStatus.NEW, 1))).label(
+                    "new"
+                ),
                 func.max(Session.created_at).label("last_activity"),
             )
             .join(Process, Session.process_id == Process.id)
@@ -149,7 +171,9 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             .where(
                 or_(
                     Session.created_at >= since,
-                    Session.status.in_([enums.SessionStatus.NEW, enums.SessionStatus.IN_PROGRESS]),
+                    Session.status.in_(
+                        [enums.SessionStatus.NEW, enums.SessionStatus.IN_PROGRESS]
+                    ),
                 )
             )
             .group_by(Session.process_id, Process.name)
@@ -195,7 +219,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
 
         count_query = select(func.count()).select_from(Session)
         if query.whereclause is not None:
-            if search: # If search is active, the join to Process is active
+            if search:  # If search is active, the join to Process is active
                 count_query = count_query.join(Session.process)
 
             count_query = count_query.where(query.whereclause)

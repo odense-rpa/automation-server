@@ -69,8 +69,12 @@ async def test_update_item_status_failed(session: AsyncSession, client: AsyncCli
     assert workitem.locked is False
 
 
-async def test_update_item_status_user_pending(session: AsyncSession, client: AsyncClient):
-    workitem = await _start_item_update(session, client, WorkItemStatus.PENDING_USER_ACTION)
+async def test_update_item_status_user_pending(
+    session: AsyncSession, client: AsyncClient
+):
+    workitem = await _start_item_update(
+        session, client, WorkItemStatus.PENDING_USER_ACTION
+    )
 
     assert workitem.status == WorkItemStatus.PENDING_USER_ACTION
     assert workitem.locked is False
@@ -83,7 +87,9 @@ async def test_update_item_status_new(session: AsyncSession, client: AsyncClient
     assert workitem.locked is False
 
 
-async def test_update_item_status_in_progress(session: AsyncSession, client: AsyncClient):
+async def test_update_item_status_in_progress(
+    session: AsyncSession, client: AsyncClient
+):
     workitem = await _start_item_update(session, client, WorkItemStatus.IN_PROGRESS)
 
     assert workitem.status == WorkItemStatus.IN_PROGRESS
@@ -137,7 +143,9 @@ async def test_get_workitems_by_reference(session: AsyncSession, client: AsyncCl
     assert created_times == sorted(created_times, reverse=True)
 
 
-async def test_get_workitems_by_reference_no_matches(session: AsyncSession, client: AsyncClient):
+async def test_get_workitems_by_reference_no_matches(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     # Test getting items by non-existent reference
@@ -148,11 +156,15 @@ async def test_get_workitems_by_reference_no_matches(session: AsyncSession, clie
     assert len(data) == 0
 
 
-async def test_get_workitems_by_reference_with_status_filter(session: AsyncSession, client: AsyncClient):
+async def test_get_workitems_by_reference_with_status_filter(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     # Test filtering by COMPLETED status
-    response = await client.get("/workitems/by-reference/Embedded workitem?status=completed")
+    response = await client.get(
+        "/workitems/by-reference/Embedded workitem?status=completed"
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -161,7 +173,9 @@ async def test_get_workitems_by_reference_with_status_filter(session: AsyncSessi
     assert data[0]["reference"] == "Embedded workitem"
 
 
-async def test_update_workitem_validation_invalid_data_types(session: AsyncSession, client: AsyncClient):
+async def test_update_workitem_validation_invalid_data_types(
+    session: AsyncSession, client: AsyncClient
+):
     """Test that workitem update endpoint properly validates data field types (GitHub issue #6)."""
     await generate_basic_data(session)
 
@@ -169,13 +183,10 @@ async def test_update_workitem_validation_invalid_data_types(session: AsyncSessi
     invalid_test_cases = [
         # String instead of dict
         {"data": "not a dict", "reference": "test1"},
-
         # List instead of dict
         {"data": [1, 2, 3], "reference": "test2"},
-
         # Number instead of dict
         {"data": 42, "reference": "test3"},
-
         # Boolean instead of dict
         {"data": True, "reference": "test4"},
     ]
@@ -184,7 +195,9 @@ async def test_update_workitem_validation_invalid_data_types(session: AsyncSessi
         response = await client.put("/workitems/1", json=test_case)
 
         # Should fail with 422 (validation error)
-        assert response.status_code == 422, f"Test {i+1} should fail validation but got {response.status_code}"
+        assert response.status_code == 422, (
+            f"Test {i + 1} should fail validation but got {response.status_code}"
+        )
 
         # Check that the error message mentions validation
         response_data = response.json()
@@ -197,7 +210,9 @@ async def test_update_workitem_validation_invalid_data_types(session: AsyncSessi
         assert "dict" in error_detail["msg"].lower()
 
 
-async def test_update_workitem_validation_valid_data_types(session: AsyncSession, client: AsyncClient):
+async def test_update_workitem_validation_valid_data_types(
+    session: AsyncSession, client: AsyncClient
+):
     """Test that workitem update endpoint accepts valid data field types."""
     await generate_basic_data(session)
 
@@ -205,16 +220,12 @@ async def test_update_workitem_validation_valid_data_types(session: AsyncSession
     valid_test_cases = [
         # Valid dict
         {"data": {"key": "value"}, "reference": "test5"},
-
         # Empty dict
         {"data": {}, "reference": "test6"},
-
         # None (should be allowed since it's Optional)
         {"data": None, "reference": "test7"},
-
         # Only reference (data is optional)
         {"reference": "test8"},
-
         # Only data (reference is optional)
         {"data": {"complex": {"nested": "structure"}}},
     ]
@@ -223,7 +234,9 @@ async def test_update_workitem_validation_valid_data_types(session: AsyncSession
         response = await client.put("/workitems/1", json=test_case)
 
         # Should succeed
-        assert response.status_code == 200, f"Test {i+1} should pass validation but got {response.status_code}: {response.json()}"
+        assert response.status_code == 200, (
+            f"Test {i + 1} should pass validation but got {response.status_code}: {response.json()}"
+        )
 
         # Verify the response contains the updated data
         response_data = response.json()
@@ -231,7 +244,9 @@ async def test_update_workitem_validation_valid_data_types(session: AsyncSession
         assert response_data["id"] == 1
 
 
-async def test_update_workitem_status_sets_started_at_on_in_progress(session: AsyncSession, client: AsyncClient):
+async def test_update_workitem_status_sets_started_at_on_in_progress(
+    session: AsyncSession, client: AsyncClient
+):
     """Test that started_at is set when manually updating status to IN_PROGRESS."""
     import time
     from datetime import datetime
@@ -248,8 +263,7 @@ async def test_update_workitem_status_sets_started_at_on_in_progress(session: As
     # Update status to IN_PROGRESS
     before_update = datetime.now()
     response = await client.put(
-        "/workitems/1/status",
-        json={"status": WorkItemStatus.IN_PROGRESS}
+        "/workitems/1/status", json={"status": WorkItemStatus.IN_PROGRESS}
     )
     after_update = datetime.now()
 
@@ -258,7 +272,7 @@ async def test_update_workitem_status_sets_started_at_on_in_progress(session: As
 
     # Verify started_at is set
     assert data["started_at"] is not None
-    started_at = datetime.fromisoformat(data["started_at"].replace('Z', '+00:00'))
+    started_at = datetime.fromisoformat(data["started_at"].replace("Z", "+00:00"))
 
     # Verify timestamp is reasonable (within our test window)
     assert before_update <= started_at.replace(tzinfo=None) <= after_update
@@ -267,18 +281,21 @@ async def test_update_workitem_status_sets_started_at_on_in_progress(session: As
     time.sleep(0.1)  # Small delay to ensure different timestamp
 
     response = await client.put(
-        "/workitems/1/status",
-        json={"status": WorkItemStatus.IN_PROGRESS}
+        "/workitems/1/status", json={"status": WorkItemStatus.IN_PROGRESS}
     )
     assert response.status_code == 200
     new_data = response.json()
 
     # Verify started_at was updated (overwritten)
-    new_started_at = datetime.fromisoformat(new_data["started_at"].replace('Z', '+00:00'))
+    new_started_at = datetime.fromisoformat(
+        new_data["started_at"].replace("Z", "+00:00")
+    )
     assert new_started_at > started_at
 
 
-async def test_update_workitem_status_calculates_duration_on_completion(session: AsyncSession, client: AsyncClient):
+async def test_update_workitem_status_calculates_duration_on_completion(
+    session: AsyncSession, client: AsyncClient
+):
     """Test that work_duration_seconds is calculated correctly on completion."""
     import time
 
@@ -286,8 +303,7 @@ async def test_update_workitem_status_calculates_duration_on_completion(session:
 
     # Set work item to IN_PROGRESS to establish started_at
     response = await client.put(
-        "/workitems/1/status",
-        json={"status": WorkItemStatus.IN_PROGRESS}
+        "/workitems/1/status", json={"status": WorkItemStatus.IN_PROGRESS}
     )
     assert response.status_code == 200
     in_progress_data = response.json()
@@ -299,8 +315,7 @@ async def test_update_workitem_status_calculates_duration_on_completion(session:
 
     # Update status to COMPLETED
     response = await client.put(
-        "/workitems/1/status",
-        json={"status": WorkItemStatus.COMPLETED}
+        "/workitems/1/status", json={"status": WorkItemStatus.COMPLETED}
     )
     assert response.status_code == 200
     completed_data = response.json()
@@ -315,8 +330,7 @@ async def test_update_workitem_status_calculates_duration_on_completion(session:
     # Test that FAILED status also calculates duration
     # First set another item to IN_PROGRESS
     response = await client.put(
-        "/workitems/2/status",
-        json={"status": WorkItemStatus.IN_PROGRESS}
+        "/workitems/2/status", json={"status": WorkItemStatus.IN_PROGRESS}
     )
     assert response.status_code == 200
 
@@ -324,8 +338,7 @@ async def test_update_workitem_status_calculates_duration_on_completion(session:
 
     # Update status to FAILED
     response = await client.put(
-        "/workitems/2/status",
-        json={"status": WorkItemStatus.FAILED}
+        "/workitems/2/status", json={"status": WorkItemStatus.FAILED}
     )
     assert response.status_code == 200
     failed_data = response.json()
@@ -333,17 +346,20 @@ async def test_update_workitem_status_calculates_duration_on_completion(session:
     # Verify work_duration_seconds is also calculated for failed items
     assert failed_data["work_duration_seconds"] is not None
     failed_duration = failed_data["work_duration_seconds"]
-    assert 0 <= failed_duration <= 3, f"Expected duration ~1 second, got {failed_duration}"
+    assert 0 <= failed_duration <= 3, (
+        f"Expected duration ~1 second, got {failed_duration}"
+    )
 
 
-async def test_update_workitem_status_timezone_aware_handling(session: AsyncSession, client: AsyncClient):
+async def test_update_workitem_status_timezone_aware_handling(
+    session: AsyncSession, client: AsyncClient
+):
     """Test that timezone-aware started_at is handled correctly in duration calculation."""
     await generate_basic_data(session)
 
     # Set work item to IN_PROGRESS to establish started_at
     response = await client.put(
-        "/workitems/1/status",
-        json={"status": WorkItemStatus.IN_PROGRESS}
+        "/workitems/1/status", json={"status": WorkItemStatus.IN_PROGRESS}
     )
     assert response.status_code == 200
 
@@ -360,12 +376,13 @@ async def test_update_workitem_status_timezone_aware_handling(session: AsyncSess
 
     # Attempt to update status to COMPLETED
     response = await client.put(
-        "/workitems/1/status",
-        json={"status": WorkItemStatus.COMPLETED}
+        "/workitems/1/status", json={"status": WorkItemStatus.COMPLETED}
     )
 
     # The timezone hypothesis was disproven - the operation actually succeeds
-    assert response.status_code == 200, f"Expected 200 success, got {response.status_code}: {response.text}"
+    assert response.status_code == 200, (
+        f"Expected 200 success, got {response.status_code}: {response.text}"
+    )
 
     # Verify the duration was calculated successfully
     completed_data = response.json()

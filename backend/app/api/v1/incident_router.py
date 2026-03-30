@@ -89,7 +89,9 @@ async def get_incident(
     responses={
         400: {
             "description": "Invalid status transition",
-            "content": {"application/json": {"example": {"detail": "Invalid status transition"}}},
+            "content": {
+                "application/json": {"example": {"detail": "Invalid status transition"}}
+            },
         }
     }
     | error_descriptions("Incident", _403=True, _404=True, _410=True),
@@ -101,7 +103,9 @@ async def resolve_incident(
     token: AccessToken = Depends(resolve_access_token),
 ) -> Incident:
     try:
-        return await service.resolve_incident(incident, resolve.status, resolve.resolution_note)
+        return await service.resolve_incident(
+            incident, resolve.status, resolve.resolution_note
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

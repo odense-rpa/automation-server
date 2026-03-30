@@ -20,7 +20,12 @@ from app.database.repository import (
     AuditLogRepository,
     IncidentRepository,
 )
-from app.services import ResourceService, SessionService, WorkqueueService, IncidentService
+from app.services import (
+    ResourceService,
+    SessionService,
+    WorkqueueService,
+    IncidentService,
+)
 from app.config import settings
 from .trigger_processors import ProcessingServices, TriggerProcessorRegistry
 from .dispatcher import ResourceDispatcher
@@ -86,7 +91,7 @@ class AutomationScheduler:
                 session_repository=session_repository,
                 resource_repository=resource_repository,
                 workqueue_repository=workqueue_repository,
-                process_repository=process_repository
+                process_repository=process_repository,
             )
 
             # Initialize processor registry and dispatcher
@@ -110,8 +115,12 @@ class AutomationScheduler:
             # Dispatch again for any new sessions created
             await self.dispatcher.dispatch_all_pending()
 
-    async def _process_triggers(self, trigger_repository: TriggerRepository,
-                              process_repository: ProcessRepository, now: datetime):
+    async def _process_triggers(
+        self,
+        trigger_repository: TriggerRepository,
+        process_repository: ProcessRepository,
+        now: datetime,
+    ):
         """Process all enabled triggers.
 
         Args:
@@ -138,10 +147,14 @@ class AutomationScheduler:
                 success = await processor.process(trigger, now)
 
                 if not success:
-                    logger.warning(f"Failed to process trigger {trigger.id} of type {trigger.type}")
+                    logger.warning(
+                        f"Failed to process trigger {trigger.id} of type {trigger.type}"
+                    )
 
             except ValueError as e:
-                logger.error(f"Unsupported trigger type {trigger.type} for trigger {trigger.id}: {e}")
+                logger.error(
+                    f"Unsupported trigger type {trigger.type} for trigger {trigger.id}: {e}"
+                )
                 continue
             except Exception as e:
                 logger.error(f"Error processing trigger {trigger.id}: {e}")

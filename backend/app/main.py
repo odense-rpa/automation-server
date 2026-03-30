@@ -38,8 +38,10 @@ except PackageNotFoundError:
 async def lifespan(app: FastAPI):
     # Create and store scheduler task reference to prevent garbage collection
     scheduler_task = asyncio.create_task(scheduler_background_task())
-    
-    logger.info(f"Starting up, database url is: {settings.database_url}, debug is {settings.debug}")
+
+    logger.info(
+        f"Starting up, database url is: {settings.database_url}, debug is {settings.debug}"
+    )
 
     try:
         yield
@@ -63,7 +65,6 @@ app = FastAPI(
     docs_url="/docs",
     openapi_url="/openapi.json",
     lifespan=lifespan,
-    
 )
 
 app.add_middleware(
@@ -88,7 +89,7 @@ app.include_router(token_router, prefix="")
 app.include_router(health_router, prefix="")
 
 
-#async def background_task():
+# async def background_task():
 #    while True:
 #        await asyncio.sleep(10)  # Sleep for 10 seconds
 #        await schedule()

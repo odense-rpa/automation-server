@@ -14,7 +14,7 @@ from app.database.repository import (
     SessionRepository,
     ResourceRepository,
     WorkqueueRepository,
-    ProcessRepository
+    ProcessRepository,
 )
 from app.services import SessionService, ResourceService, WorkqueueService
 from app.scheduler.validators import validate_parameters
@@ -82,7 +82,9 @@ class AbstractTriggerProcessor(ABC):
             return False
 
     @abstractmethod
-    async def _process_trigger(self, trigger: Trigger, validated_params: str, now: datetime) -> bool:
+    async def _process_trigger(
+        self, trigger: Trigger, validated_params: str, now: datetime
+    ) -> bool:
         """Process the specific trigger logic.
 
         This method must be implemented by concrete trigger processors.
@@ -97,7 +99,9 @@ class AbstractTriggerProcessor(ABC):
         """
         pass
 
-    def _should_trigger_in_current_minute(self, trigger: Trigger, now: datetime) -> bool:
+    def _should_trigger_in_current_minute(
+        self, trigger: Trigger, now: datetime
+    ) -> bool:
         """Check if a trigger should fire based on last_triggered time.
 
         Args:
@@ -118,7 +122,9 @@ class AbstractTriggerProcessor(ABC):
         # Only trigger if it hasn't been triggered in the current minute
         return current_minute != last_triggered_minute
 
-    async def _create_session(self, trigger: Trigger, validated_params: str, force: bool = False) -> bool:
+    async def _create_session(
+        self, trigger: Trigger, validated_params: str, force: bool = False
+    ) -> bool:
         """Helper method to create a session for a trigger.
 
         Args:
@@ -131,21 +137,20 @@ class AbstractTriggerProcessor(ABC):
         """
         try:
             session = await self.services.session_service.create_session(
-                trigger.process_id,
-                force=force,
-                parameters=validated_params
+                trigger.process_id, force=force, parameters=validated_params
             )
 
             if session:
                 # Update last_triggered timestamp after successful session creation
                 await self.services.trigger_repository.update(
-                    trigger,
-                    {"last_triggered": datetime.now()}
+                    trigger, {"last_triggered": datetime.now()}
                 )
                 logger.info(f"Created session {session.id} for trigger {trigger.id}")
                 return True
             else:
-                logger.debug(f"Session already exists for trigger {trigger.id} (force={force})")
+                logger.debug(
+                    f"Session already exists for trigger {trigger.id} (force={force})"
+                )
                 return True
 
         except Exception as e:

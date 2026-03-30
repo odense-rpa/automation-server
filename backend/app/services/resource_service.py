@@ -62,7 +62,6 @@ class ResourceService:
     async def keep_alive(self, resource: Resource):
         data = resource.model_dump()
 
-
         data["deleted"] = False
         data["last_seen"] = datetime.now()
 

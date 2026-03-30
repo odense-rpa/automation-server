@@ -176,6 +176,7 @@ async def test_next_item(session: AsyncSession, client: AsyncClient):
 
     assert response.status_code == 204
 
+
 async def test_next_item_disabled_queue(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -189,11 +190,9 @@ async def test_next_item_disabled_queue(session: AsyncSession, client: AsyncClie
     )
     assert response.status_code == 200
 
-
     response = await client.get("/workqueues/1/next_item")
 
     assert response.status_code == 204
-
 
 
 async def test_clear_queue_dates(session: AsyncSession, client: AsyncClient):
@@ -204,29 +203,20 @@ async def test_clear_queue_dates(session: AsyncSession, client: AsyncClient):
 
     await generate_basic_data(session)
 
-    response = await client.post(
-        "/workqueues/1/clear",
-        json = {
-            "days_older_than": 1
-        }
-    )
+    response = await client.post("/workqueues/1/clear", json={"days_older_than": 1})
     assert response.status_code == 204
 
     response = await client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 5
 
-    response = await client.post(
-        "/workqueues/1/clear",
-        json = {
-            "days_older_than": 0
-        }
-    )
+    response = await client.post("/workqueues/1/clear", json={"days_older_than": 0})
     assert response.status_code == 204
 
     response = await client.get("/workqueues/1/items")
     data = response.json()
     assert data["total_items"] == 0
+
 
 async def test_clear_queue_all_parameters(session: AsyncSession, client: AsyncClient):
     # test clear queue with id 1 all parameters
@@ -235,11 +225,7 @@ async def test_clear_queue_all_parameters(session: AsyncSession, client: AsyncCl
     await generate_basic_data(session)
 
     response = await client.post(
-        "/workqueues/1/clear",
-        json = {
-            "workitem_status": "new",
-            "days_older_than": 0
-        }
+        "/workqueues/1/clear", json={"workitem_status": "new", "days_older_than": 0}
     )
     assert response.status_code == 204
 
@@ -248,11 +234,7 @@ async def test_clear_queue_all_parameters(session: AsyncSession, client: AsyncCl
     assert data["total_items"] == 4
 
     response = await client.post(
-        "/workqueues/1/clear",
-        json = {
-            "workitem_status": "failed",
-            "days_older_than": 0
-        }
+        "/workqueues/1/clear", json={"workitem_status": "failed", "days_older_than": 0}
     )
     assert response.status_code == 204
 
@@ -262,10 +244,7 @@ async def test_clear_queue_all_parameters(session: AsyncSession, client: AsyncCl
 
     response = await client.post(
         "/workqueues/1/clear",
-        json = {
-            "workitem_status": "completed",
-            "days_older_than": 1
-        }
+        json={"workitem_status": "completed", "days_older_than": 1},
     )
     assert response.status_code == 204
 
@@ -280,10 +259,7 @@ async def test_clear_queue_no_parameters(session: AsyncSession, client: AsyncCli
 
     await generate_basic_data(session)
 
-    response = await client.post(
-        "/workqueues/1/clear",
-        json = {}
-    )
+    response = await client.post("/workqueues/1/clear", json={})
     assert response.status_code == 204
 
     response = await client.get("/workqueues/1/items")
@@ -313,7 +289,9 @@ async def test_workitems_paging_with_search(session: AsyncSession, client: Async
     assert data["total_items"] == 5
 
 
-async def test_get_workitems_by_reference_in_workqueue(session: AsyncSession, client: AsyncClient):
+async def test_get_workitems_by_reference_in_workqueue(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     # Test getting items by reference within a specific workqueue
@@ -350,13 +328,19 @@ async def test_get_workqueue_by_name(session: AsyncSession, client: AsyncClient)
     assert data["name"] == "Workqueue"
 
 
-async def test_get_workqueue_by_name_with_spaces(session: AsyncSession, client: AsyncClient):
+async def test_get_workqueue_by_name_with_spaces(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     # Create a workqueue with spaces in the name
     response = await client.post(
         "/workqueues/",
-        json={"name": "Client library test", "description": "Test queue", "enabled": True},
+        json={
+            "name": "Client library test",
+            "description": "Test queue",
+            "enabled": True,
+        },
     )
     assert response.status_code == 200
 
@@ -368,11 +352,15 @@ async def test_get_workqueue_by_name_with_spaces(session: AsyncSession, client: 
     assert data["name"] == "Client library test"
 
 
-async def test_get_workitems_by_reference_in_workqueue_with_status_filter(session: AsyncSession, client: AsyncClient):
+async def test_get_workitems_by_reference_in_workqueue_with_status_filter(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     # Test filtering by COMPLETED status within workqueue
-    response = await client.get("/workqueues/1/by_reference/Embedded workitem?status=completed")
+    response = await client.get(
+        "/workqueues/1/by_reference/Embedded workitem?status=completed"
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -382,7 +370,9 @@ async def test_get_workitems_by_reference_in_workqueue_with_status_filter(sessio
     assert data[0]["workqueue_id"] == 1
 
     # Test filtering by NEW status within workqueue
-    response = await client.get("/workqueues/1/by_reference/Embedded workitem?status=new")
+    response = await client.get(
+        "/workqueues/1/by_reference/Embedded workitem?status=new"
+    )
     assert response.status_code == 200
 
     data = response.json()
@@ -392,7 +382,9 @@ async def test_get_workitems_by_reference_in_workqueue_with_status_filter(sessio
     assert data[0]["workqueue_id"] == 1
 
     # Test filtering by status that doesn't exist for this reference in this workqueue
-    response = await client.get("/workqueues/1/by_reference/NonExistentReference?status=completed")
+    response = await client.get(
+        "/workqueues/1/by_reference/NonExistentReference?status=completed"
+    )
     assert response.status_code == 200
 
     data = response.json()

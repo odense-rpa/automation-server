@@ -11,10 +11,10 @@ from .workqueue import WorkqueueTriggerProcessor
 from .registry import TriggerProcessorRegistry
 
 __all__ = [
-    'AbstractTriggerProcessor',
-    'ProcessingServices',
-    'CronTriggerProcessor',
-    'DateTriggerProcessor',
-    'WorkqueueTriggerProcessor',
-    'TriggerProcessorRegistry'
+    "AbstractTriggerProcessor",
+    "ProcessingServices",
+    "CronTriggerProcessor",
+    "DateTriggerProcessor",
+    "WorkqueueTriggerProcessor",
+    "TriggerProcessorRegistry",
 ]

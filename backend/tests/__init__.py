@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import app.database.models as models
 import app.enums as enums
 
+
 async def generate_basic_data(session: AsyncSession):
     session.add(
         models.Credential(
@@ -11,7 +12,7 @@ async def generate_basic_data(session: AsyncSession):
             username="Secret username",
             password="My secret password",
             description="Test credential",
-            deleted=False
+            deleted=False,
         )
     )
 
@@ -21,7 +22,7 @@ async def generate_basic_data(session: AsyncSession):
             username="Secret deleted username",
             password="My secret password",
             description="Test credential",
-            deleted=True
+            deleted=True,
         )
     )
 
@@ -30,7 +31,7 @@ async def generate_basic_data(session: AsyncSession):
             name="Workqueue",
             description="Queue for unittest",
             enabled=True,
-            deleted=False
+            deleted=False,
         )
     )
     session.add(
@@ -38,7 +39,7 @@ async def generate_basic_data(session: AsyncSession):
             name="Deleted workqueue",
             description="Queue for unittest",
             enabled=True,
-            deleted=True
+            deleted=True,
         )
     )
     await session.commit()
@@ -49,7 +50,7 @@ async def generate_basic_data(session: AsyncSession):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -59,7 +60,7 @@ async def generate_basic_data(session: AsyncSession):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -69,7 +70,7 @@ async def generate_basic_data(session: AsyncSession):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -79,7 +80,7 @@ async def generate_basic_data(session: AsyncSession):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -89,7 +90,7 @@ async def generate_basic_data(session: AsyncSession):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -128,7 +129,7 @@ async def generate_basic_data(session: AsyncSession):
             date=None,
             workqueue_id=None,
             enabled=True,
-            process_id=1
+            process_id=1,
         )
     )
 
@@ -139,7 +140,7 @@ async def generate_basic_data(session: AsyncSession):
             date=datetime.now() + timedelta(days=1),
             workqueue_id=None,
             enabled=True,
-            process_id=1
+            process_id=1,
         )
     )
 
@@ -152,10 +153,9 @@ async def generate_basic_data(session: AsyncSession):
             enabled=True,
             deleted=True,
             last_triggered=datetime.now() - timedelta(days=1),
-            process_id=1
+            process_id=1,
         )
     )
-
 
     session.add(
         models.Trigger(
@@ -164,7 +164,7 @@ async def generate_basic_data(session: AsyncSession):
             date=None,
             workqueue_id=1,
             enabled=True,
-            process_id=1
+            process_id=1,
         )
     )
 
@@ -174,7 +174,7 @@ async def generate_basic_data(session: AsyncSession):
             fqdn="resource.example.com",
             capabilities="win32 chrome python blue_prism",
             available=True,
-            last_seen= datetime.now(),
+            last_seen=datetime.now(),
             deleted=False,
         )
     )
@@ -207,12 +207,10 @@ async def generate_basic_data(session: AsyncSession):
             fqdn="resource-not-available.example.com",
             capabilities="win32 chrome python blue_prism",
             available=False,
-            last_seen= datetime.now(),
+            last_seen=datetime.now(),
             deleted=False,
         )
     )
-
-
 
     session.add(models.Session(process_id=1, status=enums.SessionStatus.NEW))
 
@@ -221,11 +219,19 @@ async def generate_basic_data(session: AsyncSession):
     )
 
     session.add(
-        models.Session(process_id=1, status=enums.SessionStatus.COMPLETED, deleted=False)
+        models.Session(
+            process_id=1, status=enums.SessionStatus.COMPLETED, deleted=False
+        )
     )
 
     session.add(
-        models.Session(process_id=1, status=enums.SessionStatus.NEW, deleted=False,resource_id=3, dispatched_at=datetime.now())
+        models.Session(
+            process_id=1,
+            status=enums.SessionStatus.NEW,
+            deleted=False,
+            resource_id=3,
+            dispatched_at=datetime.now(),
+        )
     )
 
     session.add(
@@ -247,8 +253,29 @@ async def generate_basic_data(session: AsyncSession):
         )
     )
 
-    session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
-    session.add(models.AuditLog(session_id=3, message="Test log 3 - nothing to see here", created_at=datetime.now(), event_timestamp=datetime.now()))
-    session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
+    session.add(
+        models.AuditLog(
+            session_id=3,
+            message="Test log 3",
+            created_at=datetime.now(),
+            event_timestamp=datetime.now(),
+        )
+    )
+    session.add(
+        models.AuditLog(
+            session_id=3,
+            message="Test log 3 - nothing to see here",
+            created_at=datetime.now(),
+            event_timestamp=datetime.now(),
+        )
+    )
+    session.add(
+        models.AuditLog(
+            session_id=3,
+            message="Test log 3",
+            created_at=datetime.now(),
+            event_timestamp=datetime.now(),
+        )
+    )
 
     await session.commit()

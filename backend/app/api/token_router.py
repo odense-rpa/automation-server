@@ -21,7 +21,11 @@ async def login(
 ):
     tokens = await repository.get_all()
 
-    if form_data.password in [token.access_token for token in tokens if not token.deleted and token.expires_at > datetime.now()]:
+    if form_data.password in [
+        token.access_token
+        for token in tokens
+        if not token.deleted and token.expires_at > datetime.now()
+    ]:
         return {"access_token": form_data.password, "token_type": "bearer"}
 
     raise HTTPException(status_code=400, detail="Incorrect username or password")

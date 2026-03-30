@@ -44,9 +44,9 @@ async def get_workqueue(
 
         return workqueue
 
+
 async def get_workqueue_by_name(
-    workqueue_name: str,
-    uow: AbstractUnitOfWork = Depends(get_unit_of_work)
+    workqueue_name: str, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Workqueue:
     async with uow:
         workqueue = await uow.workqueues.get_by_name(workqueue_name)
@@ -94,7 +94,9 @@ async def get_workqueues_information(
                 in_progress=counts.get(enums.WorkItemStatus.IN_PROGRESS, 0),
                 completed=counts.get(enums.WorkItemStatus.COMPLETED, 0),
                 failed=counts.get(enums.WorkItemStatus.FAILED, 0),
-                pending_user_action=counts.get(enums.WorkItemStatus.PENDING_USER_ACTION, 0),
+                pending_user_action=counts.get(
+                    enums.WorkItemStatus.PENDING_USER_ACTION, 0
+                ),
             )
             result.append(queue_info)
 
@@ -108,12 +110,14 @@ async def get_workqueue(
 ) -> Workqueue:
     return workqueue
 
+
 @router.get("/by_name/{workqueue_name}")
 async def get_workqueue_by_name(
     workqueue: Workqueue = Depends(get_workqueue_by_name),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
     return workqueue
+
 
 @router.put("/{workqueue_id}")
 async def update_workqueue(
@@ -139,7 +143,6 @@ async def create_workqueue(
         raise HTTPException(status_code=422, detail="Workqueue name already exists")
 
 
-
 @router.delete("/{workqueue_id}", status_code=204)
 async def delete_workqueue(
     workqueue: Workqueue = Depends(get_workqueue),
@@ -159,7 +162,9 @@ async def clear_workqueue(
     token: AccessToken = Depends(resolve_access_token),
 ) -> Response:
     async with uow:
-        await uow.workqueues.clear(workqueue.id, model.workitem_status, model.days_older_than)
+        await uow.workqueues.clear(
+            workqueue.id, model.workitem_status, model.days_older_than
+        )
         return
 
 
@@ -216,7 +221,9 @@ async def get_work_items(
 async def get_workitems_by_reference_in_workqueue(
     reference: str,
     workqueue: Workqueue = Depends(get_workqueue),
-    status: enums.WorkItemStatus | None = Query(None, description="Optional status filter"),
+    status: enums.WorkItemStatus | None = Query(
+        None, description="Optional status filter"
+    ),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[WorkItem]:

@@ -32,6 +32,7 @@ class AbstractRepository(Generic[Model]):
     ) -> list[Model]:
         raise NotImplementedError
 
+
 class DatabaseRepository(AbstractRepository[Model]):
     """Repository for performing database queries."""
 

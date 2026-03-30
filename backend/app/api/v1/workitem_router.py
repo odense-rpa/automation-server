@@ -13,6 +13,7 @@ router = APIRouter(prefix="/workitems", tags=["Workitems"])
 
 # Dependency Injection local to this router
 
+
 async def get_workitem(
     item_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> WorkItem:
@@ -73,14 +74,21 @@ async def update_workitem_status(
             data["started_at"] = datetime.now()
 
         # Calculate work duration for terminal statuses if started_at is set
-        if workitem.started_at and status.status in [WorkItemStatus.COMPLETED, WorkItemStatus.FAILED]:
+        if workitem.started_at and status.status in [
+            WorkItemStatus.COMPLETED,
+            WorkItemStatus.FAILED,
+        ]:
             duration = (datetime.now() - workitem.started_at).total_seconds()
             data["work_duration_seconds"] = int(duration)
 
         # We clear the locked flag because these statuses indicate that we have stopped working on the item
-        if status.status in [WorkItemStatus.COMPLETED, WorkItemStatus.FAILED, WorkItemStatus.NEW, WorkItemStatus.PENDING_USER_ACTION]:
+        if status.status in [
+            WorkItemStatus.COMPLETED,
+            WorkItemStatus.FAILED,
+            WorkItemStatus.NEW,
+            WorkItemStatus.PENDING_USER_ACTION,
+        ]:
             data["locked"] = False
-
 
         return await uow.work_items.update(workitem, data)
 

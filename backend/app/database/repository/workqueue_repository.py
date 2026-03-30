@@ -23,7 +23,9 @@ class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def get_all_workitem_counts(self) -> dict[int, dict[enums.WorkItemStatus, int]]:
+    async def get_all_workitem_counts(
+        self,
+    ) -> dict[int, dict[enums.WorkItemStatus, int]]:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -68,10 +70,13 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
         )
         return result.scalar_one()
 
-    async def get_all_workitem_counts(self) -> dict[int, dict[enums.WorkItemStatus, int]]:
+    async def get_all_workitem_counts(
+        self,
+    ) -> dict[int, dict[enums.WorkItemStatus, int]]:
         result = await self.session.execute(
-            select(WorkItem.workqueue_id, WorkItem.status, func.count())
-            .group_by(WorkItem.workqueue_id, WorkItem.status)
+            select(WorkItem.workqueue_id, WorkItem.status, func.count()).group_by(
+                WorkItem.workqueue_id, WorkItem.status
+            )
         )
         rows = result.all()
 
@@ -84,9 +89,9 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
         return counts
 
     async def get_by_name(self, name: str) -> Workqueue:
-        return (await self.session.scalars(
-            select(Workqueue).filter(Workqueue.name == name)
-        )).first()
+        return (
+            await self.session.scalars(select(Workqueue).filter(Workqueue.name == name))
+        ).first()
 
     async def get_workitems_paginated(
         self,
@@ -147,8 +152,7 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             return []
 
         query = select(WorkItem).where(
-            WorkItem.workqueue_id == workqueue_id,
-            WorkItem.reference == reference
+            WorkItem.workqueue_id == workqueue_id, WorkItem.reference == reference
         )
 
         if status is not None:

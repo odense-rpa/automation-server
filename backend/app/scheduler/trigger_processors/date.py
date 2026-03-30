@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 class DateTriggerProcessor(AbstractTriggerProcessor):
     """Processor for date-based triggers."""
 
-    async def _process_trigger(self, trigger: Trigger, validated_params: str, now: datetime) -> bool:
+    async def _process_trigger(
+        self, trigger: Trigger, validated_params: str, now: datetime
+    ) -> bool:
         """Process a date trigger.
 
         Args:
@@ -37,7 +39,9 @@ class DateTriggerProcessor(AbstractTriggerProcessor):
 
                 if success:
                     # Date triggers are one-time only, so disable and mark as deleted
-                    await self.services.trigger_repository.update(trigger, {"enabled": False, "deleted": True})
+                    await self.services.trigger_repository.update(
+                        trigger, {"enabled": False, "deleted": True}
+                    )
                     logger.info(f"Date trigger {trigger.id} disabled after execution")
 
                 return success

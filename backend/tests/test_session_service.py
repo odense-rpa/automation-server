@@ -44,12 +44,15 @@ def session_repository(request):
 
     return MockSessionRepository(request.param)
 
+
 @pytest.fixture
 def resource_repository():
     class MockResourceRepository:
         async def get(self, id):
-            return Resource(id=1, available=False, deleted = True)
+            return Resource(id=1, available=False, deleted=True)
+
     return MockResourceRepository()
+
 
 # Test for flushing active sessions
 @pytest.mark.parametrize("session_repository", ["active"], indirect=True)
@@ -59,6 +62,7 @@ async def test_flush_dangling_sessions(session_repository, resource_repository):
     assert session_repository.data == {
         "status": SessionStatus.FAILED,
     }
+
 
 # Test for rescheduling orphaned sessions
 @pytest.mark.parametrize("session_repository", ["orphaned"], indirect=True)

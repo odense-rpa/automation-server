@@ -39,6 +39,7 @@ async def test_get_process(session: AsyncSession, client: AsyncClient):
 
     assert response.status_code == 410
 
+
 async def test_update_process(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -51,7 +52,7 @@ async def test_update_process(session: AsyncSession, client: AsyncClient):
             "target_type": "python",
             "target_source": "Test url",
             "target_credentials_id": 1,
-            "credentials_id": 1
+            "credentials_id": 1,
         },
     )
 
@@ -71,6 +72,7 @@ async def test_update_process(session: AsyncSession, client: AsyncClient):
     assert data.target_credentials_id == 1
     assert data.credentials_id == 1
 
+
 async def test_create_process(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -83,7 +85,7 @@ async def test_create_process(session: AsyncSession, client: AsyncClient):
             "target_type": "python",
             "target_source": "Test url",
             "target_credentials_id": None,
-            "credentials_id": None
+            "credentials_id": None,
         },
     )
 
@@ -107,6 +109,7 @@ async def test_delete_process(session: AsyncSession, client: AsyncClient):
     response = await client.get("/processes/1")
     assert response.status_code == 410
 
+
 async def test_create_trigger_on_process(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -125,6 +128,7 @@ async def test_create_trigger_on_process(session: AsyncSession, client: AsyncCli
     assert data["type"] == "cron"
     assert data["cron"] == "15 4 * * *"
     assert data["enabled"] is False
+
 
 async def test_get_triggers_on_process(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)

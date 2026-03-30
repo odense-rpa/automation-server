@@ -36,7 +36,9 @@ async def test_list_incidents_empty(session: AsyncSession, client: AsyncClient):
     assert data["items"] == []
 
 
-async def test_incident_created_on_session_failure(session: AsyncSession, client: AsyncClient):
+async def test_incident_created_on_session_failure(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     await _create_failed_session(client)
@@ -54,7 +56,9 @@ async def test_incident_created_on_session_failure(session: AsyncSession, client
     assert incident["deleted"] is False
 
 
-async def test_incident_creation_is_idempotent(session: AsyncSession, client: AsyncClient):
+async def test_incident_creation_is_idempotent(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     await _create_failed_session(client)
@@ -66,7 +70,12 @@ async def test_incident_creation_is_idempotent(session: AsyncSession, client: As
     assert response.json()["total_items"] == 1
 
     # Creating a second incident for the same session via the service
-    from app.database.repository import IncidentRepository, AuditLogRepository, SessionRepository, ResourceRepository
+    from app.database.repository import (
+        IncidentRepository,
+        AuditLogRepository,
+        SessionRepository,
+        ResourceRepository,
+    )
     from app.services import SessionService, IncidentService
 
     repo = IncidentRepository(session)
@@ -74,7 +83,9 @@ async def test_incident_creation_is_idempotent(session: AsyncSession, client: As
     session_repo = SessionRepository(session)
     resource_repo = ResourceRepository(session)
 
-    svc = IncidentService(repo, auditlog_repo, session_repo, SessionService(session_repo, resource_repo))
+    svc = IncidentService(
+        repo, auditlog_repo, session_repo, SessionService(session_repo, resource_repo)
+    )
 
     db_session = await session_repo.get(4)
     incident_1 = await svc.create_incident_for_session(db_session)
@@ -126,7 +137,10 @@ async def test_resolve_incident_dismiss(session: AsyncSession, client: AsyncClie
 
     response = await client.put(
         "/incidents/1/resolve",
-        json={"status": enums.IncidentStatus.DISMISSED, "resolution_note": "False alarm"},
+        json={
+            "status": enums.IncidentStatus.DISMISSED,
+            "resolution_note": "False alarm",
+        },
     )
     assert response.status_code == 200
 
@@ -139,13 +153,17 @@ async def test_resolve_incident_dismiss(session: AsyncSession, client: AsyncClie
     assert response.json() == []
 
 
-async def test_resolve_incident_invalid_transition(session: AsyncSession, client: AsyncClient):
+async def test_resolve_incident_invalid_transition(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     await _create_failed_session(client)
 
     # Dismiss the incident first
-    await client.put("/incidents/1/resolve", json={"status": enums.IncidentStatus.DISMISSED})
+    await client.put(
+        "/incidents/1/resolve", json={"status": enums.IncidentStatus.DISMISSED}
+    )
 
     # Try to transition again from DISMISSED
     response = await client.put(
@@ -155,7 +173,9 @@ async def test_resolve_incident_invalid_transition(session: AsyncSession, client
     assert response.status_code == 400
 
 
-async def test_resolve_incident_reschedule_creates_session(session: AsyncSession, client: AsyncClient):
+async def test_resolve_incident_reschedule_creates_session(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     await _create_failed_session(client)
@@ -166,7 +186,10 @@ async def test_resolve_incident_reschedule_creates_session(session: AsyncSession
 
     response = await client.put(
         "/incidents/1/resolve",
-        json={"status": enums.IncidentStatus.RESCHEDULED, "resolution_note": "Retrying"},
+        json={
+            "status": enums.IncidentStatus.RESCHEDULED,
+            "resolution_note": "Retrying",
+        },
     )
     assert response.status_code == 200
 
@@ -180,7 +203,9 @@ async def test_resolve_incident_reschedule_creates_session(session: AsyncSession
     assert sessions_after == sessions_before + 1
 
 
-async def test_list_incidents_with_status_filter(session: AsyncSession, client: AsyncClient):
+async def test_list_incidents_with_status_filter(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     await _create_failed_session(client)
@@ -196,7 +221,9 @@ async def test_list_incidents_with_status_filter(session: AsyncSession, client: 
     assert response.json()["total_items"] == 0
 
     # Dismiss the incident
-    await client.put("/incidents/1/resolve", json={"status": enums.IncidentStatus.DISMISSED})
+    await client.put(
+        "/incidents/1/resolve", json={"status": enums.IncidentStatus.DISMISSED}
+    )
 
     # Filter by DISMISSED - should now return 1
     response = await client.get("/incidents?status=dismissed")
@@ -234,31 +261,37 @@ async def test_error_trace_captured(session: AsyncSession, client: AsyncClient):
     session_repo = SessionRepository(session)
 
     # Create new session
-    new_session = await session_repo.create({
-        "process_id": 1,
-        "status": enums.SessionStatus.IN_PROGRESS,
-        "resource_id": 1,
-        "dispatched_at": datetime.now(),
-        "deleted": False,
-    })
+    new_session = await session_repo.create(
+        {
+            "process_id": 1,
+            "status": enums.SessionStatus.IN_PROGRESS,
+            "resource_id": 1,
+            "dispatched_at": datetime.now(),
+            "deleted": False,
+        }
+    )
 
     # Add audit logs
-    session.add(models.AuditLog(
-        session_id=new_session.id,
-        message="Starting process",
-        level="INFO",
-        logger_name="worker",
-        event_timestamp=datetime.now(),
-    ))
-    session.add(models.AuditLog(
-        session_id=new_session.id,
-        message="RuntimeError: Division by zero",
-        level="ERROR",
-        logger_name="worker",
-        exception_type="RuntimeError",
-        exception_message="Division by zero",
-        event_timestamp=datetime.now(),
-    ))
+    session.add(
+        models.AuditLog(
+            session_id=new_session.id,
+            message="Starting process",
+            level="INFO",
+            logger_name="worker",
+            event_timestamp=datetime.now(),
+        )
+    )
+    session.add(
+        models.AuditLog(
+            session_id=new_session.id,
+            message="RuntimeError: Division by zero",
+            level="ERROR",
+            logger_name="worker",
+            exception_type="RuntimeError",
+            exception_message="Division by zero",
+            event_timestamp=datetime.now(),
+        )
+    )
     await session.commit()
 
     # Fail the session via API

@@ -75,6 +75,7 @@ async def test_update_credential(session: AsyncSession, client: AsyncClient):
 
     assert response.status_code == 410
 
+
 async def test_create_credential(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -89,6 +90,7 @@ async def test_create_credential(session: AsyncSession, client: AsyncClient):
 
     assert response.status_code == 200
 
+
 async def test_delete_credential(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -101,12 +103,14 @@ async def test_delete_credential(session: AsyncSession, client: AsyncClient):
     credential = await session.get(models.Credential, 1)
     assert credential.deleted is True
 
-
     response = await client.delete("/credentials/2")
 
     assert response.status_code == 410
 
-async def test_retrieve_existing_credential_by_name(session: AsyncSession, client: AsyncClient):
+
+async def test_retrieve_existing_credential_by_name(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     response = await client.get("/credentials/by_name/Secret credential")
@@ -117,6 +121,7 @@ async def test_retrieve_existing_credential_by_name(session: AsyncSession, clien
     assert data["username"] == "Secret username"
     assert data["deleted"] is False
 
+
 async def test_credential_not_found(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
@@ -124,6 +129,7 @@ async def test_credential_not_found(session: AsyncSession, client: AsyncClient):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Credential not found"}
+
 
 async def test_credential_deleted(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
@@ -133,17 +139,22 @@ async def test_credential_deleted(session: AsyncSession, client: AsyncClient):
     assert response.status_code == 410
     assert response.json() == {"detail": "Credential is gone"}
 
+
 async def test_case_sensitivity(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
     response = await client.get("/credential/by_name/SeCreT cRedeNtiAl")
     assert response.status_code == 404  # Assuming case-sensitive
 
+
 async def test_empty_credential_name(session: AsyncSession, client: AsyncClient):
     response = await client.get("/credential/by_name/")
     assert response.status_code == 404  # Assuming FastAPI route validation catches this
 
-async def test_insert_non_unique_named_credential(session: AsyncSession, client: AsyncClient):
+
+async def test_insert_non_unique_named_credential(
+    session: AsyncSession, client: AsyncClient
+):
     await generate_basic_data(session)
 
     response = await client.post(
@@ -157,7 +168,10 @@ async def test_insert_non_unique_named_credential(session: AsyncSession, client:
 
     assert response.status_code == 422
 
-async def test_create_credential_with_invalid_json_data(session: AsyncSession, client: AsyncClient):
+
+async def test_create_credential_with_invalid_json_data(
+    session: AsyncSession, client: AsyncClient
+):
     response = await client.post(
         "/credentials/",
         json={
@@ -170,7 +184,10 @@ async def test_create_credential_with_invalid_json_data(session: AsyncSession, c
 
     assert response.status_code == 422
 
-async def test_create_credential_with_empty_json_data(session: AsyncSession, client: AsyncClient):
+
+async def test_create_credential_with_empty_json_data(
+    session: AsyncSession, client: AsyncClient
+):
     response = await client.post(
         "/credentials/",
         json={

@@ -168,7 +168,10 @@ async def resolve_access_token(
     )
 
 
-async def get_unit_of_work(session: AsyncSession = Depends(get_session)) -> AbstractUnitOfWork:
+async def get_unit_of_work(
+    session: AsyncSession = Depends(get_session),
+) -> AbstractUnitOfWork:
     return UnitOfWork(session)
+
 
 UnitOfWorkDep = Annotated[AbstractUnitOfWork, Depends(get_unit_of_work)]

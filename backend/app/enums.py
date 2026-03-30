@@ -1,5 +1,6 @@
 import enum
 
+
 class WorkItemStatus(str, enum.Enum):
     NEW = "new"
     IN_PROGRESS = "in progress"
@@ -7,11 +8,13 @@ class WorkItemStatus(str, enum.Enum):
     FAILED = "failed"
     PENDING_USER_ACTION = "pending user action"
 
+
 class TargetTypeEnum(str, enum.Enum):
-    PYTHON = 'python'
-    BLUE_PRISM = 'blue_prism'
-    UI_PATH = 'ui_path'
-    POWER_AUTOMATE_DESKTOP = 'power_automate_desktop'
+    PYTHON = "python"
+    BLUE_PRISM = "blue_prism"
+    UI_PATH = "ui_path"
+    POWER_AUTOMATE_DESKTOP = "power_automate_desktop"
+
 
 class SessionStatus(str, enum.Enum):
     NEW = "new"
@@ -27,11 +30,13 @@ class SessionStatus(str, enum.Enum):
             SessionStatus.FAILED: set(),
         }
         return new_status in transition_map[self]
-    
+
+
 class TriggerType(str, enum.Enum):
-    CRON = 'cron'
-    WORKQUEUE = 'workqueue'
-    DATE = 'date'
+    CRON = "cron"
+    WORKQUEUE = "workqueue"
+    DATE = "date"
+
 
 class IncidentStatus(str, enum.Enum):
     NEW = "new"
