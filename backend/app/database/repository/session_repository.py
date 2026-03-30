@@ -3,7 +3,9 @@ from typing import List, Optional
 
 from sqlalchemy.sql import func, case
 from sqlalchemy.types import String
-from sqlmodel import Session as SqlSession, cast, select, or_
+from sqlalchemy.ext.asyncio import AsyncSession as SqlAsyncSession
+from sqlalchemy.orm import selectinload
+from sqlmodel import cast, select, or_
 
 from app.database.models import Incident, Process, Session, AuditLog
 import app.enums as enums
@@ -12,22 +14,22 @@ from .database_repository import DatabaseRepository, AbstractRepository
 
 
 class AbstractSessionRepository(AbstractRepository[Session]):
-    def get_by_resource_id(self, resource_id: int) -> Session | None:
+    async def get_by_resource_id(self, resource_id: int) -> Session | None:
         raise NotImplementedError
 
-    def get_new_sessions(self) -> list[Session]:
+    async def get_new_sessions(self) -> list[Session]:
         raise NotImplementedError
 
-    def get_active_sessions(self) -> list[Session]:
+    async def get_active_sessions(self) -> list[Session]:
         raise NotImplementedError
 
-    def get_failed_without_incident(self) -> list[Session]:
+    async def get_failed_without_incident(self) -> list[Session]:
         raise NotImplementedError
 
-    def create_log(self, log_entry: dict) -> AuditLog:
+    async def create_log(self, log_entry: dict) -> AuditLog:
         raise NotImplementedError
 
-    def get_paginated(
+    async def get_paginated(
         self,
         search: Optional[str] = None,
         skip: int = 0,
@@ -36,15 +38,15 @@ class AbstractSessionRepository(AbstractRepository[Session]):
     ) -> tuple[List[Session], int]:
         raise NotImplementedError
 
-    def get_process_activity_summary(self, since: datetime) -> list[dict]:
+    async def get_process_activity_summary(self, since: datetime) -> list[dict]:
         raise NotImplementedError
 
 
 class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
-    def __init__(self, session: SqlSession) -> None:
+    def __init__(self, session: SqlAsyncSession) -> None:
         super().__init__(Session, session)
 
-    def get_by_resource_id(self, resource_id: int) -> Session | None:
+    async def get_by_resource_id(self, resource_id: int) -> Session | None:
         """
         Fetches the first active session for a given resource ID.
 
@@ -57,30 +59,31 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         Returns:
             models.Session | None: The first active session for the given resource ID, or None if no such session exists.
         """
-        return self.session.scalars(
+        return (await self.session.scalars(
             select(Session)
             .where(Session.resource_id == resource_id)
             .where(Session.status != enums.SessionStatus.COMPLETED)
             .where(Session.status != enums.SessionStatus.FAILED)
-        ).first()
+        )).first()
 
-    def get_new_sessions(self) -> list[Session]:
+    async def get_new_sessions(self) -> list[Session]:
         """
-        Fetches all new sessions.
+        Fetches all new sessions with their process relationships eagerly loaded.
 
         This method retrieves all sessions whose status is NEW.
 
         Returns:
             list[models.Session]: A list of all new sessions. Even if they are assigned to a resource.
         """
-        return self.session.scalars(
+        return list((await self.session.scalars(
             select(Session)
             .where(Session.status == enums.SessionStatus.NEW)
             .where(Session.deleted == False)  # noqa: E712
             .order_by(Session.created_at)
-        ).all()
+            .options(selectinload(Session.process))
+        )).all())
 
-    def get_active_sessions(self) -> list[Session]:
+    async def get_active_sessions(self) -> list[Session]:
         """
         Fetches all active sessions.
 
@@ -89,7 +92,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         Returns:
             list[models.Session]: A list of all active sessions. Even if they are assigned to a resource.
         """
-        return self.session.scalars(
+        return list((await self.session.scalars(
             select(Session)
             .where(
                 or_(
@@ -99,19 +102,19 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             )
             .where(Session.deleted == False)  # noqa: E712
             .order_by(Session.created_at)
-        ).all()
+        )).all())
 
-    def get_failed_without_incident(self) -> list[Session]:
+    async def get_failed_without_incident(self) -> list[Session]:
         """Return all failed, non-deleted sessions that have no corresponding incident."""
-        return list(self.session.scalars(
+        return list((await self.session.scalars(
             select(Session)
             .outerjoin(Incident, Incident.session_id == Session.id)
             .where(Session.status == enums.SessionStatus.FAILED)
             .where(Session.deleted == False)  # noqa: E712
             .where(Incident.id.is_(None))
-        ).all())
+        )).all())
 
-    def create_log(self, log_entry: dict) -> AuditLog:
+    async def create_log(self, log_entry: dict) -> AuditLog:
         """
         Creates a new session log entry.
 
@@ -126,12 +129,12 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         """
         log_entry = AuditLog(**log_entry)
         self.session.add(log_entry)
-        self.session.commit()
+        await self.session.commit()
 
         return log_entry
 
-    def get_process_activity_summary(self, since: datetime) -> list[dict]:
-        rows = self.session.exec(
+    async def get_process_activity_summary(self, since: datetime) -> list[dict]:
+        result = await self.session.execute(
             select(
                 Session.process_id,
                 Process.name,
@@ -151,7 +154,8 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             )
             .group_by(Session.process_id, Process.name)
             .order_by(func.max(Session.created_at).desc())
-        ).all()
+        )
+        rows = result.all()
 
         return [
             {
@@ -166,7 +170,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             for process_id, name, completed, failed, in_progress, new, last_activity in rows
         ]
 
-    def get_paginated(
+    async def get_paginated(
         self,
         search: Optional[str] = None,
         skip: int = 0,
@@ -195,10 +199,9 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
                 count_query = count_query.join(Session.process)
 
             count_query = count_query.where(query.whereclause)
-        
-        total_count = self.session.exec(count_query).first()
 
-        return (
-            list(self.session.exec(query.offset(skip).limit(limit)).all()),
-            total_count,
-        )
+        total_count = (await self.session.execute(count_query)).scalar_one()
+
+        items = (await self.session.scalars(query.offset(skip).limit(limit))).all()
+
+        return (list(items), total_count)

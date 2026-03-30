@@ -19,8 +19,8 @@ async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
 ):
-    tokens = repository.get_all()
-    
+    tokens = await repository.get_all()
+
     if form_data.password in [token.access_token for token in tokens if not token.deleted and token.expires_at > datetime.now()]:
         return {"access_token": form_data.password, "token_type": "bearer"}
 

@@ -10,24 +10,24 @@ router = APIRouter(prefix="/accesstokens", tags=["Access Tokens"])
 
 
 @router.get("")
-def get_access_tokens(
+async def get_access_tokens(
     include_deleted: bool = False,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[AccessTokenRead]:
-    list = repository.get_all(include_deleted)
+    list = await repository.get_all(include_deleted)
 
     list.sort(key=lambda x: x.identifier)
     return list
 
 
 @router.get("/{access_token_id}")
-def get_access_token(
+async def get_access_token(
     access_token_id: str,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> AccessTokenRead:
-    access_token = repository.get(access_token_id)
+    access_token = await repository.get(access_token_id)
 
     if access_token is None:
         raise HTTPException(status_code=404, detail="Access Token not found")
@@ -39,20 +39,20 @@ def get_access_token(
 
 
 @router.post("")
-def create_access_token(
+async def create_access_token(
     identifier: AccessTokenCreate,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> AccessToken:
-    return repository.create(identifier.identifier)
+    return await repository.create(identifier.identifier)
 
 @router.delete("/{access_token_id}")
-def delete_access_token(
+async def delete_access_token(
     access_token_id: str,
     repository: AccessTokenRepository = Depends(get_repository(AccessToken)),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Response:
-    access_token = repository.get(access_token_id)
+    access_token = await repository.get(access_token_id)
 
     if access_token is None:
         raise HTTPException(status_code=404, detail="Access Token not found")
@@ -60,9 +60,7 @@ def delete_access_token(
     if access_token.deleted:
         raise HTTPException(status_code=403, detail="Access Token is deleted")
 
-    repository.delete(access_token)
-    
+    await repository.delete(access_token)
+
     # Return 204
     return Response(status_code=204)
-    
-    

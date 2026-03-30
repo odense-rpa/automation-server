@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from fastapi import Depends, Query, HTTPException, status, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from app.database.unit_of_work import AbstractUnitOfWork,UnitOfWork
-from sqlmodel import Session
+from app.database.unit_of_work import AbstractUnitOfWork, UnitOfWork
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
 
@@ -26,7 +26,7 @@ from app.services import (
 
 
 def get_repository(model):
-    def get(session=Depends(get_session)):
+    async def get(session=Depends(get_session)):
         if model == models.Workqueue:
             return repositories.WorkqueueRepository(session)
 
@@ -63,7 +63,7 @@ def get_repository(model):
     return get
 
 
-def get_workqueue_service(
+async def get_workqueue_service(
     repository: repositories.WorkqueueRepository = Depends(
         get_repository(models.Workqueue)
     ),
@@ -71,7 +71,7 @@ def get_workqueue_service(
     return WorkqueueService(repository)
 
 
-def get_auditlog_service(
+async def get_auditlog_service(
     repository: repositories.AuditLogRepository = Depends(
         get_repository(models.AuditLog)
     ),
@@ -79,7 +79,7 @@ def get_auditlog_service(
     return AuditLogService(repository)
 
 
-def get_session_service(
+async def get_session_service(
     repository: repositories.SessionRepository = Depends(
         get_repository(models.Session)
     ),
@@ -90,7 +90,7 @@ def get_session_service(
     return SessionService(repository, resource_repository)
 
 
-def get_incident_service(
+async def get_incident_service(
     incident_repository: repositories.IncidentRepository = Depends(
         get_repository(models.Incident)
     ),
@@ -112,7 +112,7 @@ def get_incident_service(
     )
 
 
-def get_resource_service(
+async def get_resource_service(
     repository: repositories.ResourceRepository = Depends(
         get_repository(models.Resource)
     ),
@@ -132,13 +132,13 @@ def get_paginated_search_params(
     return schemas.PaginatedSearchParams(pagination=pagination, search=search)
 
 
-def resolve_access_token(
+async def resolve_access_token(
     token: str = Depends(oauth2_scheme),
     repository: repositories.AccessTokenRepository = Depends(
         get_repository(models.AccessToken)
     ),
 ) -> models.AccessToken:
-    tokens = repository.get_all()
+    tokens = await repository.get_all()
 
     # If there are no tokens in the system, we assume that we are in either install or development mode.
     if len(tokens) == 0:
@@ -169,7 +169,7 @@ def resolve_access_token(
     )
 
 
-def get_unit_of_work(session: Session = Depends(get_session)) -> AbstractUnitOfWork:
+async def get_unit_of_work(session: AsyncSession = Depends(get_session)) -> AbstractUnitOfWork:
     return UnitOfWork(session)
 
 UnitOfWorkDep = Annotated[AbstractUnitOfWork, Depends(get_unit_of_work)]

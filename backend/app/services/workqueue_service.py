@@ -10,7 +10,7 @@ class WorkqueueService:
     def __init__(self, workqueue_repository: WorkqueueRepository):
         self.repository = workqueue_repository
 
-    def search_workitems(
+    async def search_workitems(
         self,
         workqueue_id: int,
         page: int = 1,
@@ -18,7 +18,7 @@ class WorkqueueService:
         search: Optional[str] = None,
     ) -> PaginatedResponse[WorkItem]:
         skip = (page - 1) * size
-        sessions, total_items = self.repository.get_workitems_paginated(
+        sessions, total_items = await self.repository.get_workitems_paginated(
             workqueue_id, search, skip, size
         )
 
@@ -35,6 +35,6 @@ class WorkqueueService:
         return response
 
 
-    def count_pending_items(self, workqueue_id: int) -> int:
+    async def count_pending_items(self, workqueue_id: int) -> int:
         # TODO: Implement deferred on this method
-        return self.repository.get_workitem_count(workqueue_id, status=WorkItemStatus.NEW)
+        return await self.repository.get_workitem_count(workqueue_id, status=WorkItemStatus.NEW)

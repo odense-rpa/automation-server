@@ -18,11 +18,11 @@ router = APIRouter(prefix="/triggers", tags=["Triggers"])
 # Dependency Injection local to this router
 
 
-def get_trigger(
+async def get_trigger(
     trigger_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Trigger:
-    with uow:
-        trigger = uow.triggers.get(trigger_id)
+    async with uow:
+        trigger = await uow.triggers.get(trigger_id)
 
         if trigger is None:
             raise HTTPException(status_code=404, detail="Trigger not found")
@@ -44,7 +44,7 @@ async def get_triggers(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ):
-    return uow.triggers.get_all(include_deleted=include_deleted)
+    return await uow.triggers.get_all(include_deleted=include_deleted)
 
 
 # Update a trigger
@@ -58,8 +58,8 @@ async def update_trigger(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Trigger:
-    with uow:
-        return uow.triggers.update(trigger, update.model_dump())
+    async with uow:
+        return await uow.triggers.update(trigger, update.model_dump())
 
 
 # Delete a trigger
@@ -73,8 +73,8 @@ async def delete_trigger(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ):
-    with uow:
-        uow.triggers.delete(trigger)
+    async with uow:
+        await uow.triggers.delete(trigger)
 
     return
 
@@ -91,20 +91,20 @@ async def get_upcoming_trigger_executions(
     token: AccessToken = Depends(resolve_access_token),
 ):
     """Get upcoming trigger executions within the specified time window."""
-    with uow:
+    async with uow:
         # Get all active triggers
-        triggers = uow.triggers.get_all(include_deleted=False)
+        triggers = await uow.triggers.get_all(include_deleted=False)
         active_triggers = [t for t in triggers if t.enabled]
-        
+
         # Get upcoming executions
         upcoming = get_upcoming_executions(active_triggers, hours_ahead)
-        
+
         # Enhance with process information
         result = []
         for execution in upcoming:
             trigger = execution['trigger']
-            process = uow.processes.get(trigger.process_id)
-            
+            process = await uow.processes.get(trigger.process_id)
+
             if process and not process.deleted:
                 result.append({
                     'trigger_id': trigger.id,
@@ -117,5 +117,5 @@ async def get_upcoming_trigger_executions(
                     'cron': trigger.cron if trigger.type.value == 'cron' else None,
                     'date': trigger.date.isoformat() if trigger.date else None
                 })
-        
+
         return result

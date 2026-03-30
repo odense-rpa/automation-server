@@ -7,7 +7,8 @@ from collections import defaultdict
 
 from sqlalchemy import or_
 from sqlalchemy.sql import func
-from sqlmodel import Session, select, delete, cast
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select, delete, cast
 
 from app.database.models import Workqueue, WorkItem
 
@@ -18,15 +19,15 @@ from .database_repository import DatabaseRepository, AbstractRepository
 
 class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
     @abc.abstractmethod
-    def get_workitem_count(self, workqueue_id: int, status: enums.WorkItemStatus):
+    async def get_workitem_count(self, workqueue_id: int, status: enums.WorkItemStatus):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_all_workitem_counts(self) -> dict[int, dict[enums.WorkItemStatus, int]]:
+    async def get_all_workitem_counts(self) -> dict[int, dict[enums.WorkItemStatus, int]]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_workitems_paginated(
+    async def get_workitems_paginated(
         self,
         workqueue_id: int,
         search: Optional[str] = None,
@@ -37,7 +38,7 @@ class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def clear(
+    async def clear(
         self,
         workqueue_id: int,
         workitem_status: enums.WorkItemStatus | None,
@@ -46,7 +47,7 @@ class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_reference(
+    async def get_by_reference(
         self,
         workqueue_id: int,
         reference: str,
@@ -56,36 +57,38 @@ class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
 
 
 class WorkqueueRepository(DatabaseRepository[Workqueue]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         super().__init__(Workqueue, session)
 
-    def get_workitem_count(self, workqueue_id: int, status: enums.WorkItemStatus):
-        return self.session.exec(
+    async def get_workitem_count(self, workqueue_id: int, status: enums.WorkItemStatus):
+        result = await self.session.execute(
             select(func.count())
             .where(WorkItem.workqueue_id == workqueue_id)
             .where(WorkItem.status == status)
-        ).first()
+        )
+        return result.scalar_one()
 
-    def get_all_workitem_counts(self) -> dict[int, dict[enums.WorkItemStatus, int]]:
-        rows = self.session.exec(
+    async def get_all_workitem_counts(self) -> dict[int, dict[enums.WorkItemStatus, int]]:
+        result = await self.session.execute(
             select(WorkItem.workqueue_id, WorkItem.status, func.count())
             .group_by(WorkItem.workqueue_id, WorkItem.status)
-        ).all()
+        )
+        rows = result.all()
 
-        result: dict[int, dict[enums.WorkItemStatus, int]] = defaultdict(
+        counts: dict[int, dict[enums.WorkItemStatus, int]] = defaultdict(
             lambda: {s: 0 for s in enums.WorkItemStatus}
         )
         for workqueue_id, status, count in rows:
-            result[workqueue_id][status] = count
+            counts[workqueue_id][status] = count
 
-        return result
+        return counts
 
-    def get_by_name(self, name: str) -> Workqueue:
-        return self.session.exec(
+    async def get_by_name(self, name: str) -> Workqueue:
+        return (await self.session.scalars(
             select(Workqueue).filter(Workqueue.name == name)
-        ).first()
+        )).first()
 
-    def get_workitems_paginated(
+    async def get_workitems_paginated(
         self,
         workqueue_id: int,
         search: Optional[str] = None,
@@ -109,14 +112,13 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
         if query.whereclause is not None:
             count_query = count_query.where(query.whereclause)
 
-        total_count = self.session.exec(count_query).first()
+        total_count = (await self.session.execute(count_query)).scalar_one()
 
-        return (
-            list(self.session.exec(query.offset(skip).limit(limit)).all()),
-            total_count,
-        )
+        items = (await self.session.scalars(query.offset(skip).limit(limit))).all()
 
-    def clear(
+        return (list(items), total_count)
+
+    async def clear(
         self,
         workqueue_id: int,
         workitem_status: enums.WorkItemStatus | None,
@@ -131,10 +133,10 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
             cutoff_date = datetime.now() - timedelta(days=days_older_than)
             query = query.where(WorkItem.created_at < cutoff_date)
 
-        self.session.exec(query)
-        self.session.commit()
+        await self.session.execute(query)
+        await self.session.commit()
 
-    def get_by_reference(
+    async def get_by_reference(
         self,
         workqueue_id: int,
         reference: str,
@@ -143,15 +145,15 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
         """Get work items by reference value within a specific workqueue, optionally filtered by status."""
         if not reference or reference.strip() == "":
             return []
-        
+
         query = select(WorkItem).where(
             WorkItem.workqueue_id == workqueue_id,
             WorkItem.reference == reference
         )
-        
+
         if status is not None:
             query = query.where(WorkItem.status == status)
-            
+
         query = query.order_by(WorkItem.created_at.desc())
-        
-        return list(self.session.scalars(query))
+
+        return list(await self.session.scalars(query))

@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import Trigger
 
@@ -10,5 +10,5 @@ class AbstractTriggerRepository(AbstractRepository[Trigger]):
 
 
 class TriggerRepository(AbstractTriggerRepository, DatabaseRepository[Trigger]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         super().__init__(Trigger, session)

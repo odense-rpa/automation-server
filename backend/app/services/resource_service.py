@@ -15,8 +15,8 @@ class ResourceService:
         self.repository = resource_repository
         self.session_repository = session_repository
 
-    def update_availability(self):
-        resources = self.repository.get_all()
+    async def update_availability(self):
+        resources = await self.repository.get_all()
 
         for resource in resources:
             if (
@@ -27,12 +27,12 @@ class ResourceService:
                 if not any(
                     x.status == SessionStatus.IN_PROGRESS
                     and x.resource_id == resource.id
-                    for x in self.session_repository.get_active_sessions()
+                    for x in await self.session_repository.get_active_sessions()
                 ):
-                    self.detach(resource)
+                    await self.detach(resource)
 
-    def enroll(self, fqdn: str, name: str, capabilities: str):
-        previous = self.repository.get_by_fqdn(fqdn)
+    async def enroll(self, fqdn: str, name: str, capabilities: str):
+        previous = await self.repository.get_by_fqdn(fqdn)
 
         data = {
             "fqdn": fqdn,
@@ -47,51 +47,50 @@ class ResourceService:
         # TODO: Reconsider controlplane and the available flag - it could be computed based on the sessions
         if previous is not None:
             if previous.deleted:
-                resource = self.repository.update(previous, data)
-                self.flush_sessions(resource)
+                resource = await self.repository.update(previous, data)
+                await self.flush_sessions(resource)
             else:
-                resource = self.repository.update(
+                resource = await self.repository.update(
                     previous,
                     {"last_seen": datetime.now(), "capabilities": capabilities},
                 )
 
             return resource
 
-        return self.repository.create(data)
+        return await self.repository.create(data)
 
-    def keep_alive(self, resource: Resource):
+    async def keep_alive(self, resource: Resource):
         data = resource.model_dump()
 
-    
+
         data["deleted"] = False
         data["last_seen"] = datetime.now()
 
-        return self.repository.update(resource, data)
+        return await self.repository.update(resource, data)
 
-    def detach(self, resource: Resource):
+    async def detach(self, resource: Resource):
         data = resource.model_dump()
 
         data["available"] = False
         data["deleted"] = True
-        self.flush_sessions(resource)
+        await self.flush_sessions(resource)
 
-        return self.repository.update(resource, data)
+        return await self.repository.update(resource, data)
 
-    def flush_sessions(self, resource: Resource):
+    async def flush_sessions(self, resource: Resource):
         """
         Detaches all sessions from the specified resource.
         If any session is in progress, it will be marked as failed. If any session is new, it will be detached from the resource.
         """
-        sessions = self.session_repository.get_active_sessions()
+        sessions = await self.session_repository.get_active_sessions()
         for session in (s for s in sessions if s.resource_id == resource.id):
             if session.status == SessionStatus.IN_PROGRESS:
-                self.session_repository.update(
+                await self.session_repository.update(
                     session, {"status": SessionStatus.FAILED, "resource_id": None}
                 )
 
             # Detach the session from the resource
             if session.status == SessionStatus.NEW:
-                self.session_repository.update(
+                await self.session_repository.update(
                     session, {"resource_id": None, "dispatched_at": None}
                 )
-

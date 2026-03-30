@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Response, Query
 from fastapi.exceptions import HTTPException
-from time import sleep
 
 from sqlalchemy.exc import IntegrityError
 
@@ -31,11 +30,11 @@ router = APIRouter(prefix="/workqueues", tags=["Workqueues"])
 
 
 # Dependency Injection local to this router
-def get_workqueue(
+async def get_workqueue(
     workqueue_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Workqueue:
-    with uow:
-        workqueue = uow.workqueues.get(workqueue_id)
+    async with uow:
+        workqueue = await uow.workqueues.get(workqueue_id)
 
         if workqueue is None:
             raise HTTPException(status_code=404, detail="Workqueue not found")
@@ -44,44 +43,44 @@ def get_workqueue(
             raise HTTPException(status_code=410, detail="Workqueue is gone")
 
         return workqueue
-    
-def get_workqueue_by_name(
+
+async def get_workqueue_by_name(
     workqueue_name: str,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Workqueue:
-    with uow:
-        workqueue = uow.workqueues.get_by_name(workqueue_name)
- 
+    async with uow:
+        workqueue = await uow.workqueues.get_by_name(workqueue_name)
+
         if workqueue is None:
             raise HTTPException(status_code=404, detail="Workqueue not found")
- 
+
         if workqueue.deleted:
             raise HTTPException(status_code=410, detail="Workqueue is gone")
- 
+
         return workqueue
 
 
 @router.get("")
-def get_workqueues(
+async def get_workqueues(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Workqueue]:
-    workqueues = uow.workqueues.get_all(include_deleted)
+    workqueues = await uow.workqueues.get_all(include_deleted)
     sorted_workqueues = sorted(workqueues, key=lambda wq: wq.name)
 
     return sorted_workqueues
 
 
 @router.get("/information")
-def get_workqueues_information(
+async def get_workqueues_information(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[WorkqueueInformation]:
-    with uow:
-        workqueues = uow.workqueues.get_all(include_deleted)
-        all_counts = uow.workqueues.get_all_workitem_counts()
+    async with uow:
+        workqueues = await uow.workqueues.get_all(include_deleted)
+        all_counts = await uow.workqueues.get_all_workitem_counts()
 
         result = []
         for queue in workqueues:
@@ -103,76 +102,76 @@ def get_workqueues_information(
 
 
 @router.get("/{workqueue_id}")
-def get_workqueue(
+async def get_workqueue(
     workqueue: Workqueue = Depends(get_workqueue),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
     return workqueue
 
 @router.get("/by_name/{workqueue_name}")
-def get_workqueue_by_name(
+async def get_workqueue_by_name(
     workqueue: Workqueue = Depends(get_workqueue_by_name),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
     return workqueue
 
 @router.put("/{workqueue_id}")
-def update_workqueue(
+async def update_workqueue(
     update: WorkqueueUpdate,
     workqueue: Workqueue = Depends(get_workqueue),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
-    with uow:
-        return uow.workqueues.update(workqueue, update.model_dump())
+    async with uow:
+        return await uow.workqueues.update(workqueue, update.model_dump())
 
 
 @router.post("")
-def create_workqueue(
+async def create_workqueue(
     create: WorkqueueCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
     try:
-        with uow:
-            return uow.workqueues.create(create.model_dump())
+        async with uow:
+            return await uow.workqueues.create(create.model_dump())
     except IntegrityError:
         raise HTTPException(status_code=422, detail="Workqueue name already exists")
-    
+
 
 
 @router.delete("/{workqueue_id}", status_code=204)
-def delete_workqueue(
+async def delete_workqueue(
     workqueue: Workqueue = Depends(get_workqueue),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> None:
-    with uow:
-        uow.workqueues.delete(workqueue)
+    async with uow:
+        await uow.workqueues.delete(workqueue)
         return
 
 
 @router.post("/{workqueue_id}/clear", status_code=204)
-def clear_workqueue(
+async def clear_workqueue(
     model: WorkqueueClear,
     workqueue: Workqueue = Depends(get_workqueue),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Response:
-    with uow:
-        uow.workqueues.clear(workqueue.id, model.workitem_status, model.days_older_than)
+    async with uow:
+        await uow.workqueues.clear(workqueue.id, model.workitem_status, model.days_older_than)
         return
 
 
 @router.post("/{workqueue_id}/add")
-def adds_workitem(
+async def adds_workitem(
     item: WorkItemCreate,
     workqueue: Workqueue = Depends(get_workqueue),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> WorkItem:
 
-    with uow:
+    async with uow:
         # Force the initial state
         data = item.model_dump()
         data["workqueue_id"] = workqueue.id
@@ -180,32 +179,32 @@ def adds_workitem(
         data["locked"] = False
         data["deleted"] = False
 
-        return uow.work_items.create(data)
+        return await uow.work_items.create(data)
 
 
 @router.get("/{workqueue_id}/next_item")
-def gets_next_workitem(
+async def gets_next_workitem(
     workqueue: Workqueue = Depends(get_workqueue),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> WorkItem:
-    
+
     if not workqueue.enabled:
         return Response(status_code=204)
 
-    with uow:
-        item = uow.work_items.get_next_item(workqueue.id)
+    async with uow:
+        item = await uow.work_items.get_next_item(workqueue.id)
         return item if item is not None else Response(status_code=204)
 
 
 @router.get("/{workqueue_id}/items")
-def get_work_items(
+async def get_work_items(
     workqueue: Workqueue = Depends(get_workqueue),
     paginated_search: PaginatedSearchParams = Depends(get_paginated_search_params),
     service: WorkqueueService = Depends(get_workqueue_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> PaginatedResponse[WorkItem]:
-    return service.search_workitems(
+    return await service.search_workitems(
         workqueue.id,
         paginated_search.pagination.page,
         paginated_search.pagination.size,
@@ -214,12 +213,12 @@ def get_work_items(
 
 
 @router.get("/{workqueue_id}/by_reference/{reference}")
-def get_workitems_by_reference_in_workqueue(
+async def get_workitems_by_reference_in_workqueue(
     reference: str,
     workqueue: Workqueue = Depends(get_workqueue),
     status: enums.WorkItemStatus | None = Query(None, description="Optional status filter"),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[WorkItem]:
-    with uow:
-        return uow.workqueues.get_by_reference(workqueue.id, reference, status)
+    async with uow:
+        return await uow.workqueues.get_by_reference(workqueue.id, reference, status)

@@ -16,11 +16,11 @@ router = APIRouter(prefix="/resources", tags=["Resources"])
 # Dependency Injection local to this router
 
 
-def get_resource(
+async def get_resource(
     resource_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Resource:
-    with uow:
-        resource = uow.resources.get(resource_id)
+    async with uow:
+        resource = await uow.resources.get(resource_id)
 
         if resource is None:
             raise HTTPException(status_code=404, detail="Resource not found")
@@ -31,11 +31,11 @@ def get_resource(
         return resource
 
 
-def get_resource_include_deleted(
+async def get_resource_include_deleted(
     resource_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Resource:
-    with uow:
-        resource = uow.resources.get(resource_id)
+    async with uow:
+        resource = await uow.resources.get(resource_id)
 
         if resource is None:
             raise HTTPException(status_code=404, detail="Resource not found")
@@ -47,23 +47,23 @@ def get_resource_include_deleted(
 
 
 @router.get("", responses=error_descriptions("Resource", _403=True))
-def get_resources(
+async def get_resources(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Resource]:
-    service.update_availability()
+    await service.update_availability()
 
     # Return all resources that are not deleted and have been seen in the last 10 minutes
-    with uow:
-        return uow.resources.get_all(include_deleted=include_deleted)
+    async with uow:
+        return await uow.resources.get_all(include_deleted=include_deleted)
 
 
 @router.get(
     "/{resource_id}", responses=error_descriptions("Resource", _403=True, _404=True)
 )
-def get_resource_by_id(
+async def get_resource_by_id(
     resource: Resource = Depends(get_resource),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
@@ -74,7 +74,7 @@ def get_resource_by_id(
 @router.put(
     "/{resource_id}", responses=error_descriptions("Resource", _403=True, _404=True)
 )
-def update_resource(
+async def update_resource(
     update: ResourceUpdate,
     resource: Resource = Depends(get_resource_include_deleted),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -84,7 +84,7 @@ def update_resource(
     if update.fqdn != resource.fqdn:
         raise HTTPException(status_code=400, detail="FQDN cannot be changed")
 
-    return service.enroll(update.fqdn, update.name, update.capabilities)
+    return await service.enroll(update.fqdn, update.name, update.capabilities)
 
 
 @router.put(
@@ -92,20 +92,20 @@ def update_resource(
     response_model=bool,
     responses=error_descriptions("Resource", _403=True, _404=True),
 )
-def ping_resource(
+async def ping_resource(
     resource: Resource = Depends(get_resource_include_deleted),
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> bool:
-    service.keep_alive(resource)
+    await service.keep_alive(resource)
 
     return True
 
 
 @router.post("", responses=error_descriptions("Resource", _403=True))
-def create_resource(
+async def create_resource(
     resource: ResourceCreate,
     service: ResourceService = Depends(get_resource_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Resource:
-    return service.enroll(resource.fqdn, resource.name, resource.capabilities)
+    return await service.enroll(resource.fqdn, resource.name, resource.capabilities)

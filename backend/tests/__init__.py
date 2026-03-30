@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.database.models as models
 import app.enums as enums
 
-def generate_basic_data(session: Session):
+async def generate_basic_data(session: AsyncSession):
     session.add(
         models.Credential(
             name="Secret credential",
@@ -41,7 +41,7 @@ def generate_basic_data(session: Session):
             deleted=True
         )
     )
-    session.commit()
+    await session.commit()
 
     session.add(
         models.WorkItem(
@@ -93,7 +93,7 @@ def generate_basic_data(session: Session):
         )
     )
 
-    session.commit()
+    await session.commit()
 
     session.add(
         models.Process(
@@ -236,7 +236,7 @@ def generate_basic_data(session: Session):
             created_at=datetime.now(),
         )
     )
-    
+
     session.add(
         models.AuditLog(
             event_timestamp=datetime.now(),
@@ -251,4 +251,4 @@ def generate_basic_data(session: Session):
     session.add(models.AuditLog(session_id=3, message="Test log 3 - nothing to see here", created_at=datetime.now(), event_timestamp=datetime.now()))
     session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
 
-    session.commit()
+    await session.commit()

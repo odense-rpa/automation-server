@@ -79,54 +79,54 @@ class TestAutomationScheduler:
     @pytest.mark.asyncio
     async def test_process_triggers_empty_list(self):
         """Test processing triggers with empty trigger list."""
-        mock_trigger_repo = MagicMock()
-        mock_process_repo = MagicMock()
+        mock_trigger_repo = AsyncMock()
+        mock_process_repo = AsyncMock()
         mock_trigger_repo.get_all.return_value = []
-        
+
         # Should complete without errors
         await self.scheduler._process_triggers(mock_trigger_repo, mock_process_repo, datetime.now())
-        
+
         mock_trigger_repo.get_all.assert_called_once_with(include_deleted=False)
-    
+
     @pytest.mark.asyncio
     async def test_process_triggers_skips_disabled_triggers(self):
         """Test that disabled triggers are skipped."""
-        mock_trigger_repo = MagicMock()
-        mock_process_repo = MagicMock()
-        
+        mock_trigger_repo = AsyncMock()
+        mock_process_repo = AsyncMock()
+
         # Create disabled trigger
         disabled_trigger = MagicMock()
         disabled_trigger.enabled = False
         disabled_trigger.id = 1
-        
+
         mock_trigger_repo.get_all.return_value = [disabled_trigger]
-        
+
         await self.scheduler._process_triggers(mock_trigger_repo, mock_process_repo, datetime.now())
-        
+
         # Should not process disabled triggers
         mock_process_repo.get.assert_not_called()
-    
+
     @pytest.mark.asyncio
     async def test_process_triggers_skips_deleted_processes(self):
         """Test that triggers for deleted processes are skipped."""
-        mock_trigger_repo = MagicMock()
-        mock_process_repo = MagicMock()
-        
+        mock_trigger_repo = AsyncMock()
+        mock_process_repo = AsyncMock()
+
         # Create enabled trigger
         enabled_trigger = MagicMock()
         enabled_trigger.enabled = True
         enabled_trigger.process_id = 1
         enabled_trigger.id = 2
-        
+
         # Process is deleted
         deleted_process = MagicMock()
         deleted_process.deleted = True
-        
+
         mock_trigger_repo.get_all.return_value = [enabled_trigger]
         mock_process_repo.get.return_value = deleted_process
-        
+
         await self.scheduler._process_triggers(mock_trigger_repo, mock_process_repo, datetime.now())
-        
+
         # Should check process status but not proceed with processing
         mock_process_repo.get.assert_called_once_with(1)
 

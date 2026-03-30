@@ -1,14 +1,14 @@
 from datetime import datetime
-from fastapi.testclient import TestClient
-from sqlmodel import Session
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from . import generate_basic_data  # noqa: F401
 
 
-def test_get_empty_sessionlogs(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_empty_sessionlogs(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/audit-logs/4?page=1&size=10")
+    response = await client.get("/audit-logs/4?page=1&size=10")
     data = response.json()
 
     assert response.status_code == 200
@@ -18,25 +18,25 @@ def test_get_empty_sessionlogs(session: Session, client: TestClient):
     assert len(data["items"]) == 0
 
 
-def test_get_nonexistant_session(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_nonexistant_session(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/audit-logs/220202?page=1&size=10")
+    response = await client.get("/audit-logs/220202?page=1&size=10")
     data = response.json()
 
     assert response.status_code == 404
     assert data["detail"] == "Session not found"
 
-def test_get_deleted_session(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_deleted_session(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/audit-logs/2?page=1&size=10")
+    response = await client.get("/audit-logs/2?page=1&size=10")
     assert response.status_code == 410
 
-def test_search_sessionlogs(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_search_sessionlogs(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/audit-logs/3?page=1&size=1")
+    response = await client.get("/audit-logs/3?page=1&size=1")
     data = response.json()
 
     assert response.status_code == 200
@@ -45,7 +45,7 @@ def test_search_sessionlogs(session: Session, client: TestClient):
     assert data["total_pages"] == 3
     assert len(data["items"]) == 1
 
-    response = client.get("/audit-logs/3?page=1&size=1&search=nOthing")
+    response = await client.get("/audit-logs/3?page=1&size=1&search=nOthing")
     data = response.json()
 
     assert response.status_code == 200
@@ -55,24 +55,24 @@ def test_search_sessionlogs(session: Session, client: TestClient):
     assert len(data["items"]) == 1
 
 
-def test_create_audit_log(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_create_audit_log(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
     try:
         # Test minimal required fields
-        response = client.post("/audit-logs", json={
+        response = await client.post("/audit-logs", json={
             "message": "Test log message",
             "event_timestamp": datetime.now().isoformat()
         })
-        
+
         if response.status_code != 204:
             print(f"Response status: {response.status_code}")
             print(f"Response body: {response.text}")
-        
+
         assert response.status_code == 204
 
         # Test with session_id
-        response = client.post("/audit-logs", json={
+        response = await client.post("/audit-logs", json={
             "message": "Test log message with session",
             "session_id": 1,
             "event_timestamp": datetime.now().isoformat()
@@ -86,10 +86,10 @@ def test_create_audit_log(session: Session, client: TestClient):
         raise
 
 
-def test_create_audit_log_with_all_fields(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_create_audit_log_with_all_fields(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.post("/audit-logs", json={
+    response = await client.post("/audit-logs", json={
         "message": "Detailed log message",
         "session_id": 1,
         "workitem_id": 1,
@@ -113,22 +113,22 @@ def test_create_audit_log_with_all_fields(session: Session, client: TestClient):
     assert response.status_code == 204
 
 
-def test_create_audit_log_validation(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_create_audit_log_validation(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
     # Missing required field 'message'
-    response = client.post("/audit-logs", json={
+    response = await client.post("/audit-logs", json={
         "session_id": 1
     })
 
     assert response.status_code == 422
 
 
-def test_get_by_workitem(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_by_workitem(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
     # WorkItem 1 has one audit log entry (see __init__.py line 241-248)
-    response = client.get("/audit-logs/by_workitem/1")
+    response = await client.get("/audit-logs/by_workitem/1")
     data = response.json()
 
     assert response.status_code == 200
@@ -137,23 +137,22 @@ def test_get_by_workitem(session: Session, client: TestClient):
     assert data[0]["message"] == "Test log 2"
 
 
-def test_get_by_workitem_empty(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_by_workitem_empty(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
     # WorkItem 2 has no audit logs
-    response = client.get("/audit-logs/by_workitem/2")
+    response = await client.get("/audit-logs/by_workitem/2")
     data = response.json()
 
     assert response.status_code == 200
     assert len(data) == 0
 
 
-def test_get_by_workitem_not_found(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_by_workitem_not_found(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/audit-logs/by_workitem/999")
+    response = await client.get("/audit-logs/by_workitem/999")
     data = response.json()
 
     assert response.status_code == 404
     assert data["detail"] == "Workitem not found"
-

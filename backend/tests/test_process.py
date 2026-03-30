@@ -1,15 +1,15 @@
-from fastapi.testclient import TestClient
-from sqlmodel import Session
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.database.models as models
 
 from . import generate_basic_data  # noqa: F401
 
 
-def test_get_processes(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_processes(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/processes/")
+    response = await client.get("/processes/")
     data = response.json()
 
     assert response.status_code == 200
@@ -18,15 +18,15 @@ def test_get_processes(session: Session, client: TestClient):
     assert data[0]["description"] == "Process for unittest"
     assert data[0]["deleted"] is False
 
-    response = client.get("/processes/?include_deleted=true")
+    response = await client.get("/processes/?include_deleted=true")
     data = response.json()
     assert len(data) == 2
 
 
-def test_get_process(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_process(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.get("/processes/1")
+    response = await client.get("/processes/1")
 
     data = response.json()
 
@@ -35,14 +35,14 @@ def test_get_process(session: Session, client: TestClient):
     assert data["description"] == "Process for unittest"
     assert data["deleted"] is False
 
-    response = client.get("/processes/2")
+    response = await client.get("/processes/2")
 
     assert response.status_code == 410
 
-def test_update_process(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_update_process(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.put(
+    response = await client.put(
         "/processes/1",
         json={
             "name": "Process",
@@ -61,7 +61,7 @@ def test_update_process(session: Session, client: TestClient):
     assert data["name"] == "Process"
     assert data["description"] == "New description"
 
-    data = session.get(models.Process, 1)
+    data = await session.get(models.Process, 1)
 
     assert data.name == "Process"
     assert data.description == "New description"
@@ -71,10 +71,10 @@ def test_update_process(session: Session, client: TestClient):
     assert data.target_credentials_id == 1
     assert data.credentials_id == 1
 
-def test_create_process(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_create_process(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.post(
+    response = await client.post(
         "/processes/",
         json={
             "name": "Process",
@@ -94,23 +94,23 @@ def test_create_process(session: Session, client: TestClient):
     assert data["description"] == "New description"
 
 
-def test_delete_process(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_delete_process(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.delete("/processes/1")
+    response = await client.delete("/processes/1")
 
     assert response.status_code == 204
 
-    process = session.get(models.Process, 1)
+    process = await session.get(models.Process, 1)
     assert process.deleted is True
 
-    response = client.get("/processes/1")
+    response = await client.get("/processes/1")
     assert response.status_code == 410
 
-def test_create_trigger_on_process(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_create_trigger_on_process(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.post(
+    response = await client.post(
         "/processes/1/trigger",
         json={
             "type": "cron",
@@ -126,10 +126,10 @@ def test_create_trigger_on_process(session: Session, client: TestClient):
     assert data["cron"] == "15 4 * * *"
     assert data["enabled"] is False
 
-def test_get_triggers_on_process(session: Session, client: TestClient):
-    generate_basic_data(session)
+async def test_get_triggers_on_process(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
 
-    response = client.post(
+    response = await client.post(
         "/processes/1/trigger",
         json={
             "type": "cron",
@@ -138,7 +138,7 @@ def test_get_triggers_on_process(session: Session, client: TestClient):
         },
     )
 
-    response = client.get("/processes/1/trigger")
+    response = await client.get("/processes/1/trigger")
 
     assert response.status_code == 200
 
