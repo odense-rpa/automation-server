@@ -20,7 +20,7 @@ from app.services import (
 
 
 def get_repository(model):
-    async def get(session=Depends(get_session)):
+    def get(session=Depends(get_session)):
         if model == models.Workqueue:
             return repositories.WorkqueueRepository(session)
 

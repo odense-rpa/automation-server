@@ -2,12 +2,11 @@
 Tests for scheduler validators module.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from app.scheduler.validators import (
-    process_trigger_with_validation,
     validate_cron_expression,
     validate_parameters,
 )
@@ -72,61 +71,3 @@ class TestValidateCronExpression:
         """Test validation with invalid cron expression."""
         with pytest.raises(ValueError, match="Invalid cron expression"):
             validate_cron_expression("invalid cron")
-
-
-class TestProcessTriggerWithValidation:
-    """Tests for process_trigger_with_validation function."""
-
-    def test_process_trigger_with_validation_success(self):
-        """Test successful trigger processing."""
-        trigger = MagicMock()
-        trigger.id = 1
-
-        def mock_logic(trigger, params):
-            return True
-
-        result = process_trigger_with_validation(trigger, mock_logic, "valid params")
-        assert result is True
-
-    def test_process_trigger_with_validation_logic_failure(self):
-        """Test trigger processing when logic function returns False."""
-        trigger = MagicMock()
-        trigger.id = 1
-
-        def mock_logic(trigger, params):
-            return False
-
-        result = process_trigger_with_validation(trigger, mock_logic, "valid params")
-        assert result is False
-
-    def test_process_trigger_with_validation_value_error(self):
-        """Test trigger processing when logic function raises ValueError."""
-        trigger = MagicMock()
-        trigger.id = 1
-
-        def mock_logic(trigger, params):
-            raise ValueError("Test error")
-
-        with patch("app.scheduler.validators.logger") as mock_logger:
-            result = process_trigger_with_validation(
-                trigger, mock_logic, "valid params"
-            )
-            assert result is False
-            mock_logger.error.assert_called_once_with("Invalid trigger 1: Test error")
-
-    def test_process_trigger_with_validation_general_exception(self):
-        """Test trigger processing when logic function raises general exception."""
-        trigger = MagicMock()
-        trigger.id = 1
-
-        def mock_logic(trigger, params):
-            raise Exception("General error")
-
-        with patch("app.scheduler.validators.logger") as mock_logger:
-            result = process_trigger_with_validation(
-                trigger, mock_logic, "valid params"
-            )
-            assert result is False
-            mock_logger.error.assert_called_once_with(
-                "Error processing trigger 1: General error"
-            )

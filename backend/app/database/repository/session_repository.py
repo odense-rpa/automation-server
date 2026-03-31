@@ -144,6 +144,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
         log_entry = AuditLog(**log_entry)
         self.session.add(log_entry)
         await self.session.commit()
+        await self.session.refresh(log_entry)
 
         return log_entry
 
