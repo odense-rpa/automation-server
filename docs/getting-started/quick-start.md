@@ -56,6 +56,5 @@ docker compose up -d
 
 - [Writing Automations](../guides/writing-automations.md) — learn how to build your own automation
 - [Scheduling](../guides/scheduling.md) — understand trigger types in depth
-- [Workqueues](../guides/workqueues.md) — distribute work across multiple sessions
 
 Each user who needs access to Automation Server also needs a token. Create additional tokens in the Administration section the same way you created the worker token.
