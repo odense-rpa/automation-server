@@ -1,6 +1,9 @@
 <template>
   <div class="json-view">
-    <div v-if="showFullJson">
+    <div v-if="showFullJson" class="relative">
+      <button class="absolute top-2 right-2 btn btn-ghost btn-xs" @click="copyJson" :title="copied ? 'Copied!' : 'Copy'">
+        <font-awesome-icon :icon="['fas', copied ? 'check' : 'copy']" />
+      </button>
       <pre
         v-if="isValidJson"
         :class="['p-1', 'border', { pointer: !expanded }]"
@@ -39,7 +42,8 @@ export default {
   data() {
     return {
       showFullJson: this.expanded,
-      isValidJson: true
+      isValidJson: true,
+      copied: false
     };
   },
   computed: {
@@ -64,6 +68,11 @@ export default {
   methods: {
     toggleView() {
       this.showFullJson = !this.showFullJson;
+    },
+    copyJson() {
+      navigator.clipboard.writeText(this.formattedJson);
+      this.copied = true;
+      setTimeout(() => { this.copied = false; }, 1500);
     }
   }
 };
