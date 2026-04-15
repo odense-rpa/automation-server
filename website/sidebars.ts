@@ -19,7 +19,7 @@ const sidebars: SidebarsConfig = {
         'guides/setup-a-process',
         'guides/writing-automations',
         'guides/scheduling',
-        'guides/workqueues',
+
         'guides/logging-and-audit',
       ],
     },

@@ -54,4 +54,4 @@ Automation Server will monitor the queue and dispatch a session to an available 
 
 ## Next Steps
 
-With the workqueue, process, and trigger in place, you can start pushing items into the queue. See [Workqueues](./workqueues.md) for how to add items programmatically from your automations.
+With the workqueue, process, and trigger in place, you can start pushing items into the queue. See [Writing Automations](./writing-automations.md) for how to add items to the queue from your automation code.
