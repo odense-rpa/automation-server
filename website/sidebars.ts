@@ -16,6 +16,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Guides',
       items: [
+        'guides/setup-a-process',
         'guides/writing-automations',
         'guides/scheduling',
         'guides/workqueues',
