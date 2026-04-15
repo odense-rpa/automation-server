@@ -3,11 +3,11 @@
     <div v-if="showFullJson">
       <pre
         v-if="isValidJson"
-        class="p-1 pointer border"
-        @click="toggleView()"
+        :class="['p-1', 'border', { pointer: !expanded }]"
+        @click="!expanded && toggleView()"
         v-html="highlightedJson"
       ></pre>
-      <pre v-if="!isValidJson" class="p-1 pointer text-danger border" @click="toggleView()">{{
+      <pre v-if="!isValidJson" :class="['p-1', 'text-danger', 'border', { pointer: !expanded }]" @click="!expanded && toggleView()">{{
         jsonData
       }}</pre>
     </div>
@@ -30,11 +30,15 @@ export default {
     jsonData: {
       type: Object,
       required: true
+    },
+    expanded: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      showFullJson: false,
+      showFullJson: this.expanded,
       isValidJson: true
     };
   },

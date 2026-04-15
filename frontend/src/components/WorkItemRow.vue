@@ -8,13 +8,13 @@
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
         class="block px-4 py-3 no-underline text-inherit">{{ workitem.id }}</router-link>
     </td>
-    <td class="p-0 max-w-0 w-full">
+    <td class="p-0 max-w-xs">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit break-words">{{ workitem.reference }}</router-link>
+        class="block px-4 py-3 no-underline text-inherit truncate" :title="workitem.reference">{{ workitem.reference }}</router-link>
     </td>
-    <td class="p-0 max-w-0 w-full">
+    <td class="p-0 max-w-xs">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit break-words">{{ workitem.message }}</router-link>
+        class="block px-4 py-3 no-underline text-inherit truncate" :title="workitem.message">{{ workitem.message }}</router-link>
     </td>
     <td><json-view :jsonData="workitem.data" /></td>
     <td class="text-center p-0">
