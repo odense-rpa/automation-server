@@ -24,15 +24,6 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Deployment',
-      items: [
-        'deployment/docker',
-        'deployment/production',
-        'deployment/environment-variables',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Architecture',
       items: [
         'architecture/overview',

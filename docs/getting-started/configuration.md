@@ -38,7 +38,7 @@ ATS_CAPABILITIES=playwright
 
 - **`ATS_TOKEN`** — authentication token workers use to connect to the backend. Leave empty for development. Set a strong secret in production.
 - **`ATS_URL`** — the URL workers use to reach the backend API. The default `http://backend:8000` works within Docker Compose. Change this if your worker runs on a separate machine.
-- **`ATS_CAPABILITIES`** — comma-separated list of capabilities the worker advertises. Processes are matched to workers based on these. For example, `playwright` means the worker can run browser automations.
+- **`ATS_CAPABILITIES`** — comma-separated list of capabilities the worker advertises. Processes are matched to workers based on these. For example, `playwright` means the worker can run browser automations. Leave this blank if you haven't customized your workers — processes without a required capability will run on any available worker.
 
 ## Deployment
 
@@ -48,4 +48,4 @@ ATS_CAPABILITIES=playwright
 
 Uncomment `HTTP_PORT` to change the port the frontend is exposed on. Useful when running behind a reverse proxy on a non-standard port.
 
-See [Docker Setup](../deployment/docker.md) for how these variables are used in the compose configuration.
+See [Installation](./installation.md) for how these variables are used when starting the stack.

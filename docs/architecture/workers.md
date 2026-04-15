@@ -40,4 +40,4 @@ ATS_TOKEN=your-secret-token
 ATS_CAPABILITIES=playwright
 ```
 
-See [Environment Variables](../deployment/environment-variables.md) for details.
+See [Configuration](../getting-started/configuration.md) for details.

@@ -23,7 +23,7 @@ Open an issue to discuss your idea before building it. This avoids wasted effort
 
 ## Development Setup
 
-See [Docker Setup](./deployment/docker.md) for getting the full stack running locally.
+See [Installation](./getting-started/installation.md) for getting the full stack running locally.
 
 For backend-only development:
 

@@ -79,7 +79,6 @@ const config: Config = {
           items: [
             { label: 'Getting Started', to: '/docs/getting-started/installation' },
             { label: 'Guides', to: '/docs/guides/writing-automations' },
-            { label: 'Deployment', to: '/docs/deployment/docker' },
           ],
         },
         {
