@@ -6,32 +6,56 @@ description: Get your first automation running in minutes.
 
 After [installing](./installation.md) Automation Server, follow these steps to run your first automation.
 
-## 1. Add a Resource
+## 1. Check Your Workers
 
-A "resource" is a worker that Automation Server can dispatch jobs to. Workers register themselves automatically when they start, but you can also add them manually through the web interface.
+A "resource" is a worker that Automation Server can dispatch jobs to. Workers register themselves automatically when they connect — you don't need to add them manually.
 
-Navigate to **Resources** in the sidebar and confirm your worker appears there.
+Once your stack is running, the dashboard shows all connected workers in the cluster display:
 
-## 2. Create a Process
+![Cluster display showing connected workers](/img/cluster.png)
 
-A "process" is a Python automation registered in the system. Navigate to **Processes** and create a new one. You'll need to point it at a Git repository containing your automation code.
+Confirm at least one worker appears before creating your first process.
 
-Use the [process-template](https://github.com/odense-rpa/process-template) as a starting point, or the [test-process](https://github.com/odense-rpa/test-process) to try something immediately.
+## 2. Set Up a Worker Token
 
-## 3. Add a Trigger
+Workers authenticate with the backend using a token. You create tokens through the Administration section of the web interface.
 
-Once you have a process, attach a trigger to it. Navigate to the process detail page and add a trigger:
+Navigate to **Administration** in the sidebar:
 
-- **Cron** — runs on a schedule (e.g. `0 8 * * 1-5` for weekdays at 8am)
-- **Date** — runs once at a specific date and time
-- **Workqueue** — runs whenever items are waiting in a workqueue
+![Administration page](/img/qs-administration.png)
 
-## 4. Monitor Execution
+Click **+ Create** and enter a name like "Worker token":
 
-When the trigger fires, Automation Server creates a session and dispatches it to an available worker. You can follow progress in the **Sessions** view, and inspect logs in the session detail page.
+![Create token dialog](/img/qs-create-token.png)
+
+Copy the token shown — you won't be able to see it again:
+
+![Newly created token](/img/qs-created-token.png)
+
+:::warning
+Copy the token now. Once you leave this page it cannot be retrieved.
+:::
+
+Navigate back to Administration and configure the frontend to use the token:
+
+![Configure frontend with token](/img/qs-configure-frontend.png)
+
+Then open your `.env` file and set the token so workers can authenticate:
+
+```bash
+ATS_TOKEN=your-token-here
+```
+
+Restart the stack to apply the change:
+
+```bash
+docker compose up -d
+```
 
 ## Next Steps
 
 - [Writing Automations](../guides/writing-automations.md) — learn how to build your own automation
 - [Scheduling](../guides/scheduling.md) — understand trigger types in depth
 - [Workqueues](../guides/workqueues.md) — distribute work across multiple sessions
+
+Each user who needs access to Automation Server also needs a token. Create additional tokens in the Administration section the same way you created the worker token.
