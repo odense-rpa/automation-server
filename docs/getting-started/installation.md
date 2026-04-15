@@ -2,6 +2,7 @@
 title: Installation
 sidebar_position: 1
 description: How to install and set up Automation Server using Docker.
+slug: /
 ---
 
 You need Docker and Docker Compose installed on your machine. That's the only requirement — everything else runs inside containers.

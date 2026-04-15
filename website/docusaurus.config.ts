@@ -35,7 +35,7 @@ const config: Config = {
       {
         docs: {
           path: '../docs',
-          routeBasePath: 'docs',
+          routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: 'https://github.com/odense-rpa/automation-server/tree/main/',
         },
@@ -77,8 +77,8 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Getting Started', to: '/docs/getting-started/installation' },
-            { label: 'Guides', to: '/docs/guides/writing-automations' },
+            { label: 'Getting Started', to: '/getting-started/installation' },
+            { label: 'Guides', to: '/guides/writing-automations' },
           ],
         },
         {
