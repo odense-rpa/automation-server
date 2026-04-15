@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -218,6 +220,46 @@ def test_delete_incident(session: Session, client: TestClient):
     # Should not appear in listings
     response = client.get("/incidents")
     assert response.json()["total_items"] == 0
+
+
+def test_get_failed_without_incident_ignores_old_sessions(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    from app.database.repository import SessionRepository
+
+    session_repo = SessionRepository(session)
+
+    # Create a failed session that is 20 days old
+    old_session = session_repo.create({
+        "process_id": 1,
+        "status": enums.SessionStatus.FAILED,
+        "deleted": False,
+    })
+    old_session.created_at = datetime.now() - timedelta(days=20)
+    session.add(old_session)
+    session.commit()
+
+    results = session_repo.get_failed_without_incident()
+    ids = [s.id for s in results]
+    assert old_session.id not in ids
+
+
+def test_get_failed_without_incident_includes_recent_sessions(session: Session, client: TestClient):
+    generate_basic_data(session)
+
+    from app.database.repository import SessionRepository
+
+    session_repo = SessionRepository(session)
+
+    recent_session = session_repo.create({
+        "process_id": 1,
+        "status": enums.SessionStatus.FAILED,
+        "deleted": False,
+    })
+
+    results = session_repo.get_failed_without_incident()
+    ids = [s.id for s in results]
+    assert recent_session.id in ids
 
 
 def test_error_trace_captured(session: Session, client: TestClient):

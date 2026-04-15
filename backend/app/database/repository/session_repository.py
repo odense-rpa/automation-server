@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from sqlalchemy.sql import func, case
@@ -21,7 +21,7 @@ class AbstractSessionRepository(AbstractRepository[Session]):
     def get_active_sessions(self) -> list[Session]:
         raise NotImplementedError
 
-    def get_failed_without_incident(self) -> list[Session]:
+    def get_failed_without_incident(self, max_age_days: int = 14) -> list[Session]:
         raise NotImplementedError
 
     def create_log(self, log_entry: dict) -> AuditLog:
@@ -101,14 +101,16 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             .order_by(Session.created_at)
         ).all()
 
-    def get_failed_without_incident(self) -> list[Session]:
-        """Return all failed, non-deleted sessions that have no corresponding incident."""
+    def get_failed_without_incident(self, max_age_days: int = 14) -> list[Session]:
+        """Return failed, non-deleted sessions without an incident, created within the last max_age_days days."""
+        cutoff = datetime.now() - timedelta(days=max_age_days)
         return list(self.session.scalars(
             select(Session)
             .outerjoin(Incident, Incident.session_id == Session.id)
             .where(Session.status == enums.SessionStatus.FAILED)
             .where(Session.deleted == False)  # noqa: E712
             .where(Incident.id.is_(None))
+            .where(Session.created_at >= cutoff)
         ).all())
 
     def create_log(self, log_entry: dict) -> AuditLog:
