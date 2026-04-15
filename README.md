@@ -5,7 +5,7 @@
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/odense-rpa/automation-server/issues)
 [![Documentation](https://img.shields.io/badge/docs-live-blue.svg)](https://odense-rpa.github.io/automation-server/)
 
-<a href="docs/images/main-interface.png"><img src="docs/images/main-interface.png" width="400px" style="float: right; margin: 0.5em;"></a>
+<a href="website/static/img/main-interface.png"><img src="website/static/img/main-interface.png" width="400px" style="float: right; margin: 0.5em;"></a>
 
 Automation Server allows you to build, run and monitor automations written in python. Easily orchestrate your automations and deploy them on workers dynamically. Jobs get routed to workers based on their capabilities and resources are automatically utilized.
 
