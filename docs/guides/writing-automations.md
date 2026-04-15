@@ -136,10 +136,4 @@ print(cred.username, cred.password)
 
 ### Logging
 
-Standard Python logging is captured automatically and stored against the session. No extra setup needed — just use `logging.getLogger(__name__)` as usual.
-
-## Logging
-
-Automation Server integrates with Python's standard `logging` module. Any log output from your automation is captured and stored against the session, making it easy to inspect what happened during execution.
-
-See [Logging & Audit](./logging-and-audit.md) for more details.
+Standard Python logging is captured automatically and stored against the session. No extra setup needed — just use `logging.getLogger(__name__)` as usual. See [Logging & Audit](./logging-and-audit.md) for more details.

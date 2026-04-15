@@ -77,7 +77,7 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Getting Started', to: '/getting-started/installation' },
+            { label: 'Getting Started', to: '/' },
             { label: 'Guides', to: '/guides/writing-automations' },
           ],
         },
