@@ -54,7 +54,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="miwn@odense.dk" \
-      version="0.3.0" \
+      version="0.3.1" \
       description="Automation Server Worker"
 
 # Run the main Python script

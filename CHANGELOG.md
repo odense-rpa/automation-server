@@ -5,6 +5,26 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-04-15
+
+### Added
+
+- **Copy buttons in workitem views**: `JsonView`, `WorkitemInfo`, and `WorkItemRow` components now include copy-to-clipboard buttons for JSON data and workitem references ([19a9004](https://github.com/odense-rpa/automation-server/commit/19a9004))
+- **Documentation website**: New Docusaurus-based documentation site in `website/` with structured sections for getting started, architecture, and guides ([b1dd1bc](https://github.com/odense-rpa/automation-server/commit/b1dd1bc))
+- **Docs deploy workflow**: GitHub Actions workflow to automatically deploy the documentation site ([deploy-docs.yml](https://github.com/odense-rpa/automation-server/blob/development/.github/workflows/deploy-docs.yml))
+
+### Changed
+
+- **Incident age filtering**: Incident creation now filters failed sessions by age — only recent failures trigger new incidents, preventing historical sessions from generating noise ([6ce8c14](https://github.com/odense-rpa/automation-server/commit/6ce8c14), [57f470f](https://github.com/odense-rpa/automation-server/commit/57f470f))
+- **Workitem JSON display**: Improved layout and column handling in `JsonView`, `WorkitemInfo`, and `WorkitemsTable` components ([26063ba](https://github.com/odense-rpa/automation-server/commit/26063ba))
+- **Documentation restructured**: Docs reorganized into `getting-started/`, `architecture/`, and `guides/` sections; obsolete pages removed ([98a360f](https://github.com/odense-rpa/automation-server/commit/98a360f), [ef69a71](https://github.com/odense-rpa/automation-server/commit/ef69a71))
+
+### Testing
+
+- Added age-based session filtering tests for incident creation in `test_incidents.py` ([57f470f](https://github.com/odense-rpa/automation-server/commit/57f470f))
+
+---
+
 ## [0.3.0] - 2026-03-30
 
 ### Added
