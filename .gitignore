@@ -97,3 +97,8 @@ tmp
 .aider*
 .env
 .playwright-mcp/
+
+# Docusaurus
+website/node_modules/
+website/build/
+website/.docusaurus/
