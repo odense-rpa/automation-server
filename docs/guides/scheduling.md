@@ -6,6 +6,8 @@ description: Configure cron-based, date/time, and workqueue triggers for automat
 
 Automation Server supports three trigger types. You attach triggers to a process from the process detail page in the web interface.
 
+![Adding a trigger to a process](/img/guide-setup-cron.png)
+
 ## Cron Triggers
 
 A cron trigger fires on a recurring schedule defined by a cron expression.

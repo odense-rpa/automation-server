@@ -23,22 +23,24 @@ Open an issue to discuss your idea before building it. This avoids wasted effort
 
 ## Development Setup
 
-See [Installation](./getting-started/installation.md) for getting the full stack running locally.
-
-For backend-only development:
+Clone the repository and set up your environment:
 
 ```bash
-cd backend
-uv sync
-uv run uvicorn app.main:app --reload
+git clone https://github.com/odense-rpa/automation-server.git
+cd automation-server
+cp .env.example .env
 ```
 
-For frontend-only development:
+Start the stack using `docker compose up` — without specifying a compose file, Docker Compose automatically merges `docker-compose.override.yml` on top of the base, giving you local builds and hot-reloading for all services:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose up --build
+```
+
+A VS Code workspace file is included. Open it to get the full multi-folder setup with recommended extensions and settings:
+
+```bash
+code ats.code-workspace
 ```
 
 ## Questions

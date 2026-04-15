@@ -23,23 +23,7 @@ const sidebars: SidebarsConfig = {
         'guides/logging-and-audit',
       ],
     },
-    {
-      type: 'category',
-      label: 'Architecture',
-      items: [
-        'architecture/overview',
-        'architecture/backend',
-        'architecture/frontend',
-        'architecture/workers',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'API',
-      items: [
-        'api/overview',
-      ],
-    },
+    'api',
     'contributing',
   ],
 };
