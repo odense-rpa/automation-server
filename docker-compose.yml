@@ -3,7 +3,7 @@
 # For development, use: docker compose up  (auto-applies docker-compose.override.yml)
 
 x-worker-common: &worker-template
-  image: ghcr.io/odense-rpa/ats-worker:v0.3.0
+  image: ghcr.io/odense-rpa/ats-worker:v0.3.1
   environment:
     ATS_URL: ${ATS_URL:-http://api:8000}
     ATS_TOKEN: ${ATS_TOKEN}
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: ghcr.io/odense-rpa/ats-backend:v0.3.0
+    image: ghcr.io/odense-rpa/ats-backend:v0.3.1
     depends_on:
       db:
         condition: service_healthy
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/odense-rpa/ats-frontend:v0.3.0
+    image: ghcr.io/odense-rpa/ats-frontend:v0.3.1
     ports:
       - "80"
     environment:

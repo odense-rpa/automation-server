@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession as SqlAsyncSession
@@ -23,7 +23,7 @@ class AbstractSessionRepository(AbstractRepository[Session]):
     async def get_active_sessions(self) -> list[Session]:
         raise NotImplementedError
 
-    async def get_failed_without_incident(self) -> list[Session]:
+    async def get_failed_without_incident(self, max_age_days: int = 14) -> list[Session]:
         raise NotImplementedError
 
     async def create_log(self, log_entry: dict) -> AuditLog:
@@ -114,8 +114,9 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             ).all()
         )
 
-    async def get_failed_without_incident(self) -> list[Session]:
-        """Return all failed, non-deleted sessions that have no corresponding incident."""
+    async def get_failed_without_incident(self, max_age_days: int = 14) -> list[Session]:
+        """Return failed, non-deleted sessions without an incident, created within the last max_age_days days."""
+        cutoff = datetime.now() - timedelta(days=max_age_days)
         return list(
             (
                 await self.session.scalars(
@@ -124,6 +125,7 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
                     .where(Session.status == enums.SessionStatus.FAILED)
                     .where(Session.deleted == False)  # noqa: E712
                     .where(Incident.id.is_(None))
+                    .where(Session.created_at >= cutoff)
                 )
             ).all()
         )

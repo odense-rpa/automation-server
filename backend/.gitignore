@@ -95,3 +95,7 @@ test.db
 automation.db
 automation.db-journal
 .env
+
+# Benchmark artifacts
+benchmarks/results/
+benchmarks/seed-ids.json

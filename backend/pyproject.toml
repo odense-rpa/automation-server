@@ -1,6 +1,6 @@
 [project]
 name = "automation_server_backend"
-version = "0.3.0"
+version = "0.3.1"
 description = "The Automation Server Backend - run api services and manages the database"
 requires-python = ">=3.13"
 dependencies = [
@@ -22,6 +22,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "docker>=7.1.0",
+    "locust>=2.0",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.21.0",
     "ruff>=0.9.0",
