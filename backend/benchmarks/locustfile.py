@@ -42,34 +42,34 @@ class ReaderUser(HttpUser):
     def next_item(self) -> None:
         # 204 is normal when the queue is empty — not an error
         with self.client.get(
-            f"/api/v1/workqueues/{WORKQUEUE_ID}/next_item",
+            f"/workqueues/{WORKQUEUE_ID}/next_item",
             headers=AUTH,
             catch_response=True,
-            name="/api/v1/workqueues/[id]/next_item",
+            name="/workqueues/[id]/next_item",
         ) as r:
             if r.status_code in (200, 204):
                 r.success()
 
     @task(3)
     def workqueue_information(self) -> None:
-        self.client.get("/api/v1/workqueues/information", headers=AUTH)
+        self.client.get("/workqueues/information", headers=AUTH)
 
     @task(2)
     def list_resources(self) -> None:
-        self.client.get("/api/v1/resources", headers=AUTH)
+        self.client.get("/resources", headers=AUTH)
 
     @task(2)
     def get_workitem(self) -> None:
         item_id = random.choice(WORKITEM_IDS)
         self.client.get(
-            f"/api/v1/workitems/{item_id}",
+            f"/workitems/{item_id}",
             headers=AUTH,
-            name="/api/v1/workitems/[id]",
+            name="/workitems/[id]",
         )
 
     @task(1)
     def list_workqueues(self) -> None:
-        self.client.get("/api/v1/workqueues", headers=AUTH)
+        self.client.get("/workqueues", headers=AUTH)
 
 
 class WriterUser(HttpUser):
@@ -81,17 +81,17 @@ class WriterUser(HttpUser):
     @task(5)
     def enqueue_item(self) -> None:
         self.client.post(
-            f"/api/v1/workqueues/{WORKQUEUE_ID}/add",
+            f"/workqueues/{WORKQUEUE_ID}/add",
             json={"data": {"bench": True}, "reference": ""},
             headers=AUTH,
-            name="/api/v1/workqueues/[id]/add",
+            name="/workqueues/[id]/add",
         )
 
     @task(3)
     def ping_resource(self) -> None:
         resource_id = random.choice(RESOURCE_IDS)
         self.client.put(
-            f"/api/v1/resources/{resource_id}/ping",
+            f"/resources/{resource_id}/ping",
             headers=AUTH,
-            name="/api/v1/resources/[id]/ping",
+            name="/resources/[id]/ping",
         )

@@ -40,9 +40,9 @@ def main(host: str) -> None:
 
     with httpx.Client(base_url=host, timeout=30) as client:
         # Idempotency guard
-        r = client.get("/api/v1/workqueues", headers=HEADERS)
+        r = client.get("/workqueues", headers=HEADERS)
         r.raise_for_status()
-        existing = [q["name"] for q in r.json().get("items", [])]
+        existing = [q["name"] for q in r.json()]
         if WORKQUEUE_NAME in existing:
             print(
                 f"Workqueue '{WORKQUEUE_NAME}' already exists — aborting to prevent double-seed.\n"
@@ -53,7 +53,7 @@ def main(host: str) -> None:
 
         # 1. Workqueue
         print(f"Creating workqueue '{WORKQUEUE_NAME}' ...", end=" ", flush=True)
-        q = post(client, "/api/v1/workqueues", {"name": WORKQUEUE_NAME, "description": "Benchmark queue", "enabled": True})
+        q = post(client, "/workqueues", {"name": WORKQUEUE_NAME, "description": "Benchmark queue", "enabled": True})
         ids["workqueue"] = q["id"]
         print(f"id={q['id']}")
 
@@ -62,7 +62,7 @@ def main(host: str) -> None:
         for i in range(N_PROCESSES):
             p = post(
                 client,
-                "/api/v1/processes",
+                "/processes",
                 {
                     "name": f"bench-process-{i:03d}",
                     "description": "benchmark",
@@ -78,7 +78,7 @@ def main(host: str) -> None:
         for i in range(N_RESOURCES):
             res = post(
                 client,
-                "/api/v1/resources",
+                "/resources",
                 {
                     "name": f"bench-resource-{i:03d}",
                     "fqdn": f"bench-resource-{i:03d}.local",
@@ -93,7 +93,7 @@ def main(host: str) -> None:
         for i in range(N_WORKITEMS):
             item = post(
                 client,
-                f"/api/v1/workqueues/{q['id']}/add",
+                f"/workqueues/{q['id']}/add",
                 {"data": {"index": i}, "reference": f"bench-item-{i:04d}"},
             )
             ids["workitems"].append(item["id"])
