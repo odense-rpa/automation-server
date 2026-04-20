@@ -59,8 +59,8 @@ cd "$REPO_ROOT"
 
 # Must be on master or development
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "master" && "$CURRENT_BRANCH" != "development" ]]; then
-  warn "Current branch is '$CURRENT_BRANCH' (expected master or development)"
+if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "development" ]]; then
+  warn "Current branch is '$CURRENT_BRANCH' (expected main or development)"
   confirm "Continue anyway?" || abort
 else
   info "Branch: $CURRENT_BRANCH"
