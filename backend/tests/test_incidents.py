@@ -249,6 +249,54 @@ async def test_delete_incident(session: AsyncSession, client: AsyncClient):
     assert response.json()["total_items"] == 0
 
 
+async def test_get_failed_without_incident_ignores_old_sessions(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    from app.database.repository.session_repository import SessionRepository
+
+    old_session = models.Session(
+        process_id=1,
+        status=enums.SessionStatus.FAILED,
+        deleted=False,
+        created_at=datetime.now() - timedelta(days=20),
+        updated_at=datetime.now(),
+    )
+    session.add(old_session)
+    await session.commit()
+    await session.refresh(old_session)
+
+    session_repo = SessionRepository(session)
+    results = await session_repo.get_failed_without_incident()
+    ids = [s.id for s in results]
+    assert old_session.id not in ids
+
+
+async def test_get_failed_without_incident_includes_recent_sessions(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    from app.database.repository.session_repository import SessionRepository
+
+    recent_session = models.Session(
+        process_id=1,
+        status=enums.SessionStatus.FAILED,
+        deleted=False,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    session.add(recent_session)
+    await session.commit()
+    await session.refresh(recent_session)
+
+    session_repo = SessionRepository(session)
+    results = await session_repo.get_failed_without_incident()
+    ids = [s.id for s in results]
+    assert recent_session.id in ids
+
+
 async def test_error_trace_captured(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
