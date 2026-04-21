@@ -3,45 +3,39 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-
-from app.database.unit_of_work import AbstractUnitOfWork
-
-from app.database.models import Session, Process, Resource, AccessToken
 import app.enums as enums
-
-from .schemas import (
-    SessionCreate,
-    SessionStatusUpdate,
-    ProcessActivitySummary,
-)
-
 from app.api.v1.schemas import PaginatedResponse, PaginatedSearchParams
-from app.services import SessionService
-
-from .dependencies import (
-    get_unit_of_work,
-    get_session_service,
-    get_incident_service,
-    get_paginated_search_params,
-    resolve_access_token,
-)
-from app.services import IncidentService
+from app.database.models import AccessToken, Process, Resource, Session
+from app.database.unit_of_work import AbstractUnitOfWork
+from app.services import IncidentService, SessionService
 
 from . import error_descriptions
+from .dependencies import (
+    get_incident_service,
+    get_paginated_search_params,
+    get_session_service,
+    get_unit_of_work,
+    resolve_access_token,
+)
 
 # We borrow the get_resource function from the resource_router module to check for a valid resource
 from .resource_router import get_resource
+from .schemas import (
+    ProcessActivitySummary,
+    SessionCreate,
+    SessionStatusUpdate,
+)
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
 # Dependency Injection local to this router
 
 
-def get_session(
+async def get_session(
     session_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Process:
-    with uow:
-        session = uow.sessions.get(session_id)
+    async with uow:
+        session = await uow.sessions.get(session_id)
 
         if session is None:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -55,15 +49,14 @@ def get_session(
 # Error responses
 
 
-
 @router.get("", responses=error_descriptions("Session", _403=True))
-def get_sessions(
+async def get_sessions(
     include_deleted: bool = False,
     paginated_search: PaginatedSearchParams = Depends(get_paginated_search_params),
     service: SessionService = Depends(get_session_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> PaginatedResponse[Session]:
-    return service.search_sessions(
+    return await service.search_sessions(
         paginated_search.pagination.page,
         paginated_search.pagination.size,
         paginated_search.search,
@@ -72,29 +65,30 @@ def get_sessions(
 
 
 @router.get("/new", responses=error_descriptions("Session", _403=True))
-def get_new_sessions(
+async def get_new_sessions(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Session]:
-    return uow.sessions.get_new_sessions()
+    async with uow:
+        return await uow.sessions.get_new_sessions()
 
 
 @router.get("/activity-summary", responses=error_descriptions("Session", _403=True))
-def get_activity_summary(
+async def get_activity_summary(
     hours: int = 24,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[ProcessActivitySummary]:
     since = datetime.now() - timedelta(hours=hours)
-    with uow:
-        return uow.sessions.get_process_activity_summary(since)
+    async with uow:
+        return await uow.sessions.get_process_activity_summary(since)
 
 
 @router.get(
     "/{session_id}",
     responses=error_descriptions("Session", _403=True, _404=True, _410=True),
 )
-def get_session(
+async def get_session(
     session: Session = Depends(get_session),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
@@ -118,7 +112,7 @@ def get_session(
     }
     | error_descriptions("Session", _403=True),
 )
-def update_session_status(
+async def update_session_status(
     update: SessionStatusUpdate,
     session: Session = Depends(get_session),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
@@ -134,18 +128,18 @@ def update_session_status(
             status_code=400, detail="Resource must be assigned to update status"
         )
 
-    with uow:
+    async with uow:
         # If the session is completed or failed, release the resource
         if update.status in [enums.SessionStatus.COMPLETED, enums.SessionStatus.FAILED]:
-            resource = uow.resources.get(session.resource_id)
-            uow.resources.update(resource, {"available": True})
+            resource = await uow.resources.get(session.resource_id)
+            await uow.resources.update(resource, {"available": True})
 
         data = {"status": update.status}
 
-        updated_session = uow.sessions.update(session, data)
+        updated_session = await uow.sessions.update(session, data)
 
         if update.status == enums.SessionStatus.FAILED:
-            incident_service.create_incident_for_session(updated_session)
+            await incident_service.create_incident_for_session(updated_session)
 
         return updated_session
 
@@ -154,14 +148,14 @@ def update_session_status(
     "",
     responses=error_descriptions("Process", _403=True, _404=True),
 )
-def create_session(
+async def create_session(
     session: SessionCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
-    with uow:
+    async with uow:
         # Check if the process exists
-        process = uow.processes.get(session.process_id)
+        process = await uow.processes.get(session.process_id)
         if process is None:
             raise HTTPException(status_code=404, detail="Process not found")
 
@@ -172,7 +166,7 @@ def create_session(
         data["created_at"] = datetime.now()
         data["updated_at"] = datetime.now()
 
-        return uow.sessions.create(data)
+        return await uow.sessions.create(data)
 
 
 @router.get(
@@ -180,17 +174,15 @@ def create_session(
     responses=error_descriptions("Session", _403=True, _204=True)
     | error_descriptions("Resource", _404=True),
 )
-def get_active_sessions_by_resource(
+async def get_active_sessions_by_resource(
     resource: Resource = Depends(get_resource),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Session:
-    with uow:
-        session = uow.sessions.get_by_resource_id(resource.id)
+    async with uow:
+        session = await uow.sessions.get_by_resource_id(resource.id)
 
         if session is None:
             raise HTTPException(status_code=204, detail="No active sessions")
 
         return session
-
-

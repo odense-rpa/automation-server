@@ -1,17 +1,19 @@
 from datetime import datetime, timedelta
-from sqlmodel import Session
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.database.models as models
 import app.enums as enums
 
-def generate_basic_data(session: Session):
+
+async def generate_basic_data(session: AsyncSession):
     session.add(
         models.Credential(
             name="Secret credential",
             username="Secret username",
             password="My secret password",
             description="Test credential",
-            deleted=False
+            deleted=False,
         )
     )
 
@@ -21,7 +23,7 @@ def generate_basic_data(session: Session):
             username="Secret deleted username",
             password="My secret password",
             description="Test credential",
-            deleted=True
+            deleted=True,
         )
     )
 
@@ -30,7 +32,7 @@ def generate_basic_data(session: Session):
             name="Workqueue",
             description="Queue for unittest",
             enabled=True,
-            deleted=False
+            deleted=False,
         )
     )
     session.add(
@@ -38,10 +40,10 @@ def generate_basic_data(session: Session):
             name="Deleted workqueue",
             description="Queue for unittest",
             enabled=True,
-            deleted=True
+            deleted=True,
         )
     )
-    session.commit()
+    await session.commit()
 
     session.add(
         models.WorkItem(
@@ -49,7 +51,7 @@ def generate_basic_data(session: Session):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -59,7 +61,7 @@ def generate_basic_data(session: Session):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -69,7 +71,7 @@ def generate_basic_data(session: Session):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -79,7 +81,7 @@ def generate_basic_data(session: Session):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
@@ -89,11 +91,11 @@ def generate_basic_data(session: Session):
             data={},
             reference="Embedded workitem",
             locked=False,
-            workqueue_id=1
+            workqueue_id=1,
         )
     )
 
-    session.commit()
+    await session.commit()
 
     session.add(
         models.Process(
@@ -128,7 +130,7 @@ def generate_basic_data(session: Session):
             date=None,
             workqueue_id=None,
             enabled=True,
-            process_id=1
+            process_id=1,
         )
     )
 
@@ -139,7 +141,7 @@ def generate_basic_data(session: Session):
             date=datetime.now() + timedelta(days=1),
             workqueue_id=None,
             enabled=True,
-            process_id=1
+            process_id=1,
         )
     )
 
@@ -152,10 +154,9 @@ def generate_basic_data(session: Session):
             enabled=True,
             deleted=True,
             last_triggered=datetime.now() - timedelta(days=1),
-            process_id=1
+            process_id=1,
         )
     )
-
 
     session.add(
         models.Trigger(
@@ -164,7 +165,7 @@ def generate_basic_data(session: Session):
             date=None,
             workqueue_id=1,
             enabled=True,
-            process_id=1
+            process_id=1,
         )
     )
 
@@ -174,7 +175,7 @@ def generate_basic_data(session: Session):
             fqdn="resource.example.com",
             capabilities="win32 chrome python blue_prism",
             available=True,
-            last_seen= datetime.now(),
+            last_seen=datetime.now(),
             deleted=False,
         )
     )
@@ -207,12 +208,10 @@ def generate_basic_data(session: Session):
             fqdn="resource-not-available.example.com",
             capabilities="win32 chrome python blue_prism",
             available=False,
-            last_seen= datetime.now(),
+            last_seen=datetime.now(),
             deleted=False,
         )
     )
-
-
 
     session.add(models.Session(process_id=1, status=enums.SessionStatus.NEW))
 
@@ -221,11 +220,19 @@ def generate_basic_data(session: Session):
     )
 
     session.add(
-        models.Session(process_id=1, status=enums.SessionStatus.COMPLETED, deleted=False)
+        models.Session(
+            process_id=1, status=enums.SessionStatus.COMPLETED, deleted=False
+        )
     )
 
     session.add(
-        models.Session(process_id=1, status=enums.SessionStatus.NEW, deleted=False,resource_id=3, dispatched_at=datetime.now())
+        models.Session(
+            process_id=1,
+            status=enums.SessionStatus.NEW,
+            deleted=False,
+            resource_id=3,
+            dispatched_at=datetime.now(),
+        )
     )
 
     session.add(
@@ -236,7 +243,7 @@ def generate_basic_data(session: Session):
             created_at=datetime.now(),
         )
     )
-    
+
     session.add(
         models.AuditLog(
             event_timestamp=datetime.now(),
@@ -247,8 +254,29 @@ def generate_basic_data(session: Session):
         )
     )
 
-    session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
-    session.add(models.AuditLog(session_id=3, message="Test log 3 - nothing to see here", created_at=datetime.now(), event_timestamp=datetime.now()))
-    session.add(models.AuditLog(session_id=3, message="Test log 3", created_at=datetime.now(), event_timestamp=datetime.now()))
+    session.add(
+        models.AuditLog(
+            session_id=3,
+            message="Test log 3",
+            created_at=datetime.now(),
+            event_timestamp=datetime.now(),
+        )
+    )
+    session.add(
+        models.AuditLog(
+            session_id=3,
+            message="Test log 3 - nothing to see here",
+            created_at=datetime.now(),
+            event_timestamp=datetime.now(),
+        )
+    )
+    session.add(
+        models.AuditLog(
+            session_id=3,
+            message="Test log 3",
+            created_at=datetime.now(),
+            event_timestamp=datetime.now(),
+        )
+    )
 
-    session.commit()
+    await session.commit()

@@ -8,9 +8,10 @@ Create Date: 2024-10-11 09:32:41.015254
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c0f22b1d3fa0"
@@ -92,7 +93,7 @@ def upgrade() -> None:
         sa.Column("capabilities", sa.String(), nullable=False),
         sa.Column("available", sa.Boolean(), nullable=False),
         sa.Column("last_seen", sa.DateTime(), nullable=True),
-        sa.Column("deleted", sa.Boolean(), nullable=False,default=False),
+        sa.Column("deleted", sa.Boolean(), nullable=False, default=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint("id"),

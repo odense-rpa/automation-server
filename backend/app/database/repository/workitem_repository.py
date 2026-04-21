@@ -1,31 +1,33 @@
 import abc
-
 from datetime import datetime
 
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select, desc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import desc, select
 
-from app.database.models import WorkItem
 import app.enums as enums
+from app.database.models import WorkItem
 
-from .database_repository import DatabaseRepository, AbstractRepository
+from .database_repository import AbstractRepository, DatabaseRepository
+
 
 class AbstractWorkItemRepository(AbstractRepository[WorkItem]):
     @abc.abstractmethod
-    def get_next_item(self, queue_id: int):
+    async def get_next_item(self, queue_id: int):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_by_reference(self, reference: str, status: enums.WorkItemStatus | None = None) -> list[WorkItem]:
+    async def get_by_reference(
+        self, reference: str, status: enums.WorkItemStatus | None = None
+    ) -> list[WorkItem]:
         raise NotImplementedError
-  
 
 
 class WorkItemRepository(DatabaseRepository[WorkItem]):
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         super().__init__(WorkItem, session)
 
-    def get_next_item(self, queue_id: int):
+    async def get_next_item(self, queue_id: int):
         """
         Retrieves and locks the next available work item from a specified queue.
 
@@ -45,14 +47,18 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
                     transaction handling, after rolling back any changes.
         """
         try:
-            item = self.session.scalars(
-                select(WorkItem)
-                .where(WorkItem.workqueue_id == queue_id)
-                .where(WorkItem.locked == False)  # noqa: E712
-                .where(WorkItem.status == enums.WorkItemStatus.NEW)
-                .order_by(WorkItem.created_at)
-                .limit(1)
-                .with_for_update(skip_locked=True)  # Use skip_locked to avoid waiting for locked rows
+            item = (
+                await self.session.scalars(
+                    select(WorkItem)
+                    .where(WorkItem.workqueue_id == queue_id)
+                    .where(WorkItem.locked == False)  # noqa: E712
+                    .where(WorkItem.status == enums.WorkItemStatus.NEW)
+                    .order_by(WorkItem.created_at)
+                    .limit(1)
+                    .with_for_update(
+                        skip_locked=True
+                    )  # Use skip_locked to avoid waiting for locked rows
+                )
             ).first()
 
             if item is None:
@@ -63,26 +69,25 @@ class WorkItemRepository(DatabaseRepository[WorkItem]):
             item.started_at = datetime.now()
             item.updated_at = datetime.now()
             self.session.add(item)
-            self.session.commit()
-            self.session.refresh(item)
+            await self.session.commit()
+            await self.session.refresh(item)
             return item
         except IntegrityError:
-            self.session.rollback()
+            await self.session.rollback()
             raise
 
-    def get_by_reference(self, reference: str, status: enums.WorkItemStatus | None = None) -> list[WorkItem]:
+    async def get_by_reference(
+        self, reference: str, status: enums.WorkItemStatus | None = None
+    ) -> list[WorkItem]:
         """Get work items by reference value, optionally filtered by status, sorted newest to oldest."""
         if not reference or reference.strip() == "":
             return []
-        
-        query = select(WorkItem).where(
-            WorkItem.reference == reference
-        )
-        
+
+        query = select(WorkItem).where(WorkItem.reference == reference)
+
         if status is not None:
             query = query.where(WorkItem.status == status)
-            
-        query = query.order_by(desc(WorkItem.created_at))
-        
-        return list(self.session.scalars(query))
 
+        query = query.order_by(desc(WorkItem.created_at))
+
+        return list(await self.session.scalars(query))
