@@ -1,6 +1,10 @@
-
-    
-def error_descriptions(name: str, _404: bool = False, _410: bool = False, _204: bool = False, _403: bool = False ) -> dict:
+def error_descriptions(
+    name: str,
+    _404: bool = False,
+    _410: bool = False,
+    _204: bool = False,
+    _403: bool = False,
+) -> dict:
     descriptions = {}
     if _204:
         descriptions[204] = {
@@ -15,7 +19,9 @@ def error_descriptions(name: str, _404: bool = False, _410: bool = False, _204: 
     if _404:
         descriptions[404] = {
             "description": f"{name} not found",
-            "content": {"application/json": {"example": {"detail": f"{name} not found"}}},
+            "content": {
+                "application/json": {"example": {"detail": f"{name} not found"}}
+            },
         }
     if _410:
         descriptions[410] = {

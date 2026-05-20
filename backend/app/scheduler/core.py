@@ -4,42 +4,50 @@ Core scheduler implementation.
 This module contains the refactored AutomationScheduler class using the modular architecture.
 """
 
-import logging
 import asyncio
+import logging
 from datetime import datetime
 
-from app.database.session import get_session
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import settings
 from app.database.repository import (
-    TriggerRepository,
-    SessionRepository,
-    ResourceRepository,
-    WorkqueueRepository,
-    ProcessRepository,
     AuditLogRepository,
     IncidentRepository,
+    ProcessRepository,
+    ResourceRepository,
+    SessionRepository,
+    TriggerRepository,
+    WorkqueueRepository,
 )
-from app.services import ResourceService, SessionService, WorkqueueService, IncidentService
-from app.config import settings
-from .trigger_processors import ProcessingServices, TriggerProcessorRegistry
+from app.database.session import async_engine
+from app.services import (
+    IncidentService,
+    ResourceService,
+    SessionService,
+    WorkqueueService,
+)
+
 from .dispatcher import ResourceDispatcher
+from .trigger_processors import ProcessingServices, TriggerProcessorRegistry
 
 logger = logging.getLogger(__name__)
 
 
 class AutomationScheduler:
     """Modular scheduler class to manage automation triggers and execution."""
-    
+
     def __init__(self):
         """Initialize the scheduler."""
         self.processor_registry = None
         self.dispatcher = None
-    
+
     async def run_background_task(self):
         """Background task that runs the scheduler in a loop."""
         if not settings.scheduler_enabled:
             logger.info("Scheduler is disabled via configuration")
             return
-            
+
         while True:
             try:
                 await self.schedule()
@@ -47,14 +55,14 @@ class AutomationScheduler:
                 logger.error(f"Scheduler error: {e}")
                 # Configurable backoff on error
                 await asyncio.sleep(settings.scheduler_error_backoff)
-            
+
             # Configurable sleep interval
             await asyncio.sleep(settings.scheduler_interval)
-    
+
     async def schedule(self):
         """Main scheduling logic using the modular architecture."""
-        # Use proper database session management
-        with next(get_session()) as session:
+        # Use proper async database session management
+        async with AsyncSession(async_engine, expire_on_commit=False) as session:
             # Initialize repositories
             trigger_repository = TriggerRepository(session)
             session_repository = SessionRepository(session)
@@ -74,7 +82,7 @@ class AutomationScheduler:
                 session_repository,
                 session_service,
             )
-            
+
             # Initialize processing services container
             processing_services = ProcessingServices(
                 session_service=session_service,
@@ -84,20 +92,20 @@ class AutomationScheduler:
                 session_repository=session_repository,
                 resource_repository=resource_repository,
                 workqueue_repository=workqueue_repository,
-                process_repository=process_repository
+                process_repository=process_repository,
             )
-            
+
             # Initialize processor registry and dispatcher
             self.processor_registry = TriggerProcessorRegistry(processing_services)
             self.dispatcher = ResourceDispatcher(resource_service, session_repository)
 
             # Do housekeeping
-            session_service.reschedule_orphaned_sessions()
-            session_service.flush_dangling_sessions()
-            incident_service.create_incidents_for_new_failures()
+            await session_service.reschedule_orphaned_sessions()
+            await session_service.flush_dangling_sessions()
+            await incident_service.create_incidents_for_new_failures()
 
             # Dispatch pending sessions first
-            self.dispatcher.dispatch_all_pending()
+            await self.dispatcher.dispatch_all_pending()
 
             # Get current time for trigger evaluation
             now = datetime.now()
@@ -106,40 +114,48 @@ class AutomationScheduler:
             await self._process_triggers(trigger_repository, process_repository, now)
 
             # Dispatch again for any new sessions created
-            self.dispatcher.dispatch_all_pending()
+            await self.dispatcher.dispatch_all_pending()
 
-    async def _process_triggers(self, trigger_repository: TriggerRepository, 
-                              process_repository: ProcessRepository, now: datetime):
+    async def _process_triggers(
+        self,
+        trigger_repository: TriggerRepository,
+        process_repository: ProcessRepository,
+        now: datetime,
+    ):
         """Process all enabled triggers.
-        
+
         Args:
             trigger_repository: Repository for trigger operations
             process_repository: Repository for process operations
             now: Current datetime for trigger evaluation
         """
-        triggers = trigger_repository.get_all(include_deleted=False)
+        triggers = await trigger_repository.get_all(include_deleted=False)
 
         for trigger in triggers:
             if not trigger.enabled:
                 continue
 
             # Check if the associated process exists and is not deleted
-            process = process_repository.get(trigger.process_id)
+            process = await process_repository.get(trigger.process_id)
             if process is None or process.deleted:
                 continue
 
             try:
                 # Get the appropriate processor for this trigger type
                 processor = self.processor_registry.get_processor(trigger.type)
-                
+
                 # Process the trigger
-                success = processor.process(trigger, now)
-                
+                success = await processor.process(trigger, now)
+
                 if not success:
-                    logger.warning(f"Failed to process trigger {trigger.id} of type {trigger.type}")
-                    
+                    logger.warning(
+                        f"Failed to process trigger {trigger.id} of type {trigger.type}"
+                    )
+
             except ValueError as e:
-                logger.error(f"Unsupported trigger type {trigger.type} for trigger {trigger.id}: {e}")
+                logger.error(
+                    f"Unsupported trigger type {trigger.type} for trigger {trigger.id}: {e}"
+                )
                 continue
             except Exception as e:
                 logger.error(f"Error processing trigger {trigger.id}: {e}")

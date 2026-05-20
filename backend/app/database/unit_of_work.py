@@ -1,11 +1,10 @@
 import abc
-
-from contextlib import AbstractContextManager
+from contextlib import AbstractAsyncContextManager
 
 from app.database import repository
 
 
-class AbstractUnitOfWork(AbstractContextManager):
+class AbstractUnitOfWork(AbstractAsyncContextManager):
     processes: repository.AbstractProcessRepository
     triggers: repository.AbstractTriggerRepository
     credentials: repository.AbstractCredentialRepository
@@ -16,19 +15,19 @@ class AbstractUnitOfWork(AbstractContextManager):
     workqueues: repository.AbstractWorkqueueRepository
     incidents: repository.AbstractIncidentRepository
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type, exc_value, traceback):
         if exc_type is not None:
-            self.rollback()
+            await self.rollback()
 
     @abc.abstractmethod
-    def commit(self):
+    async def commit(self):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def rollback(self):
+    async def rollback(self):
         raise NotImplementedError
 
 
@@ -45,8 +44,8 @@ class UnitOfWork(AbstractUnitOfWork):
         self.workqueues = repository.WorkqueueRepository(session)
         self.incidents = repository.IncidentRepository(session)
 
-    def commit(self):
-        self.session.commit()
+    async def commit(self):
+        await self.session.commit()
 
-    def rollback(self):
-        self.session.rollback()
+    async def rollback(self):
+        await self.session.rollback()

@@ -24,4 +24,4 @@ This modular design improves:
 # Maintain backward compatibility
 from .core import AutomationScheduler, scheduler_background_task
 
-__all__ = ['AutomationScheduler', 'scheduler_background_task']
+__all__ = ["AutomationScheduler", "scheduler_background_task"]

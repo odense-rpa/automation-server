@@ -3,27 +3,27 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
 
-from app.database.models import Incident, AccessToken
+from app.database.models import AccessToken, Incident
 from app.database.unit_of_work import AbstractUnitOfWork
 from app.enums import IncidentStatus
 from app.services import IncidentService
 
-from .schemas import IncidentResolve, PaginatedResponse
+from . import error_descriptions
 from .dependencies import (
-    get_unit_of_work,
     get_incident_service,
+    get_unit_of_work,
     resolve_access_token,
 )
-from . import error_descriptions
+from .schemas import IncidentResolve, PaginatedResponse
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
 
-def get_incident_dependency(
+async def get_incident_dependency(
     incident_id: int, uow: AbstractUnitOfWork = Depends(get_unit_of_work)
 ) -> Incident:
-    with uow:
-        incident = uow.incidents.get(incident_id)
+    async with uow:
+        incident = await uow.incidents.get(incident_id)
 
         if incident is None:
             raise HTTPException(status_code=404, detail="Incident not found")
@@ -35,7 +35,7 @@ def get_incident_dependency(
 
 
 @router.get("", responses=error_descriptions("Incident", _403=True))
-def list_incidents(
+async def list_incidents(
     status: Optional[IncidentStatus] = Query(None, description="Filter by status"),
     page: int = Query(1, ge=1),
     size: int = Query(50, ge=1, le=200),
@@ -43,33 +43,33 @@ def list_incidents(
     service: IncidentService = Depends(get_incident_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> PaginatedResponse[Incident]:
-    return service.search_incidents(page, size, search, status)
+    return await service.search_incidents(page, size, search, status)
 
 
 @router.get("/open", responses=error_descriptions("Incident", _403=True))
-def list_open_incidents(
+async def list_open_incidents(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[Incident]:
-    with uow:
-        return uow.incidents.get_open_incidents()
+    async with uow:
+        return await uow.incidents.get_open_incidents()
 
 
 @router.get("/open/count", responses=error_descriptions("Incident", _403=True))
-def count_open_incidents(
+async def count_open_incidents(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> dict:
-    with uow:
-        return {"count": uow.incidents.count_open_incidents()}
+    async with uow:
+        return {"count": await uow.incidents.count_open_incidents()}
 
 
 @router.post("/dismiss-all", responses=error_descriptions("Incident", _403=True))
-def dismiss_all_incidents(
+async def dismiss_all_incidents(
     service: IncidentService = Depends(get_incident_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> dict:
-    count = service.dismiss_all_open()
+    count = await service.dismiss_all_open()
     return {"dismissed": count}
 
 
@@ -77,7 +77,7 @@ def dismiss_all_incidents(
     "/{incident_id}",
     responses=error_descriptions("Incident", _403=True, _404=True, _410=True),
 )
-def get_incident(
+async def get_incident(
     incident: Incident = Depends(get_incident_dependency),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Incident:
@@ -89,19 +89,23 @@ def get_incident(
     responses={
         400: {
             "description": "Invalid status transition",
-            "content": {"application/json": {"example": {"detail": "Invalid status transition"}}},
+            "content": {
+                "application/json": {"example": {"detail": "Invalid status transition"}}
+            },
         }
     }
     | error_descriptions("Incident", _403=True, _404=True, _410=True),
 )
-def resolve_incident(
+async def resolve_incident(
     resolve: IncidentResolve,
     incident: Incident = Depends(get_incident_dependency),
     service: IncidentService = Depends(get_incident_service),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Incident:
     try:
-        return service.resolve_incident(incident, resolve.status, resolve.resolution_note)
+        return await service.resolve_incident(
+            incident, resolve.status, resolve.resolution_note
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -110,13 +114,13 @@ def resolve_incident(
     "/{incident_id}",
     responses=error_descriptions("Incident", _403=True, _404=True, _410=True),
 )
-def delete_incident(
+async def delete_incident(
     incident: Incident = Depends(get_incident_dependency),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> Incident:
-    with uow:
-        db_incident = uow.incidents.get(incident.id)
+    async with uow:
+        db_incident = await uow.incidents.get(incident.id)
         if db_incident is None:
             raise HTTPException(status_code=404, detail="Incident not found")
-        return uow.incidents.delete(db_incident)
+        return await uow.incidents.delete(db_incident)

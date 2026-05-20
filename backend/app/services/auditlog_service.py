@@ -1,15 +1,15 @@
 from typing import Optional
 
 from app.api.v1.schemas import PaginatedResponse
-from app.database.repository import AuditLogRepository
 from app.database.models import AuditLog
+from app.database.repository import AuditLogRepository
 
 
 class AuditLogService:
     def __init__(self, audit_repository: AuditLogRepository):
         self.repository = audit_repository
 
-    def search_logs(
+    async def search_logs(
         self,
         session_id: int,
         page: int = 1,
@@ -17,7 +17,7 @@ class AuditLogService:
         search: Optional[str] = None,
     ) -> PaginatedResponse[AuditLog]:
         skip = (page - 1) * size
-        logs, total_items = self.repository.get_paginated(
+        logs, total_items = await self.repository.get_paginated(
             session_id, search, skip, size
         )
 
@@ -33,5 +33,5 @@ class AuditLogService:
 
         return response
 
-    def get_by_workitem(self, workitem_id: int) -> list[AuditLog]:
-        return self.repository.get_logs_by_workitem_id(workitem_id)
+    async def get_by_workitem(self, workitem_id: int) -> list[AuditLog]:
+        return await self.repository.get_logs_by_workitem_id(workitem_id)
