@@ -5,6 +5,30 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-20
+
+### Changed
+
+- **Full async I/O migration**: All database sessions, repositories, services, API endpoints, and the scheduler now use `async`/`await`. The database engine is replaced with `asyncpg`-backed `AsyncSession`; `AbstractUnitOfWork` is now an async context manager. This eliminates thread-blocking DB calls and reduces latency under concurrent load.
+- **Async scheduler**: The automation scheduler loop runs entirely async, using `AsyncSession` directly rather than wrapping a sync session generator.
+- **Async test suite**: All API and service tests ported to `pytest-asyncio` with `AsyncClient`.
+
+### Added
+
+- **Locust benchmark harness** (`backend/benchmarks/`): load-test scripts and seed data for comparing async vs sync throughput. Run with `locust -f backend/benchmarks/locustfile.py`.
+
+### Fixed
+
+- `release.sh` branch guard updated from `master` to `main`.
+
+### Internal
+
+- Added `asyncpg>=0.30.0` runtime dependency.
+- Added `locust>=2.0` and `ruff>=0.9.0` as dev dependencies.
+- Sync `engine` retained solely for Alembic migrations; application uses `async_engine`.
+
+---
+
 ## [0.3.1] - 2026-04-15
 
 ### Added
