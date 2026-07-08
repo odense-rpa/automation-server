@@ -44,6 +44,7 @@ class Workqueue(Base, table=True):
     name: str = Field(min_length=1)
     description: typing.Optional[str]
     enabled: bool = Field(default=True)
+    auto_clean_max_age_days: int | None = Field(default=None)
 
     deleted: bool = False
 
