@@ -7,8 +7,6 @@ import os
 import threading
 from requests.exceptions import ConnectionError
 
-HEALTH_FILE = pathlib.Path("/tmp/worker.health")
-
 from automationclient import (
     resources,
     sessions,
@@ -17,6 +15,7 @@ from automationclient import (
 )
 from runners import python
 
+HEALTH_FILE = pathlib.Path("/tmp/worker.health")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
