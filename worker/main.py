@@ -116,7 +116,7 @@ if __name__ == "__main__":
                 )
                 time.sleep(5)
     finally:
-        if ping_thread.is_alive():
+        if ping_thread is not None and ping_thread.is_alive():
             stop_ping_thread.set()
             ping_thread.join()
         logger.info("Worker stopped")
