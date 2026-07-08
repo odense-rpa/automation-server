@@ -429,6 +429,10 @@ const accessTokensApi = {
       const response = await axios.delete(`/accesstokens/${token}`)
       return response.data
     } catch (error) {
+      const detail = error.response?.data?.detail
+      if (typeof detail === 'string') {
+        throw new Error(detail)
+      }
       throw new Error(`Error deleting access token: ${error}`)
     }
   }
