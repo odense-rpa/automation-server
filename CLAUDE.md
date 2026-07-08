@@ -102,14 +102,20 @@ Use `uv run --python 3.13` locally if your default is newer.
 
 ### Releases
 
+1. Branch from `main`, run `./scripts/bump-version.sh X.Y.Z` (updates
+   versions across all files — never bump version numbers by hand).
+2. Add a `CHANGELOG.md` entry for the version.
+3. Open a PR, merge when CI is green.
+4. Tag the merge commit on `main` and push the tag:
+
 ```bash
-./scripts/release.sh X.Y.Z   # run on main with a clean tree
+git checkout main && git pull
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
 ```
 
-The script bumps versions across all files (via `bump-version.sh`),
-commits, tags `vX.Y.Z`, and pushes; the tag triggers Docker image
-builds to GHCR. Never bump version numbers by hand. Nightly images
-build from `main` at 02:00 UTC.
+The tag push triggers Docker image builds to GHCR
+(`docker-release.yml`). Nightly images build from `main` at 02:00 UTC.
 
 ## Database Operations
 
