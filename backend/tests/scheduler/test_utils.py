@@ -56,10 +56,19 @@ class TestFindBestResource:
         return resource
 
     def test_find_best_resource_empty_requirements(self):
-        """Test finding resource with empty requirements."""
+        """Empty requirements match any resource."""
         resources = [self.create_mock_resource("python docker")]
         result = find_best_resource("", resources)
-        assert result is None
+        assert result == resources[0]
+
+    def test_find_best_resource_empty_requirements_prefers_fewest_capabilities(self):
+        """Empty requirements steer to the least specialized resource."""
+        resource1 = self.create_mock_resource("python docker finance-vpn")
+        resource2 = self.create_mock_resource("python")
+        resources = [resource1, resource2]
+
+        result = find_best_resource("", resources)
+        assert result == resource2
 
     def test_find_best_resource_no_resources(self):
         """Test finding resource with no available resources."""

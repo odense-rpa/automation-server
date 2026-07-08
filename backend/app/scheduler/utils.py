@@ -37,9 +37,10 @@ def find_best_resource(
         resources: List of available resources
 
     Returns:
-        Best matching resource or None if no match found
+        Best matching resource or None if no match found. Empty requirements
+        match any resource.
     """
-    if not requirements or not resources:
+    if not resources:
         return None
 
     session_requirements = parse_capabilities_or_requirements(requirements)
