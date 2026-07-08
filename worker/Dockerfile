@@ -2,7 +2,7 @@
 FROM python:3.13-slim AS base
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
 
 # Create non-root user
 RUN useradd -m -u 1001 worker && \

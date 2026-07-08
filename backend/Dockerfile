@@ -2,7 +2,7 @@
 FROM python:3.13-slim AS builder
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN uv sync --frozen
 FROM python:3.13-slim AS runtime
 
 # Install uv for runtime
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
 
 # Install runtime dependencies
 RUN apt-get update && \
