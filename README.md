@@ -1,6 +1,6 @@
 # Automation Server
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/odense-rpa/automation-server)
+[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](https://github.com/odense-rpa/automation-server)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/odense-rpa/automation-server/issues)
 [![Documentation](https://img.shields.io/badge/docs-live-blue.svg)](https://odense-rpa.github.io/automation-server/)
