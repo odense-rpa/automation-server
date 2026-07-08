@@ -6,7 +6,15 @@ from app.database.unit_of_work import AbstractUnitOfWork
 
 from . import error_descriptions
 from .dependencies import get_unit_of_work, resolve_access_token
-from .schemas import CredentialCreate, CredentialUpdate
+from .schemas import CredentialCreate, CredentialRead, CredentialUpdate
+
+
+def to_credential_read(
+    credential: Credential, unencrypted_ids: set[int]
+) -> CredentialRead:
+    return CredentialRead(
+        **credential.model_dump(), encrypted=credential.id not in unencrypted_ids
+    )
 
 # Dependency Injection local to this router
 
@@ -40,20 +48,24 @@ async def get_credentials(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
-) -> list[Credential]:
+) -> list[CredentialRead]:
     async with uow:
         result = await uow.credentials.get_all(include_deleted)
+        unencrypted_ids = await uow.credentials.get_unencrypted_ids()
 
         result.sort(key=lambda x: x.name)
-        return result
+        return [to_credential_read(c, unencrypted_ids) for c in result]
 
 
 @router.get("/{credential_id}", responses=RESPONSE_STATES)
-async def get_credential(
+async def read_credential(
     credential: Credential = Depends(get_credential),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
-) -> Credential:
-    return credential
+) -> CredentialRead:
+    async with uow:
+        unencrypted_ids = await uow.credentials.get_unencrypted_ids()
+        return to_credential_read(credential, unencrypted_ids)
 
 
 @router.get("/by_name/{credential_name}", responses=RESPONSE_STATES)

@@ -28,6 +28,29 @@ POSTGRES_DB=automation
 
 Credentials for the PostgreSQL database. In development, the defaults from `.env.example` are fine. In production, use strong, unique values.
 
+## Credential Encryption
+
+```
+ENCRYPTION_KEY=
+```
+
+Encrypts the username and password of stored credentials at rest in the database. Any non-empty string works as the key; use a long random value:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+The setting is optional:
+
+- **Unset** — credentials are stored as plaintext. The web interface marks them with an "unencrypted" badge.
+- **Set** — credentials are encrypted whenever they are created or saved. Credentials that existed before the key was set remain plaintext until they are saved again; open and save each one to encrypt it.
+
+The API always returns decrypted values to authenticated clients, so workers and automations are unaffected by this setting.
+
+:::warning
+Back up the encryption key. If it is lost or changed, encrypted credentials cannot be recovered and must be re-entered manually.
+:::
+
 ## Workers
 
 ```

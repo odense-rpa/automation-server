@@ -8,6 +8,7 @@ from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 from typing_extensions import Self
 
 import app.enums as enums
+from app.database.crypto import EncryptedStr
 
 
 class Base(SQLModel):
@@ -18,8 +19,8 @@ class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
     data: typing.Dict = Field(default={}, sa_type=JSONB)
-    username: str | None = Field()
-    password: str | None = Field()
+    username: str | None = Field(sa_type=EncryptedStr)
+    password: str | None = Field(sa_type=EncryptedStr)
     deleted: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
