@@ -14,10 +14,14 @@ The system is designed to run in Docker containers and manages automation script
 ## Architecture
 
 The system follows a modular architecture:
-- **API Layer**: FastAPI routers handle HTTP requests
+- **API Layer**: FastAPI routers handle HTTP requests (all endpoints `async def`)
 - **Service Layer**: Business logic and orchestration
-- **Repository Layer**: Data access with SQLModel ORM
-- **Database**: PostgreSQL
+- **Repository Layer**: Data access with SQLModel ORM over async SQLAlchemy
+- **Database**: PostgreSQL via asyncpg
+
+The backend is async end-to-end: `get_session()` yields an `AsyncSession`
+from an asyncpg engine, and services/repositories are async. A sync engine
+(psycopg2) exists only for Alembic migrations — never use it in app code.
 
 Key directories:
 - `backend/app/api/v1/`: API endpoints and routers
@@ -109,7 +113,7 @@ build from `main` at 02:00 UTC.
 
 ## Database Operations
 
-- Database is PostGresql
+- Database is PostgreSQL
 - Migrations are handled by Alembic
 - Database models are in `backend/app/database/models.py`
 
@@ -134,6 +138,7 @@ backend/app/scheduler/
 ├── core.py                  # Main AutomationScheduler class
 ├── validators.py            # Parameter and cron validation
 ├── dispatcher.py            # Resource allocation logic
+├── upcoming_calculator.py   # Upcoming trigger run calculation
 ├── utils.py                # Utility functions for resource matching
 └── trigger_processors/     # Strategy pattern implementation
     ├── __init__.py
