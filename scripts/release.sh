@@ -57,10 +57,10 @@ heading "Step 1: Pre-flight checks"
 
 cd "$REPO_ROOT"
 
-# Must be on master or development
+# Must be on main
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "development" ]]; then
-  warn "Current branch is '$CURRENT_BRANCH' (expected main or development)"
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+  warn "Current branch is '$CURRENT_BRANCH' (expected main)"
   confirm "Continue anyway?" || abort
 else
   info "Branch: $CURRENT_BRANCH"

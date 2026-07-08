@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: development
+          ref: main
           fetch-depth: 0
 
       - name: Check for recent changes
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: development
+          ref: main
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -137,7 +137,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: development
+          ref: main
 
       - name: Generate nightly date tag
         id: date
@@ -161,7 +161,7 @@ jobs:
             --notes "$(cat <<NOTES
           ## Nightly Build — $(date -u +%Y-%m-%d)
 
-          Built from \`development\` branch at commit \`${SHORT_SHA}\`.
+          Built from \`main\` branch at commit \`${SHORT_SHA}\`.
 
           > **Warning:** Nightly builds are unstable and intended for testing only.
 
