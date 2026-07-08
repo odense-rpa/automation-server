@@ -12,14 +12,6 @@
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold">Automation Server</h1>
       </div>
-      <router-link
-        v-if="authOpen"
-        to="/administration"
-        class="badge badge-warning gap-1 mt-2"
-        title="No access tokens configured — the API accepts requests without authentication. Create a token to enforce auth.">
-        <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
-        auth off
-      </router-link>
       <hr />
       <nav class="mt-6">
         <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/" active-class="bg-white/15"
@@ -35,8 +27,16 @@
         <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/administration"
           active-class="bg-white/15">Administration</router-link>
       </nav>
-      <!-- Dark mode toggle -->
+      <!-- Auth warning + dark mode toggle -->
       <div class="mt-auto pt-6">
+        <router-link
+          v-if="authOpen"
+          to="/administration"
+          class="btn btn-ghost btn-sm gap-2 w-full justify-start text-warning opacity-70 hover:opacity-100"
+          title="No access tokens configured — the API accepts requests without authentication. Create a token to enforce auth.">
+          <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
+          Auth disabled
+        </router-link>
         <button @click="toggleDarkMode" class="btn btn-ghost btn-sm gap-2 w-full justify-start opacity-70 hover:opacity-100">
           <font-awesome-icon :icon="['fas', isDark ? 'sun' : 'moon']" />
           {{ isDark ? 'Light mode' : 'Dark mode' }}
