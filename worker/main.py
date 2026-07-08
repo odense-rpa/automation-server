@@ -94,6 +94,7 @@ if __name__ == "__main__":
                                     repo_url=process["target_source"],
                                     username=username,
                                     token=token,
+                                    git_options=process.get("git_options"),
                                     script_env={
                                         "ATS_URL": automationserver_url,
                                         "ATS_TOKEN": automationserver_token,

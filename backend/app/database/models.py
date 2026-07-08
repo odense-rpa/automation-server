@@ -60,6 +60,7 @@ class Process(Base, table=True):
 
     target_type: enums.TargetTypeEnum | None = None
     target_source: typing.Optional[str] = ""
+    git_options: typing.Optional[str] = ""
 
     target_credentials_id: typing.Optional[int] | None = Field(
         default=None, foreign_key="credential.id"
