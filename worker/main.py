@@ -87,9 +87,6 @@ if __name__ == "__main__":
                                 token = credentials["password"]
 
                             if process["target_type"] == "python":
-                                
-                                
-                                
                                 _, _ , returncode = python.run_python(
                                     repo_url=process["target_source"],
                                     username=username,
@@ -107,7 +104,10 @@ if __name__ == "__main__":
                                 
                                 if returncode != 0:
                                     raise RuntimeError("Failing session")
-                                
+                            else:
+                                raise RuntimeError(
+                                    f"target_type '{process['target_type']}' is not supported by this worker"
+                                )
 
                             resources.ping_resource(resource["id"])
             except ConnectionError:
