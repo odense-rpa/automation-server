@@ -3,7 +3,7 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as get_version
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -32,10 +32,15 @@ async def health_check() -> Dict[str, Any]:
 
 @router.get("/ready", response_model=Dict[str, Any])
 async def readiness_check(
+    response: Response,
     session: AsyncSession = Depends(get_session),
 ) -> Dict[str, Any]:
-    """Readiness check that includes database connectivity."""
-    response = {
+    """Readiness check that includes database connectivity.
+
+    Returns 503 when the database is unreachable so healthchecks and
+    orchestrators can act on the HTTP status alone.
+    """
+    body = {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": APP_VERSION,
@@ -46,9 +51,10 @@ async def readiness_check(
         # Simple database connectivity check
         result = await session.execute(select(1))
         _ = result.first()
-        response["database"] = "connected"
+        body["database"] = "connected"
     except Exception as e:
-        response["status"] = "unhealthy"
-        response["database"] = f"error: {str(e)}"
+        body["status"] = "unhealthy"
+        body["database"] = f"error: {str(e)}"
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
-    return response
+    return body
