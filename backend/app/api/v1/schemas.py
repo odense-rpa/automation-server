@@ -157,6 +157,19 @@ class CredentialUpdate(CredentialCreate):
     pass
 
 
+class CredentialRead(BaseModel):
+    id: int
+    name: str
+    data: Optional[Dict] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    deleted: bool
+    created_at: datetime
+    updated_at: datetime
+    # True when username and password are stored encrypted at rest
+    encrypted: bool
+
+
 class ResourceCreate(BaseModel):
     name: str
     fqdn: str

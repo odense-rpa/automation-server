@@ -134,6 +134,8 @@ cred = Credential.get_by_name(ats, "my-system")
 print(cred.username, cred.password)
 ```
 
+Credentials may be [encrypted at rest](../getting-started/configuration.md#credential-encryption) on the server. This is transparent to automations — the API always returns decrypted values.
+
 ### Logging
 
 Standard Python logging is captured automatically and stored against the session. No extra setup needed — just use `logging.getLogger(__name__)` as usual. See [Logging & Audit](./logging-and-audit.md) for more details.

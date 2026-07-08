@@ -15,6 +15,7 @@ Automation Server allows you to build, run and monitor automations written in py
 - **Audit your automations:** Built-in logging and integration with Pythons logging system provides a clear audit-trail. All logs are grouped by their sessions and associated workitems allowing for ease if access and operations.
 - **Templates for automations:** Automation Server provides a framework for interacting with the server from your processes. There is also a [template](https://github.com/odense-rpa/process-template) to get you started.
 - **Isolated execution:** Each worker runs a single automation at the time and it is isolated in it's private environment, thus ensuring stability and package integrity.
+- **Secure credential storage:** Store credentials for your automations centrally, encrypted at rest with an optional server-side encryption key.
 
 ## Get started
 

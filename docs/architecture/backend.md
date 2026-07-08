@@ -37,3 +37,7 @@ uv run alembic upgrade head
 ```
 
 Models are defined in `backend/app/database/models.py` using SQLModel, which combines SQLAlchemy and Pydantic.
+
+### Credential encryption
+
+When `ENCRYPTION_KEY` is set, credential usernames and passwords are encrypted at rest using Fernet (AES-128-CBC with HMAC). The implementation lives in `backend/app/database/crypto.py` as a SQLAlchemy type decorator, so encryption and decryption happen transparently at the column level — services, repositories, and the API work with plaintext values. Encrypted values carry an `enc:v1:` prefix in the database; values without the prefix are treated as legacy plaintext and pass through unchanged. See [Configuration](../getting-started/configuration.md) for setup.

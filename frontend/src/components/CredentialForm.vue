@@ -1,5 +1,11 @@
 <template>
   <form @submit.prevent="saveCredential" v-if="editedCredential" class="space-y-4">
+    <!-- Unencrypted warning -->
+    <div v-if="credential.encrypted === false" class="alert alert-warning">
+      <span>This credential is stored unencrypted. Set an encryption key on the server and save the
+        credential to encrypt it.</span>
+    </div>
+
     <!-- Name Field -->
     <div class="flex items-center">
       <label for="name" class="w-1/5 font-semibold">Name</label>
