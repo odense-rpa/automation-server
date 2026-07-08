@@ -65,6 +65,48 @@ File structure:
 - `docker-compose.yml` — production base (GHCR images, no defaults)
 - `docker-compose.override.yml` — development overrides (auto-applied by `docker compose up`)
 
+## Git Workflow
+
+Trunk-based development. `main` is the only long-lived branch; releases
+are marked by `v*` tags.
+
+- Never commit directly to `main`. Branch protection requires a PR with
+  green CI; admins are exempt from the rule — do not use that bypass.
+- Branch from `main`, open PR against `main`, merge when CI is green,
+  delete the branch after merge.
+- PRs behind `main` must be updated before merging (strict rule):
+  `gh pr update-branch <PR>`.
+- Commit messages: Conventional Commits (`feat:`, `fix:`, `chore:`,
+  `docs:`, `ci:`, `test:`).
+
+### CI checks (required to merge)
+
+`.github/workflows/ci.yml` runs two jobs on every PR. Reproduce locally
+before pushing:
+
+```bash
+# backend job
+cd backend && uv run ruff check . && uv run pytest
+
+# frontend job — use raw eslint, NOT `npm run lint` (that script passes
+# --fix and mutates files instead of failing)
+cd frontend && npx eslint . --ext .vue,.js,.jsx,.cjs,.mjs --ignore-path .gitignore && npm run build
+```
+
+CI pins Python 3.13 — Python 3.14 breaks the psycopg2-binary build.
+Use `uv run --python 3.13` locally if your default is newer.
+
+### Releases
+
+```bash
+./scripts/release.sh X.Y.Z   # run on main with a clean tree
+```
+
+The script bumps versions across all files (via `bump-version.sh`),
+commits, tags `vX.Y.Z`, and pushes; the tag triggers Docker image
+builds to GHCR. Never bump version numbers by hand. Nightly images
+build from `main` at 02:00 UTC.
+
 ## Database Operations
 
 - Database is PostGresql
