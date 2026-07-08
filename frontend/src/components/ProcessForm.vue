@@ -74,6 +74,21 @@
       </div>
     </div>
 
+    <!-- Git Options Field (Python Only) -->
+    <div class="flex items-center" v-if="editedProcess.target_type == 'python'">
+      <label for="git_options" class="w-1/5 font-semibold">Git options</label>
+      <div class="w-full">
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          v-model="editedProcess.git_options"
+          id="git_options"
+          placeholder="--branch=dev --depth=1"
+        />
+        <small class="text-base-content/60 block mt-1">Extra arguments passed to git clone</small>
+      </div>
+    </div>
+
     <!-- Git Credentials Field (Python Only) -->
     <div class="flex items-center" v-if="editedProcess.target_type == 'python'">
       <label for="target_credentials_id" class="w-1/5 font-semibold">Git credentials</label>

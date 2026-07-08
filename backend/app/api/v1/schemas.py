@@ -1,8 +1,9 @@
+import shlex
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from cronsim import CronSim, CronSimError
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import Self
 
 from app import enums
@@ -81,10 +82,24 @@ class ProcessCreate(BaseModel):
     requirements: Optional[str] = ""
     target_type: enums.TargetTypeEnum
     target_source: Optional[str] = ""
+    git_options: Optional[str] = ""
     target_credentials_id: Optional[int] = None
     credentials_id: Optional[int] = None
     workqueue_id: Optional[int] = None
     requirements: Optional[str] = ""
+
+    @field_validator("git_options")
+    @classmethod
+    def validate_git_options(cls, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return value
+        if "\n" in value or "\r" in value:
+            raise ValueError("git_options must be a single line")
+        try:
+            shlex.split(value)
+        except ValueError as e:
+            raise ValueError(f"git_options is not parseable: {e}") from e
+        return value
 
 
 class ProcessUpdate(ProcessCreate):

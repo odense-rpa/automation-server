@@ -24,6 +24,7 @@ export default {
         description: '',
         target_type: 'python',
         target_source: '',
+        git_options: '',
         target_credentials_id: null,
         credentials_id: null,
         workqueue_id: null,
