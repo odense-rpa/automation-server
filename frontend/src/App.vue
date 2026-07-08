@@ -12,6 +12,14 @@
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold">Automation Server</h1>
       </div>
+      <router-link
+        v-if="authOpen"
+        to="/administration"
+        class="badge badge-warning gap-1 mt-2"
+        title="No access tokens configured — the API accepts requests without authentication. Create a token to enforce auth.">
+        <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
+        auth off
+      </router-link>
       <hr />
       <nav class="mt-6">
         <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/" active-class="bg-white/15"
@@ -65,6 +73,7 @@
 </template>
 <script>
 import AlertFlasher from './components/AlertFlasher.vue';
+import { healthAPI } from '@/services/automationserver';
 
 export default {
   components: {
@@ -74,6 +83,8 @@ export default {
     return {
       isSidebarOpen: false,
       isDark: false,
+      authOpen: false,
+      healthInterval: null,
     };
   },
   watch: {
@@ -93,6 +104,14 @@ export default {
     applyTheme() {
       document.documentElement.setAttribute('data-theme', this.isDark ? 'automation-dark' : 'automation');
     },
+    async checkAuthMode() {
+      try {
+        const health = await healthAPI.getHealth();
+        this.authOpen = health.auth === 'open';
+      } catch {
+        this.authOpen = false;
+      }
+    },
   },
   mounted() {
     const stored = localStorage.getItem('theme-dark');
@@ -109,6 +128,12 @@ export default {
         this.applyTheme();
       }
     });
+
+    this.checkAuthMode();
+    this.healthInterval = setInterval(this.checkAuthMode, 60000);
+  },
+  unmounted() {
+    clearInterval(this.healthInterval);
   },
 };
 </script>

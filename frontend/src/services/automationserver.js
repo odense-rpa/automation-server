@@ -495,8 +495,21 @@ const incidentsAPI = {
   }
 }
 
+// Health API
+const healthAPI = {
+  getHealth: async () => {
+    try {
+      const response = await axios.get(`/health`)
+      return response.data
+    } catch (error) {
+      throw new Error(`Error fetching health: ${error}`)
+    }
+  }
+}
+
 // Export APIs for use in Vue components or elsewhere
 export {
+  healthAPI,
   processesAPI,
   workqueuesAPI,
   credentialsAPI,

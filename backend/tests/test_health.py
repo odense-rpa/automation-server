@@ -17,6 +17,18 @@ async def test_health(client: AsyncClient):
     assert data["status"] == "healthy"
     assert "version" in data
     assert "timestamp" in data
+    assert data["auth"] == "open"
+
+
+@pytest.mark.asyncio
+async def test_health_auth_enforced_with_token(client: AsyncClient):
+    response = await client.post("/accesstokens", json={"identifier": "HealthToken"})
+    assert response.status_code == 200
+
+    response = await client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["auth"] == "enforced"
 
 
 @pytest.mark.asyncio
