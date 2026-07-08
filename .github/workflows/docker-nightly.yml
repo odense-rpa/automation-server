@@ -155,7 +155,7 @@ jobs:
           SHORT_SHA="${{ needs.check-changes.outputs.short_sha }}"
           DATE_TAG="${{ steps.date.outputs.tag }}"
           gh release create nightly \
-            --target development \
+            --target main \
             --title "Nightly Build ($DATE_TAG)" \
             --prerelease \
             --notes "$(cat <<NOTES
