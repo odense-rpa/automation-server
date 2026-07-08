@@ -61,6 +61,15 @@ async def delete_access_token(
     if access_token.deleted:
         raise HTTPException(status_code=403, detail="Access Token is deleted")
 
+    active_tokens = await repository.get_all()
+    if len(active_tokens) <= 1:
+        raise HTTPException(
+            status_code=409,
+            detail="Cannot delete the last access token. Create a replacement "
+            "token first — with no tokens the API would run without "
+            "authentication.",
+        )
+
     await repository.delete(access_token)
 
     # Return 204

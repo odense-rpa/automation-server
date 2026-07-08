@@ -27,8 +27,16 @@
         <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/administration"
           active-class="bg-white/15">Administration</router-link>
       </nav>
-      <!-- Dark mode toggle -->
+      <!-- Auth warning + dark mode toggle -->
       <div class="mt-auto pt-6">
+        <router-link
+          v-if="authOpen"
+          to="/administration"
+          class="btn btn-ghost btn-sm gap-2 w-full justify-start text-warning opacity-70 hover:opacity-100"
+          title="No access tokens configured — the API accepts requests without authentication. Create a token to enforce auth.">
+          <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
+          Auth disabled
+        </router-link>
         <button @click="toggleDarkMode" class="btn btn-ghost btn-sm gap-2 w-full justify-start opacity-70 hover:opacity-100">
           <font-awesome-icon :icon="['fas', isDark ? 'sun' : 'moon']" />
           {{ isDark ? 'Light mode' : 'Dark mode' }}
@@ -65,6 +73,7 @@
 </template>
 <script>
 import AlertFlasher from './components/AlertFlasher.vue';
+import { healthAPI } from '@/services/automationserver';
 
 export default {
   components: {
@@ -74,6 +83,8 @@ export default {
     return {
       isSidebarOpen: false,
       isDark: false,
+      authOpen: false,
+      healthInterval: null,
     };
   },
   watch: {
@@ -93,6 +104,14 @@ export default {
     applyTheme() {
       document.documentElement.setAttribute('data-theme', this.isDark ? 'automation-dark' : 'automation');
     },
+    async checkAuthMode() {
+      try {
+        const health = await healthAPI.getHealth();
+        this.authOpen = health.auth === 'open';
+      } catch {
+        this.authOpen = false;
+      }
+    },
   },
   mounted() {
     const stored = localStorage.getItem('theme-dark');
@@ -109,6 +128,12 @@ export default {
         this.applyTheme();
       }
     });
+
+    this.checkAuthMode();
+    this.healthInterval = setInterval(this.checkAuthMode, 60000);
+  },
+  unmounted() {
+    clearInterval(this.healthInterval);
   },
 };
 </script>
