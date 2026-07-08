@@ -17,12 +17,14 @@ class WorkqueueUpdate(BaseModel):
     name: str = Field(min_length=1)
     description: str
     enabled: bool
+    auto_clean_max_age_days: Optional[int] = Field(default=None, ge=1)
 
 
 class WorkqueueCreate(BaseModel):
     name: str = Field(min_length=1)
     description: str
     enabled: bool
+    auto_clean_max_age_days: Optional[int] = Field(default=None, ge=1)
 
 
 class WorkqueueInformation(BaseModel):

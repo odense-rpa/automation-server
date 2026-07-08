@@ -6,7 +6,7 @@ This module contains the refactored AutomationScheduler class using the modular 
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,6 +41,7 @@ class AutomationScheduler:
         """Initialize the scheduler."""
         self.processor_registry = None
         self.dispatcher = None
+        self._last_auto_clean: datetime | None = None
 
     async def run_background_task(self):
         """Background task that runs the scheduler in a loop."""
@@ -103,6 +104,13 @@ class AutomationScheduler:
             await session_service.reschedule_orphaned_sessions()
             await session_service.flush_dangling_sessions()
             await incident_service.create_incidents_for_new_failures()
+
+            # Auto-clean workqueues at most once per hour
+            if self._last_auto_clean is None or (
+                datetime.now() - self._last_auto_clean
+            ) >= timedelta(hours=1):
+                await workqueue_service.auto_clean_workqueues()
+                self._last_auto_clean = datetime.now()
 
             # Dispatch pending sessions first
             await self.dispatcher.dispatch_all_pending()
