@@ -32,6 +32,7 @@ class WorkqueueInformation(BaseModel):
     name: str = Field(min_length=1)
     description: str
     enabled: bool
+    auto_clean_max_age_days: Optional[int] = None
     new: int
     in_progress: int
     completed: int

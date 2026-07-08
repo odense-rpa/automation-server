@@ -25,6 +25,7 @@ async def test_get_workqueues_information(session: AsyncSession, client: AsyncCl
     queue = data[0]
     assert queue["name"] == "Workqueue"
     assert queue["enabled"] is True
+    assert queue["auto_clean_max_age_days"] is None
     assert queue["new"] == 1
     assert queue["in_progress"] == 1
     assert queue["completed"] == 1

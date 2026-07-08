@@ -4,6 +4,7 @@
       <tr>
         <th>Name</th>
         <th class="text-center">Enabled</th>
+        <th class="text-center">Auto-clean</th>
         <th class="text-center">In progress</th>
         <th class="text-center">New</th>
         <th class="text-center">Pending user</th>
