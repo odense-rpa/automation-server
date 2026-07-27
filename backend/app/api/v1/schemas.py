@@ -176,6 +176,12 @@ class CredentialEncryptionStatus(BaseModel):
     # Credentials whose username or password is still stored as plaintext,
     # soft-deleted ones included
     unencrypted_count: int
+    # Credentials holding ciphertext, whether or not it can be read
+    encrypted_count: int
+    # False when stored ciphertext cannot be decrypted with the configured
+    # key — the key was removed or changed. Those credentials are unreadable
+    # until the original key comes back.
+    decryptable: bool
 
 
 class CredentialReencryptResult(BaseModel):

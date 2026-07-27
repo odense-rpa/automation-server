@@ -71,12 +71,18 @@ async def get_encryption_status(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> CredentialEncryptionStatus:
-    """Report whether credentials are encrypted at rest."""
+    """Report whether credentials are encrypted at rest, and readable.
+
+    Reads the stored values with raw SQL, so this keeps answering when the
+    configured key cannot decrypt them and every other credential endpoint
+    is failing.
+    """
     async with uow:
-        unencrypted_ids = await uow.credentials.get_unencrypted_ids()
         return CredentialEncryptionStatus(
             key_configured=crypto.is_configured(),
-            unencrypted_count=len(unencrypted_ids),
+            unencrypted_count=len(await uow.credentials.get_unencrypted_ids()),
+            encrypted_count=len(await uow.credentials.get_encrypted_ids()),
+            decryptable=await uow.credentials.can_decrypt(),
         )
 
 

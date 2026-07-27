@@ -58,8 +58,20 @@ After setting a key on a server that already holds credentials, rewrite the exis
 
 Both cover soft-deleted credentials too, since their secrets are still on disk. Re-encryption does not change the credential values or their `updated_at` timestamp. Until it is run, the server logs a warning at startup naming how many credentials are still plaintext.
 
+### If the key is lost or changed
+
+There is no key rotation: a credential can only be read with the key it was saved under. If the server is started with a different `ENCRYPTION_KEY`, or with none at all, credentials encrypted under the previous key cannot be decrypted.
+
+The server does not fail silently or return corrupt values in this case:
+
+- Startup logs an error naming how many credentials are unreadable.
+- The Credentials page shows a red banner explaining whether the key is missing or mismatched, and what to do about it.
+- Credential API requests answer `500` with the same explanation, so workers fail loudly rather than running with empty passwords.
+
+The fix is to restore the previous `ENCRYPTION_KEY` value and restart. If it is genuinely gone, the affected credentials must be deleted and re-entered.
+
 :::warning
-Back up the encryption key. If it is lost or changed, encrypted credentials cannot be recovered and must be re-entered manually — there is no key rotation. A server started with the wrong key answers credential requests with an error explaining the mismatch, rather than returning corrupt values.
+Back up the encryption key somewhere other than the server it runs on. Losing it means re-entering every credential by hand.
 :::
 
 ## Workers

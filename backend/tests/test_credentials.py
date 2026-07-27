@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.database.models as models
 from app.config import settings
-from app.main import warn_on_plaintext_credentials
+from app.main import check_credential_encryption
 
 from . import generate_basic_data  # noqa: F401
 
@@ -431,11 +431,13 @@ async def test_credential_write_responses_carry_encrypted_flag(
     assert response.json()["encrypted"] is True
 
 
-async def test_startup_warns_when_no_key_configured(monkeypatch, caplog):
+async def test_startup_warns_when_no_key_configured(
+    session: AsyncSession, monkeypatch, caplog
+):
     monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await warn_on_plaintext_credentials()
+        await check_credential_encryption(session)
 
     assert "ENCRYPTION_KEY is not set" in caplog.text
 
@@ -449,7 +451,7 @@ async def test_startup_warns_about_leftover_plaintext_credentials(
     monkeypatch.setattr(settings, "encryption_key", "test-key")
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await warn_on_plaintext_credentials(session)
+        await check_credential_encryption(session)
 
     assert "2 credential(s) are still stored as PLAINTEXT" in caplog.text
 
@@ -470,9 +472,129 @@ async def test_startup_is_silent_when_everything_is_encrypted(
     assert response.status_code == 200
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await warn_on_plaintext_credentials(session)
+        await check_credential_encryption(session)
 
     assert caplog.text == ""
+
+
+async def test_startup_reports_credentials_encrypted_with_a_lost_key(
+    session: AsyncSession, client: AsyncClient, monkeypatch, caplog
+):
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    response = await client.post(
+        "/credentials/",
+        json={
+            "name": "Encrypted credential",
+            "username": "Encrypted username",
+            "password": "Encrypted password",
+        },
+    )
+    assert response.status_code == 200
+
+    # The key is removed from the environment afterwards
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await check_credential_encryption(session)
+
+    assert "ENCRYPTION_KEY is not set" in caplog.text
+    assert "1 credential(s) are encrypted but ENCRYPTION_KEY is not set" in caplog.text
+    assert "CANNOT be read" in caplog.text
+
+
+async def test_startup_reports_a_changed_key(
+    session: AsyncSession, client: AsyncClient, monkeypatch, caplog
+):
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    response = await client.post(
+        "/credentials/",
+        json={
+            "name": "Encrypted credential",
+            "username": "Encrypted username",
+            "password": "Encrypted password",
+        },
+    )
+    assert response.status_code == 200
+
+    monkeypatch.setattr(settings, "encryption_key", "a-different-key")
+
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await check_credential_encryption(session)
+
+    assert "encrypted with a different key" in caplog.text
+
+
+async def test_encryption_status_reports_unreadable_credentials(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    response = await client.post(
+        "/credentials/",
+        json={
+            "name": "Encrypted credential",
+            "username": "Encrypted username",
+            "password": "Encrypted password",
+        },
+    )
+    assert response.status_code == 200
+
+    # Still readable with the key that wrote them
+    data = (await client.get("/credentials/encryption")).json()
+    assert data["decryptable"] is True
+    assert data["encrypted_count"] == 1
+    assert data["unencrypted_count"] == 0
+
+    # The key goes away: the status endpoint must keep answering, since it is
+    # what explains the failure of every other credential endpoint
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+
+    response = await client.get("/credentials/encryption")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["key_configured"] is False
+    assert data["decryptable"] is False
+    assert data["encrypted_count"] == 1
+
+    # A wrong key is reported the same way
+    monkeypatch.setattr(settings, "encryption_key", "a-different-key")
+    data = (await client.get("/credentials/encryption")).json()
+
+    assert data["key_configured"] is True
+    assert data["decryptable"] is False
+
+
+async def test_unreadable_credentials_explain_themselves(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    response = await client.post(
+        "/credentials/",
+        json={
+            "name": "Encrypted credential",
+            "username": "Encrypted username",
+            "password": "Encrypted password",
+        },
+    )
+    assert response.status_code == 200
+    credential_id = response.json()["id"]
+
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+
+    for url in ("/credentials/", f"/credentials/{credential_id}"):
+        response = await client.get(url)
+
+        assert response.status_code == 500
+        detail = response.json()["detail"]
+        assert "no ENCRYPTION_KEY is configured" in detail
+        assert "Restore" in detail
+
+    monkeypatch.setattr(settings, "encryption_key", "a-different-key")
+
+    response = await client.get("/credentials/")
+
+    assert response.status_code == 500
+    assert "different key" in response.json()["detail"]
 
 
 async def test_create_credential_with_empty_json_data(

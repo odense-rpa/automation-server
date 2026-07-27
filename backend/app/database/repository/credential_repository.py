@@ -58,6 +58,50 @@ class CredentialRepository(DatabaseRepository[Credential]):
         )
         return {row[0] for row in result}
 
+    async def get_encrypted_ids(self) -> set[int]:
+        """Return ids of credentials holding ciphertext, readable or not.
+
+        Uses raw SQL, so it keeps working when the configured key cannot
+        decrypt the values.
+        """
+        result = await self.session.execute(
+            text(
+                "SELECT id FROM credential"
+                " WHERE username LIKE :prefix OR password LIKE :prefix"
+            ),
+            {"prefix": f"{ENCRYPTION_PREFIX}%"},
+        )
+        return {row[0] for row in result}
+
+    async def can_decrypt(self) -> bool:
+        """Return whether stored ciphertext is readable with the current key.
+
+        True when there is no ciphertext to read. Probes a single row rather
+        than the whole table: one unreadable value means the key is wrong for
+        all of them.
+        """
+        row = (
+            await self.session.execute(
+                text(
+                    "SELECT username, password FROM credential"
+                    " WHERE username LIKE :prefix OR password LIKE :prefix"
+                    " LIMIT 1"
+                ),
+                {"prefix": f"{ENCRYPTION_PREFIX}%"},
+            )
+        ).first()
+
+        if row is None:
+            return True
+
+        try:
+            for value in row:
+                crypto.decrypt(value)
+        except crypto.EncryptionKeyError:
+            return False
+
+        return True
+
     async def reencrypt_unencrypted(self) -> int:
         """Rewrite plaintext credentials so they are stored encrypted.
 

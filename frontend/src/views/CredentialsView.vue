@@ -6,8 +6,31 @@
       <router-link :to="{ name: 'credential.create' }" class="btn btn-primary btn-sm">+ Create</router-link>
     </template>
 
+    <!-- Encrypted with a key the server no longer has: nothing can be read -->
+    <div v-if="credentialsUnreadable" class="alert alert-error mb-4">
+      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
+      <span>
+        {{ encryption.encrypted_count }}
+        {{ encryption.encrypted_count === 1 ? 'credential is' : 'credentials are' }}
+        encrypted with a key this server does not have, so they cannot be read and are missing
+        from the list below.
+        <template v-if="encryption.key_configured">
+          The configured <code>ENCRYPTION_KEY</code> does not match the one they were saved with.
+          Restore the previous value and restart the server,
+        </template>
+        <template v-else>
+          No <code>ENCRYPTION_KEY</code> is configured. Restore the value the server was previously
+          started with and restart it,
+        </template>
+        or delete and re-enter the affected credentials.
+      </span>
+    </div>
+
     <!-- No encryption key on the server: everything is stored as plaintext -->
-    <div v-if="encryption && !encryption.key_configured" class="alert alert-warning mb-4">
+    <div
+      v-else-if="encryption && !encryption.key_configured"
+      class="alert alert-warning mb-4"
+    >
       <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
       <span>
         No encryption key is configured on the server — credential usernames and passwords are
@@ -32,7 +55,8 @@
       </button>
     </div>
 
-    <div v-if="filteredCredentials.length === 0" class="text-center mb-4">
+    <!-- An empty list is explained by the banner above when the key is lost -->
+    <div v-if="filteredCredentials.length === 0 && !credentialsUnreadable" class="text-center mb-4">
       <p class="secondary-content font-semibold">No credentials found matching search.</p>
     </div>
 
@@ -67,8 +91,10 @@ export default {
     };
   },
   async created() {
-    await this.fetchCredentials();
+    // Status first: it survives an unreadable key, and tells fetchCredentials
+    // whether a failure is already explained by the banner
     await this.fetchEncryptionStatus();
+    await this.fetchCredentials();
   },
   methods: {
     async fetchCredentials() {
@@ -78,7 +104,10 @@ export default {
         this.credentials = await credentialsAPI.getCredentials();
       } catch (error) {
         console.error(error);
-        alertStore.addAlert({ type: "error", message: error });
+        // The banner already explains an unreadable-key failure in full
+        if (this.encryption?.decryptable !== false) {
+          alertStore.addAlert({ type: "error", message: error.message });
+        }
       }
     },
     async fetchEncryptionStatus() {
@@ -111,6 +140,9 @@ export default {
     }
   },
   computed: {
+    credentialsUnreadable() {
+      return this.encryption !== null && !this.encryption.decryptable;
+    },
     searchTerm: {
       get() {
         return this.tableStateStore.getSearchTerm('credentials');
