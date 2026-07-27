@@ -27,6 +27,9 @@ Once installed, check out the [process template](https://github.com/odense-rpa/p
 
 If you require assistance feel free to create a [discussion](https://github.com/odense-rpa/automation-server/discussions) or open an [issue](https://github.com/odense-rpa/automation-server/issues).
 
+## Integrations
+
+Optional, opt-in integrations for operating a deployed instance are in [`integrations/`](integrations/) — for example a [Claude Code skill](integrations/claude-code/automation-server/) for administering Automation Server via natural language.
 
 ## License
 
