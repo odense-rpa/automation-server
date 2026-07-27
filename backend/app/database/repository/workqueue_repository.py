@@ -55,6 +55,16 @@ class AbstractWorkqueueRepository(AbstractRepository[Workqueue]):
     ) -> list[WorkItem]:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    async def get_auto_clean_workqueues(self) -> list[Workqueue]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    async def clear_terminal_items_older_than(
+        self, workqueue_id: int, days: int
+    ) -> int:
+        raise NotImplementedError
+
 
 class WorkqueueRepository(DatabaseRepository[Workqueue]):
     def __init__(self, session: AsyncSession) -> None:
@@ -138,6 +148,30 @@ class WorkqueueRepository(DatabaseRepository[Workqueue]):
 
         await self.session.execute(query)
         await self.session.commit()
+
+    async def get_auto_clean_workqueues(self) -> list[Workqueue]:
+        """Get non-deleted workqueues with auto-clean enabled."""
+        query = select(Workqueue).where(
+            Workqueue.deleted == False,  # noqa: E712
+            Workqueue.auto_clean_max_age_days.isnot(None),
+        )
+        return list(await self.session.scalars(query))
+
+    async def clear_terminal_items_older_than(
+        self, workqueue_id: int, days: int
+    ) -> int:
+        """Delete completed/failed workitems not updated within the given number of days."""
+        cutoff_date = datetime.now() - timedelta(days=days)
+        query = delete(WorkItem).where(
+            WorkItem.workqueue_id == workqueue_id,
+            WorkItem.status.in_(
+                [enums.WorkItemStatus.COMPLETED, enums.WorkItemStatus.FAILED]
+            ),
+            WorkItem.updated_at < cutoff_date,
+        )
+        result = await self.session.execute(query)
+        await self.session.commit()
+        return result.rowcount
 
     async def get_by_reference(
         self,

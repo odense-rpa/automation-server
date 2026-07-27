@@ -6,9 +6,18 @@
 # Coding Conventions for Python
 - Use type hints for all function parameters and returns
 - Prefer async/await for I/O operations
-- Follow PEP 8 for Python code
+- Follow PEP 8 for Python code, 88 character line length
+- Format with `uv run ruff format .`; lint with `uv run ruff check .`
 
-# Conding Conventions for Javascript
+## Database access
+- New endpoints are `async def`; repositories take an `AsyncSession`
+- Never use the sync engine in application code — it exists only for Alembic migrations
+
+## Testing
+- New features and bugfixes include pytest coverage
+- Run the test suite before opening a PR: `cd backend && uv run pytest`
+
+# Coding Conventions for Javascript
 
 - Use Prettier defaults for JavaScript
 

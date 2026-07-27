@@ -7,8 +7,6 @@ import os
 import threading
 from requests.exceptions import ConnectionError
 
-HEALTH_FILE = pathlib.Path("/tmp/worker.health")
-
 from automationclient import (
     resources,
     sessions,
@@ -17,6 +15,7 @@ from automationclient import (
 )
 from runners import python
 
+HEALTH_FILE = pathlib.Path("/tmp/worker.health")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,13 +86,11 @@ if __name__ == "__main__":
                                 token = credentials["password"]
 
                             if process["target_type"] == "python":
-                                
-                                
-                                
                                 _, _ , returncode = python.run_python(
                                     repo_url=process["target_source"],
                                     username=username,
                                     token=token,
+                                    git_options=process.get("git_options"),
                                     script_env={
                                         "ATS_URL": automationserver_url,
                                         "ATS_TOKEN": automationserver_token,
@@ -106,7 +103,10 @@ if __name__ == "__main__":
                                 
                                 if returncode != 0:
                                     raise RuntimeError("Failing session")
-                                
+                            else:
+                                raise RuntimeError(
+                                    f"target_type '{process['target_type']}' is not supported by this worker"
+                                )
 
                             resources.ping_resource(resource["id"])
             except ConnectionError:
@@ -115,7 +115,7 @@ if __name__ == "__main__":
                 )
                 time.sleep(5)
     finally:
-        if ping_thread.is_alive():
+        if ping_thread is not None and ping_thread.is_alive():
             stop_ping_thread.set()
             ping_thread.join()
         logger.info("Worker stopped")

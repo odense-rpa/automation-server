@@ -1,5 +1,6 @@
 import subprocess
 import os
+import shlex
 import tempfile
 import logging
 import sys
@@ -64,6 +65,7 @@ def run_python(
     token: Optional[str] = None,
     script_env: Optional[Dict[str, str]] = None,
     script_args: Optional[List[str]] = None,
+    git_options: Optional[str] = None,
 ) -> Tuple[Optional[str], Optional[str], int]:
     """Clones repo, sets up env with 'uv', installs deps, and runs main.py.
 
@@ -73,6 +75,8 @@ def run_python(
         token (Optional[str]): Personal Access Token for authentication (if needed).
         script_env (Optional[Dict[str, str]]): Environment variables to pass when running main.py.
         script_args (Optional[List[str]]): Command-line arguments to pass to main.py.
+        git_options (Optional[str]): Extra arguments appended to `git clone`,
+            e.g. "--branch=dev --depth=1".
 
     Returns:
         Tuple[str | None, str | None, int]: (stdout, stderr, return code).
@@ -85,12 +89,23 @@ def run_python(
         if username and token:
             repo_url = repo_url.replace("https://", f"https://{username}:{token}@")
 
+        multi_options = ["--recurse-submodules"]
+        if git_options:
+            try:
+                multi_options += shlex.split(git_options)
+            except ValueError as e:
+                logging.error(f"Invalid git options {git_options!r}: {e}")
+                return None, None, 1
+
         # Clone the repo
-        logging.info(f"Cloning repository into {temp_path}...")
+        logging.info(f"Cloning repository into {temp_path} (options: {multi_options})...")
         try:
-            git.Repo.clone_from(repo_url, temp_path, multi_options=["--recurse-submodules"])
+            git.Repo.clone_from(repo_url, temp_path, multi_options=multi_options)
         except git.exc.GitCommandError as e:
-            logging.error(f"Git clone failed: {e}")
+            message = str(e)
+            if token:
+                message = message.replace(token, "***")
+            logging.error(f"Git clone failed: {message}")
             return None, None, 1
 
         # Initialize virtual environment using 'uv'

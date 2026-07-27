@@ -1,6 +1,6 @@
 [project]
 name = "automation_server_backend"
-version = "0.4.0"
+version = "0.4.1"
 description = "The Automation Server Backend - run api services and manages the database"
 requires-python = ">=3.13"
 dependencies = [
@@ -17,6 +17,7 @@ dependencies = [
     "sqlmodel>0.0.16,<1.0",
     "uvicorn>=0.32.1,<1.0",
     "greenlet>=3.1.1",
+    "cryptography>=49.0.0",
 ]
 
 [dependency-groups]

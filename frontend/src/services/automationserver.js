@@ -429,6 +429,10 @@ const accessTokensApi = {
       const response = await axios.delete(`/accesstokens/${token}`)
       return response.data
     } catch (error) {
+      const detail = error.response?.data?.detail
+      if (typeof detail === 'string') {
+        throw new Error(detail)
+      }
       throw new Error(`Error deleting access token: ${error}`)
     }
   }
@@ -495,8 +499,21 @@ const incidentsAPI = {
   }
 }
 
+// Health API
+const healthAPI = {
+  getHealth: async () => {
+    try {
+      const response = await axios.get(`/health`)
+      return response.data
+    } catch (error) {
+      throw new Error(`Error fetching health: ${error}`)
+    }
+  }
+}
+
 // Export APIs for use in Vue components or elsewhere
 export {
+  healthAPI,
   processesAPI,
   workqueuesAPI,
   credentialsAPI,

@@ -96,6 +96,81 @@ async def test_create_process(session: AsyncSession, client: AsyncClient):
     assert data["description"] == "New description"
 
 
+async def test_create_process_with_git_options(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    response = await client.post(
+        "/processes/",
+        json={
+            "name": "Process",
+            "description": "New description",
+            "workqueue_id": 1,
+            "target_type": "python",
+            "target_source": "Test url",
+            "git_options": "--branch=dev --depth=1",
+            "target_credentials_id": None,
+            "credentials_id": None,
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["git_options"] == "--branch=dev --depth=1"
+
+    process = await session.get(models.Process, data["id"])
+    assert process.git_options == "--branch=dev --depth=1"
+
+
+async def test_update_process_git_options(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
+
+    response = await client.put(
+        "/processes/1",
+        json={
+            "name": "Process",
+            "description": "Process for unittest",
+            "workqueue_id": 1,
+            "target_type": "python",
+            "target_source": "Test url",
+            "git_options": "--branch=release/1.0",
+            "target_credentials_id": 1,
+            "credentials_id": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["git_options"] == "--branch=release/1.0"
+
+    process = await session.get(models.Process, 1)
+    assert process.git_options == "--branch=release/1.0"
+
+
+async def test_create_process_rejects_invalid_git_options(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    for bad_options in ["--branch='unclosed", "--depth=1\n--branch=dev"]:
+        response = await client.post(
+            "/processes/",
+            json={
+                "name": "Process",
+                "description": "New description",
+                "workqueue_id": 1,
+                "target_type": "python",
+                "target_source": "Test url",
+                "git_options": bad_options,
+                "target_credentials_id": None,
+                "credentials_id": None,
+            },
+        )
+
+        assert response.status_code == 422
+
+
 async def test_delete_process(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 

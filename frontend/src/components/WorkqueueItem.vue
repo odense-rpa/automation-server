@@ -13,6 +13,15 @@
     </td>
     <td class="text-center p-0">
       <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
+        class="block px-4 py-3 no-underline text-inherit">
+        <span v-if="workqueue.auto_clean_max_age_days != null" :title="`Completed and failed items older than ${workqueue.auto_clean_max_age_days} days are deleted automatically`">
+          {{ workqueue.auto_clean_max_age_days }} days
+        </span>
+        <span v-else class="text-base-content/40" title="Auto-clean disabled">—</span>
+      </router-link>
+    </td>
+    <td class="text-center p-0">
+      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
         class="block px-4 py-3 no-underline text-inherit">{{ workqueue.in_progress }}</router-link>
     </td>
     <td class="text-center p-0">

@@ -1,8 +1,9 @@
+import shlex
 from datetime import datetime
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from cronsim import CronSim, CronSimError
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import Self
 
 from app import enums
@@ -16,12 +17,14 @@ class WorkqueueUpdate(BaseModel):
     name: str = Field(min_length=1)
     description: str
     enabled: bool
+    auto_clean_max_age_days: Optional[int] = Field(default=None, ge=1)
 
 
 class WorkqueueCreate(BaseModel):
     name: str = Field(min_length=1)
     description: str
     enabled: bool
+    auto_clean_max_age_days: Optional[int] = Field(default=None, ge=1)
 
 
 class WorkqueueInformation(BaseModel):
@@ -29,6 +32,7 @@ class WorkqueueInformation(BaseModel):
     name: str = Field(min_length=1)
     description: str
     enabled: bool
+    auto_clean_max_age_days: Optional[int] = None
     new: int
     in_progress: int
     completed: int
@@ -81,10 +85,24 @@ class ProcessCreate(BaseModel):
     requirements: Optional[str] = ""
     target_type: enums.TargetTypeEnum
     target_source: Optional[str] = ""
+    git_options: Optional[str] = ""
     target_credentials_id: Optional[int] = None
     credentials_id: Optional[int] = None
     workqueue_id: Optional[int] = None
     requirements: Optional[str] = ""
+
+    @field_validator("git_options")
+    @classmethod
+    def validate_git_options(cls, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return value
+        if "\n" in value or "\r" in value:
+            raise ValueError("git_options must be a single line")
+        try:
+            shlex.split(value)
+        except ValueError as e:
+            raise ValueError(f"git_options is not parseable: {e}") from e
+        return value
 
 
 class ProcessUpdate(ProcessCreate):
@@ -137,6 +155,19 @@ class CredentialCreate(BaseModel):
 
 class CredentialUpdate(CredentialCreate):
     pass
+
+
+class CredentialRead(BaseModel):
+    id: int
+    name: str
+    data: Optional[Dict] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    deleted: bool
+    created_at: datetime
+    updated_at: datetime
+    # True when username and password are stored encrypted at rest
+    encrypted: bool
 
 
 class ResourceCreate(BaseModel):

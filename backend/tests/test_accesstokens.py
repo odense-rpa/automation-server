@@ -80,7 +80,7 @@ async def test_create_and_access_without_token(
 async def test_delete_accesstoken(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
-    # Create a new access token
+    # Create two access tokens so one can be deleted
     response = await client.post(
         "/accesstokens",
         json={
@@ -92,10 +92,53 @@ async def test_delete_accesstoken(session: AsyncSession, client: AsyncClient):
     data = response.json()
     access_token = data["access_token"]
 
-    # Delete the access token
+    response = await client.post(
+        "/accesstokens",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json={
+            "identifier": "UnusedAccessToken2",
+        },
+    )
+    assert response.status_code == 200
+
+    # Delete the first access token
     response = await client.delete(
         "/accesstokens/1",
         headers={"Authorization": f"Bearer {access_token}"},
     )
 
     assert response.status_code == 204
+
+
+async def test_delete_last_accesstoken_is_blocked(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    # Create a single access token
+    response = await client.post(
+        "/accesstokens",
+        json={
+            "identifier": "OnlyToken",
+        },
+    )
+    assert response.status_code == 200
+
+    access_token = response.json()["access_token"]
+
+    # Deleting the last active token must be refused, otherwise the API
+    # would fall back to running without authentication
+    response = await client.delete(
+        "/accesstokens/1",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert response.status_code == 409
+
+    # Token still works
+    response = await client.get(
+        "/accesstokens/",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 200
+    assert len(response.json()) == 1

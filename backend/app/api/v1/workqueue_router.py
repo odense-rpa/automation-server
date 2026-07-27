@@ -88,6 +88,7 @@ async def get_workqueues_information(
                 name=queue.name,
                 description=queue.description,
                 enabled=queue.enabled,
+                auto_clean_max_age_days=queue.auto_clean_max_age_days,
                 new=counts.get(enums.WorkItemStatus.NEW, 0),
                 in_progress=counts.get(enums.WorkItemStatus.IN_PROGRESS, 0),
                 completed=counts.get(enums.WorkItemStatus.COMPLETED, 0),

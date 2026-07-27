@@ -8,6 +8,7 @@ from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 from typing_extensions import Self
 
 import app.enums as enums
+from app.database.crypto import EncryptedStr
 
 
 class Base(SQLModel):
@@ -18,8 +19,8 @@ class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
     data: typing.Dict = Field(default={}, sa_type=JSONB)
-    username: str | None = Field()
-    password: str | None = Field()
+    username: str | None = Field(sa_type=EncryptedStr)
+    password: str | None = Field(sa_type=EncryptedStr)
     deleted: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
@@ -44,6 +45,7 @@ class Workqueue(Base, table=True):
     name: str = Field(min_length=1)
     description: typing.Optional[str]
     enabled: bool = Field(default=True)
+    auto_clean_max_age_days: int | None = Field(default=None)
 
     deleted: bool = False
 
@@ -60,6 +62,7 @@ class Process(Base, table=True):
 
     target_type: enums.TargetTypeEnum | None = None
     target_source: typing.Optional[str] = ""
+    git_options: typing.Optional[str] = ""
 
     target_credentials_id: typing.Optional[int] | None = Field(
         default=None, foreign_key="credential.id"

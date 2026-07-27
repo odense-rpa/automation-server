@@ -5,6 +5,25 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-07-08
+
+### Security
+
+- **Dependency upgrades across all components** patching ~135 advisories rooted in stale lockfiles ([344b99b](https://github.com/odense-rpa/automation-server/commit/344b99b)):
+  - Backend: h11 0.16.0 (request smuggling, CVE-2025-43859), python-multipart 0.0.32 (arbitrary file write, CVE-2026-24486), starlette 1.3.1 via FastAPI 0.139.0 (7 CVEs), urllib3 2.7.0 (decompression-bomb DoS)
+  - Worker: gitpython 3.1.50 (4 RCE-class CVEs in clone/config paths), urllib3 2.7.0, requests 2.34.2
+  - Frontend: axios 1.16.x (25 advisories), form-data boundary randomness fix (critical), vite 5.4.21, tar chain
+  - Website: shell-quote 1.9.0 (command injection), babel/fast-uri/ws updates
+- **Docker base images**: node 20 (EOL) → 24, nginx 1.25 → 1.30, uv image pinned to 0.11.28 (was `:latest`); `.env*` excluded from worker image via `.dockerignore`
+
+### Internal
+
+- Migrated to trunk-based development: `main` is the only long-lived branch, protected with required CI checks; releases are marked by `v*` tags
+- Added CI workflow running backend tests/lint and frontend lint/build on all pull requests
+- Added nightly Docker build workflow
+
+---
+
 ## [0.4.0] - 2026-05-20
 
 ### Changed

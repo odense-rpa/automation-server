@@ -2,7 +2,7 @@
 FROM python:3.13-slim AS builder
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -23,7 +23,7 @@ RUN uv sync --frozen
 FROM python:3.13-slim AS runtime
 
 # Install uv for runtime
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
 
 # Install runtime dependencies
 RUN apt-get update && \
@@ -67,11 +67,11 @@ EXPOSE 8000
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/health/ready || exit 1
 
 # Add metadata labels
 LABEL maintainer="your-email@example.com" \
-      version="0.4.0" \
+      version="0.4.1" \
       description="Automation Server Backend"
 
 # Use exec form for proper signal handling

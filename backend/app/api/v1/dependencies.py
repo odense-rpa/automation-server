@@ -1,3 +1,5 @@
+import logging
+import time
 from datetime import datetime, timedelta
 from typing import Annotated, Optional
 
@@ -126,6 +128,24 @@ def get_paginated_search_params(
     return schemas.PaginatedSearchParams(pagination=pagination, search=search)
 
 
+logger = logging.getLogger(__name__)
+
+_BYPASS_WARNING_INTERVAL_SECONDS = 600
+_last_bypass_warning = 0.0
+
+
+def _warn_auth_bypass() -> None:
+    global _last_bypass_warning
+    now = time.monotonic()
+    if now - _last_bypass_warning >= _BYPASS_WARNING_INTERVAL_SECONDS:
+        _last_bypass_warning = now
+        logger.warning(
+            "No access tokens configured — serving requests WITHOUT "
+            "authentication. Create a token under Administration to "
+            "enforce auth."
+        )
+
+
 async def resolve_access_token(
     token: str = Depends(oauth2_scheme),
     repository: repositories.AccessTokenRepository = Depends(
@@ -136,6 +156,7 @@ async def resolve_access_token(
 
     # If there are no tokens in the system, we assume that we are in either install or development mode.
     if len(tokens) == 0:
+        _warn_auth_bypass()
         return models.AccessToken(
             id=0,
             token="development-token",

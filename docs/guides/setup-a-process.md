@@ -20,6 +20,7 @@ Navigate to **Processes** in the sidebar and click **+ Create**. Fill in the det
 
 - **Name** — a human-readable label for the automation
 - **Git repository** — the URL of the repository containing your automation code
+- **Git options** — optional extra arguments for `git clone`, e.g. `--branch=dev --depth=1` to run from a specific branch or tag. Leave empty to clone the default branch.
 - **Requirements** — leave as `python` unless your automation needs specific packages
 
 ![Creating a process](/img/guide-setup-create-process.png)

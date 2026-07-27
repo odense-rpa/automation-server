@@ -1,9 +1,12 @@
+import logging
 from typing import Optional
 
 from app.api.v1.schemas import PaginatedResponse
 from app.database.models import WorkItem
 from app.database.repository import WorkqueueRepository
 from app.enums import WorkItemStatus
+
+logger = logging.getLogger(__name__)
 
 
 class WorkqueueService:
@@ -39,3 +42,17 @@ class WorkqueueService:
         return await self.repository.get_workitem_count(
             workqueue_id, status=WorkItemStatus.NEW
         )
+
+    async def auto_clean_workqueues(self) -> None:
+        """Delete old completed/failed workitems from workqueues with auto-clean enabled."""
+        workqueues = await self.repository.get_auto_clean_workqueues()
+        for workqueue in workqueues:
+            deleted_count = await self.repository.clear_terminal_items_older_than(
+                workqueue.id, workqueue.auto_clean_max_age_days
+            )
+            if deleted_count > 0:
+                logger.info(
+                    f"Auto-clean deleted {deleted_count} workitems from "
+                    f"workqueue '{workqueue.name}' (id={workqueue.id}) older than "
+                    f"{workqueue.auto_clean_max_age_days} days"
+                )

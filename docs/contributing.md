@@ -16,10 +16,10 @@ Open an issue to discuss your idea before building it. This avoids wasted effort
 
 ## Submitting Code
 
-1. Fork the repository and create a feature branch from `development`
+1. Fork the repository and create a feature branch from `main`
 2. Make your changes and add tests
 3. Run the test suite: `cd backend && uv run pytest`
-4. Submit a pull request against the `development` branch
+4. Submit a pull request against the `main` branch
 
 ## Development Setup
 
