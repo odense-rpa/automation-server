@@ -190,13 +190,6 @@ class Session(Base, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now())
 
 
-class SystemLog(Base, table=True):
-    id: typing.Optional[int] = Field(default=None, primary_key=True)
-    message: str
-    level: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now())
-
-
 class AuditLog(Base, table=True):
     id: typing.Optional[int] = Field(default=None, primary_key=True)
 
