@@ -42,13 +42,24 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 The setting is optional:
 
-- **Unset** — credentials are stored as plaintext. The web interface marks them with an "unencrypted" badge.
-- **Set** — credentials are encrypted whenever they are created or saved. Credentials that existed before the key was set remain plaintext until they are saved again; open and save each one to encrypt it.
+- **Unset** — credentials are stored as plaintext. The server logs a warning on every startup, and the Credentials page shows a banner explaining that no key is configured.
+- **Set** — credentials are encrypted whenever they are created or saved. Credentials that existed before the key was set remain plaintext until they are written again.
 
 The API always returns decrypted values to authenticated clients, so workers and automations are unaffected by this setting.
 
+Note that only the username and password are encrypted. The free-form **Data** field of a credential is stored as-is — do not put secrets there.
+
+### Encrypting existing credentials
+
+After setting a key on a server that already holds credentials, rewrite the existing rows in one pass:
+
+- **Web interface** — the Credentials page shows how many credentials are still plaintext, with an **Encrypt all now** button.
+- **API** — `POST /credentials/reencrypt`, which returns the number rewritten and the number remaining. It answers `409` if no key is configured.
+
+Both cover soft-deleted credentials too, since their secrets are still on disk. Re-encryption does not change the credential values or their `updated_at` timestamp. Until it is run, the server logs a warning at startup naming how many credentials are still plaintext.
+
 :::warning
-Back up the encryption key. If it is lost or changed, encrypted credentials cannot be recovered and must be re-entered manually.
+Back up the encryption key. If it is lost or changed, encrypted credentials cannot be recovered and must be re-entered manually — there is no key rotation. A server started with the wrong key answers credential requests with an error explaining the mismatch, rather than returning corrupt values.
 :::
 
 ## Workers

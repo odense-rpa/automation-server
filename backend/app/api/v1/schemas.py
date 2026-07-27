@@ -170,6 +170,21 @@ class CredentialRead(BaseModel):
     encrypted: bool
 
 
+class CredentialEncryptionStatus(BaseModel):
+    # True when the server has an ENCRYPTION_KEY configured
+    key_configured: bool
+    # Credentials whose username or password is still stored as plaintext,
+    # soft-deleted ones included
+    unencrypted_count: int
+
+
+class CredentialReencryptResult(BaseModel):
+    # Credentials rewritten as ciphertext by this call
+    reencrypted: int
+    # Credentials still stored as plaintext afterwards
+    remaining: int
+
+
 class ResourceCreate(BaseModel):
     name: str
     fqdn: str

@@ -1,9 +1,12 @@
+import logging
+
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.database.models as models
 from app.config import settings
+from app.main import warn_on_plaintext_credentials
 
 from . import generate_basic_data  # noqa: F401
 
@@ -300,6 +303,176 @@ async def test_credential_encrypts_on_save_with_unchanged_values(
     assert data["username"] == "Secret username"
     assert data["password"] == "My secret password"
     assert data["encrypted"] is True
+
+
+async def test_credential_encryption_status(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+    await generate_basic_data(session)
+
+    response = await client.get("/credentials/encryption")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["key_configured"] is False
+    # Both the live and the soft-deleted credential are plaintext
+    assert data["unencrypted_count"] == 2
+
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    response = await client.get("/credentials/encryption")
+    data = response.json()
+
+    assert data["key_configured"] is True
+    assert data["unencrypted_count"] == 2
+
+
+async def test_reencrypt_without_key_is_refused(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+    await generate_basic_data(session)
+
+    response = await client.post("/credentials/reencrypt")
+
+    assert response.status_code == 409
+    assert "ENCRYPTION_KEY" in response.json()["detail"]
+
+    # Nothing was written
+    row = (
+        await session.execute(
+            text("SELECT username FROM credential WHERE id = 1")
+        )
+    ).one()
+    assert row[0] == "Secret username"
+
+
+async def test_reencrypt_rewrites_plaintext_credentials(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    # Credentials written before a key was configured
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+    await generate_basic_data(session)
+
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    response = await client.post("/credentials/reencrypt")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["reencrypted"] == 2
+    assert data["remaining"] == 0
+
+    rows = (
+        await session.execute(
+            text("SELECT username, password FROM credential ORDER BY id")
+        )
+    ).all()
+    for row in rows:
+        assert row[0].startswith("enc:v1:")
+        assert row[1].startswith("enc:v1:")
+
+    # Values still read back correctly and the flag flipped
+    response = await client.get("/credentials/1")
+    data = response.json()
+    assert data["username"] == "Secret username"
+    assert data["password"] == "My secret password"
+    assert data["encrypted"] is True
+
+
+async def test_reencrypt_is_idempotent(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+    await generate_basic_data(session)
+
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    assert (await client.post("/credentials/reencrypt")).json()["reencrypted"] == 2
+
+    response = await client.post("/credentials/reencrypt")
+    data = response.json()
+
+    assert response.status_code == 200
+    assert data["reencrypted"] == 0
+    assert data["remaining"] == 0
+
+
+async def test_credential_write_responses_carry_encrypted_flag(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+
+    response = await client.post(
+        "/credentials/",
+        json={
+            "name": "Plaintext credential",
+            "username": "Plaintext username",
+            "password": "Plaintext password",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["encrypted"] is False
+    credential_id = response.json()["id"]
+
+    # With a key configured, saving encrypts and the response says so
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    response = await client.put(
+        f"/credentials/{credential_id}",
+        json={
+            "name": "Plaintext credential",
+            "username": "Plaintext username",
+            "password": "Plaintext password",
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["encrypted"] is True
+
+
+async def test_startup_warns_when_no_key_configured(monkeypatch, caplog):
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await warn_on_plaintext_credentials()
+
+    assert "ENCRYPTION_KEY is not set" in caplog.text
+
+
+async def test_startup_warns_about_leftover_plaintext_credentials(
+    session: AsyncSession, monkeypatch, caplog
+):
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+    await generate_basic_data(session)
+
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await warn_on_plaintext_credentials(session)
+
+    assert "2 credential(s) are still stored as PLAINTEXT" in caplog.text
+
+
+async def test_startup_is_silent_when_everything_is_encrypted(
+    session: AsyncSession, client: AsyncClient, monkeypatch, caplog
+):
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    response = await client.post(
+        "/credentials/",
+        json={
+            "name": "Encrypted credential",
+            "username": "Encrypted username",
+            "password": "Encrypted password",
+        },
+    )
+    assert response.status_code == 200
+
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await warn_on_plaintext_credentials(session)
+
+    assert caplog.text == ""
 
 
 async def test_create_credential_with_empty_json_data(

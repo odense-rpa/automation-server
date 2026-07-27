@@ -1,12 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 
+from app.database import crypto
 from app.database.models import AccessToken, Credential
 from app.database.unit_of_work import AbstractUnitOfWork
 
 from . import error_descriptions
 from .dependencies import get_unit_of_work, resolve_access_token
-from .schemas import CredentialCreate, CredentialRead, CredentialUpdate
+from .schemas import (
+    CredentialCreate,
+    CredentialEncryptionStatus,
+    CredentialRead,
+    CredentialReencryptResult,
+    CredentialUpdate,
+)
 
 
 def to_credential_read(
@@ -57,6 +64,63 @@ async def get_credentials(
         return [to_credential_read(c, unencrypted_ids) for c in result]
 
 
+# Declared before /{credential_id}: that route parses the path segment as an
+# int, so a later declaration would be shadowed and answer 422.
+@router.get("/encryption", responses=error_descriptions("Credential", _403=True))
+async def get_encryption_status(
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> CredentialEncryptionStatus:
+    """Report whether credentials are encrypted at rest."""
+    async with uow:
+        unencrypted_ids = await uow.credentials.get_unencrypted_ids()
+        return CredentialEncryptionStatus(
+            key_configured=crypto.is_configured(),
+            unencrypted_count=len(unencrypted_ids),
+        )
+
+
+@router.post(
+    "/reencrypt",
+    responses={
+        409: {
+            "description": "No encryption key is configured",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "No encryption key is configured"}
+                }
+            },
+        }
+    }
+    | error_descriptions("Credential", _403=True),
+)
+async def reencrypt_credentials(
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> CredentialReencryptResult:
+    """Rewrite every plaintext credential so it is stored encrypted.
+
+    Credentials created before an encryption key was configured stay
+    plaintext until they are written again. This does that in one pass.
+    """
+    if not crypto.is_configured():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "No encryption key is configured. Set ENCRYPTION_KEY on the "
+                "server and restart it before re-encrypting credentials."
+            ),
+        )
+
+    async with uow:
+        reencrypted = await uow.credentials.reencrypt_unencrypted()
+        remaining = len(await uow.credentials.get_unencrypted_ids())
+
+        return CredentialReencryptResult(
+            reencrypted=reencrypted, remaining=remaining
+        )
+
+
 @router.get("/{credential_id}", responses=RESPONSE_STATES)
 async def read_credential(
     credential: Credential = Depends(get_credential),
@@ -92,9 +156,11 @@ async def update_credential(
     credential: Credential = Depends(get_credential),
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
-) -> Credential:
+) -> CredentialRead:
     async with uow:
-        return await uow.credentials.update(credential, update.model_dump())
+        updated = await uow.credentials.update(credential, update.model_dump())
+        unencrypted_ids = await uow.credentials.get_unencrypted_ids()
+        return to_credential_read(updated, unencrypted_ids)
 
 
 @router.post("", responses=error_descriptions("Credential", _403=True))
@@ -102,13 +168,15 @@ async def create_credential(
     credential: CredentialCreate,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
-) -> Credential:
+) -> CredentialRead:
     try:
         async with uow:
             data = credential.model_dump()
             data["deleted"] = False
 
-            return await uow.credentials.create(data)
+            created = await uow.credentials.create(data)
+            unencrypted_ids = await uow.credentials.get_unencrypted_ids()
+            return to_credential_read(created, unencrypted_ids)
     except ValueError:
         raise HTTPException(status_code=422, detail="JSON data is invalid")
     except IntegrityError:

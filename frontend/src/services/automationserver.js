@@ -207,6 +207,23 @@ const credentialsAPI = {
     } catch (error) {
       throw new Error(`Error deleting credential: ${error}`)
     }
+  },
+  getEncryptionStatus: async () => {
+    try {
+      const response = await axios.get(`/credentials/encryption`)
+      return response.data
+    } catch (error) {
+      throw new Error(`Error fetching encryption status: ${error}`)
+    }
+  },
+  reencryptCredentials: async () => {
+    try {
+      const response = await axios.post(`/credentials/reencrypt`)
+      return response.data
+    } catch (error) {
+      const detail = error?.response?.data?.detail
+      throw new Error(typeof detail === 'string' ? detail : `Error encrypting credentials: ${error}`)
+    }
   }
 }
 
