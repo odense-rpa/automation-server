@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""
+ats — generic authenticated HTTP client for an Automation Server REST API.
+
+Usage:
+  ats <METHOD> <path> [--query k=v ...] [--data '<json>' | --data @file.json] [--confirm] [--raw]
+  ats health
+
+Config (in priority order):
+  --url / --token flags
+  ATS_BASE_URL (or ATS_URL) / ATS_TOKEN environment variables
+
+Examples:
+  ats GET /processes
+  ats GET /workqueues/information
+  ats POST /processes/5/trigger --data '{"type":"date","date":"2026-07-03T09:00:00"}'
+  ats PUT /incidents/12/resolve --data '{"status":"dismissed"}'
+  ats DELETE /workqueues/9 --confirm
+
+Hard rules (not overridable by flags):
+  - /credentials*, /accesstokens*, /token* are blocked entirely — this tool never
+    touches secrets or mints auth material.
+  - DELETE requests and any path ending in /clear require --confirm.
+"""
+
+import json
+import os
+import re
+import sys
+import urllib.request
+import urllib.error
+import urllib.parse
+
+BLOCKED_PATH_RE = re.compile(r"^/(credentials|accesstokens|token)(/|$)")
+METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH"}
+
+
+def die(msg, code=1):
+    print(f"ats: error: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def get_config(args):
+    base_url = args.get("url") or os.environ.get("ATS_BASE_URL") or os.environ.get("ATS_URL")
+    token = args.get("token") or os.environ.get("ATS_TOKEN")
+
+    if not base_url:
+        die(
+            "no base URL configured. Set ATS_BASE_URL (e.g. http://localhost/api) "
+            "or pass --url."
+        )
+    if not token:
+        die("no token configured. Set ATS_TOKEN or pass --token.")
+
+    return base_url.rstrip("/"), token
+
+
+def parse_args(argv):
+    if not argv:
+        print(__doc__)
+        sys.exit(0)
+
+    if argv[0] in ("-h", "--help"):
+        print(__doc__)
+        sys.exit(0)
+
+    if argv[0] == "health":
+        return {"method": "GET", "path": "/health", "query": [], "data": None,
+                "confirm": False, "raw": False, "url": None, "token": None}
+
+    if argv[0] not in METHODS:
+        die(f"unknown method {argv[0]!r} (expected one of {sorted(METHODS)}, or 'health')")
+
+    method = argv[0]
+    rest = argv[1:]
+    if not rest or rest[0].startswith("-"):
+        die("missing <path> argument, e.g. ats GET /processes")
+    path = rest[0]
+    if not path.startswith("/"):
+        path = "/" + path
+    rest = rest[1:]
+
+    out = {"method": method, "path": path, "query": [], "data": None,
+           "confirm": False, "raw": False, "url": None, "token": None}
+
+    i = 0
+    while i < len(rest):
+        arg = rest[i]
+        if arg == "--query":
+            i += 1
+            if i >= len(rest):
+                die("--query requires a k=v argument")
+            if "=" not in rest[i]:
+                die(f"--query argument must be k=v, got {rest[i]!r}")
+            k, v = rest[i].split("=", 1)
+            out["query"].append((k, v))
+        elif arg == "--data":
+            i += 1
+            if i >= len(rest):
+                die("--data requires a JSON string or @file argument")
+            raw = rest[i]
+            if raw.startswith("@"):
+                fname = raw[1:]
+                try:
+                    with open(fname, "r") as f:
+                        raw = f.read()
+                except OSError as e:
+                    die(f"could not read {fname}: {e}")
+            try:
+                out["data"] = json.loads(raw)
+            except json.JSONDecodeError as e:
+                die(f"--data is not valid JSON: {e}")
+        elif arg == "--confirm":
+            out["confirm"] = True
+        elif arg == "--raw":
+            out["raw"] = True
+        elif arg == "--url":
+            i += 1
+            if i >= len(rest):
+                die("--url requires a value")
+            out["url"] = rest[i]
+        elif arg == "--token":
+            i += 1
+            if i >= len(rest):
+                die("--token requires a value")
+            out["token"] = rest[i]
+        else:
+            die(f"unknown argument {arg!r}")
+        i += 1
+
+    return out
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+    method, path = args["method"], args["path"]
+
+    if BLOCKED_PATH_RE.match(path):
+        die(
+            f"path {path!r} is off-limits. This tool never calls /credentials, "
+            "/accesstokens, or /token — those handle secrets and auth material "
+            "and are intentionally excluded."
+        )
+
+    is_destructive = method == "DELETE" or path.rstrip("/").endswith("/clear")
+    if is_destructive and not args["confirm"]:
+        die(
+            f"{method} {path} is destructive. Re-run with --confirm to proceed "
+            "(confirm with the user first)."
+        )
+
+    base_url, token = get_config(args)
+    url = base_url + path
+    if args["query"]:
+        url += "?" + urllib.parse.urlencode(args["query"])
+
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    body = None
+    if args["data"] is not None:
+        body = json.dumps(args["data"]).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+
+    req = urllib.request.Request(url, data=body, headers=headers, method=method)
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            status = resp.status
+            raw_body = resp.read()
+    except urllib.error.HTTPError as e:
+        raw_body = e.read()
+        print(f"ats: HTTP {e.code} {e.reason}", file=sys.stderr)
+        _print_body(raw_body, raw=args["raw"], stream=sys.stderr)
+        sys.exit(1)
+    except urllib.error.URLError as e:
+        die(f"could not reach {base_url}: {e.reason}")
+
+    if not raw_body:
+        print(f"OK ({status}, no content)")
+        return
+
+    _print_body(raw_body, raw=args["raw"], stream=sys.stdout)
+
+
+def _print_body(raw_body, raw, stream):
+    if raw:
+        stream.write(raw_body.decode("utf-8", errors="replace"))
+        if not raw_body.endswith(b"\n"):
+            stream.write("\n")
+        return
+    try:
+        parsed = json.loads(raw_body)
+        print(json.dumps(parsed, indent=2, ensure_ascii=False), file=stream)
+    except json.JSONDecodeError:
+        stream.write(raw_body.decode("utf-8", errors="replace"))
+        if not raw_body.endswith(b"\n"):
+            stream.write("\n")
+
+
+if __name__ == "__main__":
+    main()
