@@ -95,6 +95,9 @@ echo "Syncing backend lock file..."
 echo "Syncing worker lock file..."
 (cd "$REPO_ROOT/worker" && uv lock)
 
+echo "Syncing frontend lock file..."
+(cd "$REPO_ROOT/frontend" && npm install --package-lock-only --ignore-scripts)
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 echo ""
@@ -104,3 +107,4 @@ for f in "${CHANGED_FILES[@]}"; do
 done
 echo "  backend/uv.lock"
 echo "  worker/uv.lock"
+echo "  frontend/package-lock.json"
