@@ -12,6 +12,20 @@ axios.interceptors.request.use((config) => {
   return config
 })
 
+// Prefer the API's own explanation over "Request failed with status code 500",
+// which tells the user nothing about what to do.
+const apiErrorMessage = (error, fallback) => {
+  const detail = error?.response?.data?.detail
+
+  if (typeof detail === 'string') {
+    return detail
+  }
+  if (Array.isArray(detail) && detail[0]?.msg) {
+    return detail[0].msg
+  }
+  return `${fallback}: ${error}`
+}
+
 // Processes API
 const processesAPI = {
   getProcesses: async (include_deleted = false) => {
@@ -173,7 +187,7 @@ const credentialsAPI = {
       const response = await axios.get(`/credentials`, { params: { include_deleted } })
       return response.data
     } catch (error) {
-      throw new Error(`Error fetching credentials: ${error}`)
+      throw new Error(apiErrorMessage(error, 'Error fetching credentials'))
     }
   },
   createCredential: async (credentialData) => {
@@ -181,7 +195,7 @@ const credentialsAPI = {
       const response = await axios.post(`/credentials`, credentialData)
       return response.data
     } catch (error) {
-      throw new Error(`${error["response"]["data"]["detail"][0]["msg"]}`)
+      throw new Error(apiErrorMessage(error, 'Error creating credential'))
     }
   },
   readCredential: async (credential_id) => {
@@ -189,7 +203,7 @@ const credentialsAPI = {
       const response = await axios.get(`/credentials/${credential_id}`)
       return response.data
     } catch (error) {
-      throw new Error(`Error reading credential: ${error}`)
+      throw new Error(apiErrorMessage(error, 'Error reading credential'))
     }
   },
   updateCredential: async (credential_id, credentialData) => {
@@ -197,7 +211,7 @@ const credentialsAPI = {
       const response = await axios.put(`/credentials/${credential_id}`, credentialData)
       return response.data
     } catch (error) {
-      throw new Error(`${error["response"]["data"]["detail"][0]["msg"]}`)
+      throw new Error(apiErrorMessage(error, 'Error updating credential'))
     }
   },
   deleteCredential: async (credential_id) => {
@@ -205,7 +219,23 @@ const credentialsAPI = {
       const response = await axios.delete(`/credentials/${credential_id}`)
       return response.data
     } catch (error) {
-      throw new Error(`Error deleting credential: ${error}`)
+      throw new Error(apiErrorMessage(error, 'Error deleting credential'))
+    }
+  },
+  getEncryptionStatus: async () => {
+    try {
+      const response = await axios.get(`/credentials/encryption`)
+      return response.data
+    } catch (error) {
+      throw new Error(apiErrorMessage(error, 'Error fetching encryption status'))
+    }
+  },
+  reencryptCredentials: async () => {
+    try {
+      const response = await axios.post(`/credentials/reencrypt`)
+      return response.data
+    } catch (error) {
+      throw new Error(apiErrorMessage(error, 'Error encrypting credentials'))
     }
   }
 }
