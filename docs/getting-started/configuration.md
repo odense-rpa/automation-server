@@ -74,6 +74,18 @@ The fix is to restore the previous `ENCRYPTION_KEY` value and restart. If it is 
 Back up the encryption key somewhere other than the server it runs on. Losing it means re-entering every credential by hand.
 :::
 
+## CORS
+
+```
+CORS_ALLOW_ORIGINS=
+```
+
+Origins the API accepts cross-origin browser requests from, as a comma-separated
+list. Leave unset for same-origin only — correct for this compose setup, since the
+frontend and API share the nginx proxy in front of them and the browser never makes
+a cross-origin request. Only needed if you serve the frontend from a different
+origin, such as a separately hosted SPA. Set to `*` to allow any origin.
+
 ## Workers
 
 ```
