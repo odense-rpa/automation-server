@@ -1,4 +1,6 @@
 import axios from 'axios'
+import router from '@/router'
+import { useAlertStore } from '@/stores/alertStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 
 axios.interceptors.request.use((config) => {
@@ -25,6 +27,46 @@ const apiErrorMessage = (error, fallback) => {
   }
   return `${fallback}: ${error}`
 }
+
+// True while a 401 is already being handled, so a burst of requests that all
+// fail at once (a page loading several resources in parallel) produces one
+// redirect and one toast instead of one per request.
+let handlingUnauthorized = false
+
+// An expired or deleted token otherwise surfaces as a generic error toast
+// per call site, with no path to recovery. On 401, sign the user out and
+// send them to Settings to re-enter a token — unless they're already there,
+// where a 401 means the token they're testing is bad and the page's own
+// error handling should explain that instead.
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isUnauthorized = error?.response?.status === 401
+    const onSettingsPage = router.currentRoute.value.name === 'settings'
+
+    if (!isUnauthorized || onSettingsPage) {
+      return Promise.reject(error)
+    }
+
+    if (!handlingUnauthorized) {
+      handlingUnauthorized = true
+      useSettingsStore().setToken('')
+      useAlertStore().addAlert({
+        type: 'error',
+        message: apiErrorMessage(error, 'Your session has expired, please sign in again')
+      })
+      router.push({ name: 'settings' }).finally(() => {
+        handlingUnauthorized = false
+      })
+    }
+
+    // Swallow the rejection instead of letting it reach the call site: the
+    // view is being redirected away, and every call site's own catch block
+    // would otherwise add a second, more generic "Error fetching X" toast
+    // right on top of the explanation above.
+    return new Promise(() => {})
+  }
+)
 
 // Processes API
 const processesAPI = {
