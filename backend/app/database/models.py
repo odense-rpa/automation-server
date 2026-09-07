@@ -3,8 +3,9 @@ from datetime import datetime
 
 from cronsim import CronSim, CronSimError
 from pydantic import field_validator, model_validator
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlmodel import JSON, Column, Field, Relationship, SQLModel
+from sqlmodel import Column, Field, Relationship, SQLModel
 from typing_extensions import Self
 
 import app.enums as enums
@@ -18,7 +19,7 @@ class Base(SQLModel):
 class Credential(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
-    data: typing.Dict = Field(default={}, sa_type=JSONB)
+    data: typing.Optional[typing.Dict] = Field(default={}, sa_type=JSONB, nullable=True)
     username: str | None = Field(sa_type=EncryptedStr)
     password: str | None = Field(sa_type=EncryptedStr)
     deleted: bool = False
@@ -27,11 +28,13 @@ class Credential(Base, table=True):
 
 
 class WorkItem(Base, table=True):
+    __table_args__ = (Index("ix_workitem_workqueue_id_status", "workqueue_id", "status"),)
+
     id: int | None = Field(default=None, primary_key=True)
     data: typing.Dict = Field(default={}, sa_type=JSONB)
-    reference: str | None = Field(default="")
+    reference: str | None = Field(default="", index=True)
     locked: bool
-    status: enums.WorkItemStatus
+    status: enums.WorkItemStatus = Field(index=True)
     message: str = ""
     workqueue_id: int = Field(foreign_key="workqueue.id")
     started_at: datetime | None = Field(default=None)
@@ -42,7 +45,7 @@ class WorkItem(Base, table=True):
 
 class Workqueue(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(min_length=1)
+    name: str = Field(min_length=1, unique=True)
     description: typing.Optional[str]
     enabled: bool = Field(default=True)
     auto_clean_max_age_days: int | None = Field(default=None)
@@ -64,14 +67,34 @@ class Process(Base, table=True):
     target_source: typing.Optional[str] = ""
     git_options: typing.Optional[str] = ""
 
-    target_credentials_id: typing.Optional[int] | None = Field(
-        default=None, foreign_key="credential.id"
+    target_credentials_id: typing.Optional[int] = Field(
+        default=None,
+        sa_column=Column(
+            "target_credentials_id",
+            Integer,
+            ForeignKey("credential.id", ondelete="SET NULL", onupdate="CASCADE"),
+            nullable=True,
+        ),
     )
     credentials_id: typing.Optional[int] = Field(
-        default=None, foreign_key="credential.id"
+        default=None,
+        sa_column=Column(
+            "credentials_id",
+            Integer,
+            ForeignKey("credential.id", ondelete="SET NULL", onupdate="CASCADE"),
+            nullable=True,
+        ),
     )
 
-    workqueue_id: int | None = Field(default=None, foreign_key="workqueue.id")
+    workqueue_id: typing.Optional[int] = Field(
+        default=None,
+        sa_column=Column(
+            "workqueue_id",
+            Integer,
+            ForeignKey("workqueue.id", ondelete="SET NULL", onupdate="CASCADE"),
+            nullable=True,
+        ),
+    )
     workqueue: typing.Optional[Workqueue] = Relationship()
 
     deleted: bool = False
@@ -99,7 +122,7 @@ class Trigger(Base, table=True):
     workqueue_scale_up_threshold: int = 0
 
     # Used for commandline parameters. Can be none
-    parameters: typing.Optional[str] = None
+    parameters: typing.Optional[str] = Field(default=None, sa_type=Text)
 
     deleted: typing.Optional[bool] = False
     enabled: typing.Optional[bool] = False
@@ -174,7 +197,7 @@ class Session(Base, table=True):
     process_id: int = Field(foreign_key="process.id")
     process: typing.Optional[Process] = Relationship()
 
-    parameters: typing.Optional[str] = None
+    parameters: typing.Optional[str] = Field(default=None, sa_type=Text)
 
     resource_id: typing.Optional[int] = Field(foreign_key="resource.id")
     resource: typing.Optional[Resource] = Relationship()
@@ -191,13 +214,44 @@ class Session(Base, table=True):
 
 
 class AuditLog(Base, table=True):
+    __table_args__ = (
+        Index("idx_sessionlog_session_event", "session_id", "event_timestamp"),
+        Index("idx_sessionlog_workitem_event", "workitem_id", "event_timestamp"),
+        Index("idx_sessionlog_level", "level"),
+        Index("idx_sessionlog_logger", "logger_name"),
+        Index(
+            "idx_sessionlog_exception",
+            "exception_type",
+            postgresql_where=text("exception_type IS NOT NULL"),
+        ),
+        Index(
+            "idx_sessionlog_structured_data", "structured_data", postgresql_using="gin"
+        ),
+    )
+
     id: typing.Optional[int] = Field(default=None, primary_key=True)
 
     # Foreign key relationships (both nullable for development flexibility)
-    session_id: typing.Optional[int] = Field(foreign_key="session.id", nullable=True)
+    session_id: typing.Optional[int] = Field(
+        default=None,
+        sa_column=Column(
+            "session_id",
+            Integer,
+            ForeignKey("session.id", ondelete="CASCADE", onupdate="CASCADE"),
+            nullable=True,
+        ),
+    )
     session: typing.Optional[Session] = Relationship()
 
-    workitem_id: typing.Optional[int] = Field(foreign_key="workitem.id", nullable=True)
+    workitem_id: typing.Optional[int] = Field(
+        default=None,
+        sa_column=Column(
+            "workitem_id",
+            Integer,
+            ForeignKey("workitem.id", ondelete="SET NULL", onupdate="CASCADE"),
+            nullable=True,
+        ),
+    )
     workitem: typing.Optional[WorkItem] = Relationship()
 
     # Core logging fields
@@ -212,14 +266,18 @@ class AuditLog(Base, table=True):
 
     # Exception fields
     exception_type: typing.Optional[str] = None
-    exception_message: typing.Optional[str] = None
-    traceback: typing.Optional[str] = None
+    exception_message: typing.Optional[str] = Field(default=None, sa_type=Text)
+    traceback: typing.Optional[str] = Field(default=None, sa_type=Text)
 
     # Structured data for audit trail
-    structured_data: typing.Optional[dict] = Field(default=None, sa_column=Column(JSON))
+    structured_data: typing.Optional[dict] = Field(
+        default=None, sa_type=JSONB, nullable=True
+    )
 
     # Timestamps
-    event_timestamp: datetime  # When the logged event actually occurred
+    event_timestamp: datetime = Field(
+        sa_type=DateTime(timezone=True)
+    )  # When the logged event actually occurred
     created_at: datetime = Field(
         default_factory=lambda: datetime.now()
     )  # DB insertion time
@@ -228,14 +286,14 @@ class AuditLog(Base, table=True):
 class Incident(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    session_id: int = Field(foreign_key="session.id")
+    session_id: int = Field(foreign_key="session.id", index=True)
     session: typing.Optional[Session] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "[Incident.session_id]"}
     )
 
     process_id: int = Field(foreign_key="process.id")
 
-    status: enums.IncidentStatus = Field(default=enums.IncidentStatus.NEW)
+    status: enums.IncidentStatus = Field(default=enums.IncidentStatus.NEW, index=True)
 
     error_trace: typing.List = Field(default=[], sa_type=JSONB)
 
