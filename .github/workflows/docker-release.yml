@@ -59,6 +59,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   github-release:
+    needs: docker
     runs-on: ubuntu-latest
     permissions:
       contents: write
