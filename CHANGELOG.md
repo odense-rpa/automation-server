@@ -5,6 +5,52 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-09-16
+
+### Security
+
+- **Credential encryption at rest**: `Credential.username` and `Credential.password` are now encrypted when `ENCRYPTION_KEY` is set. Encryption status is surfaced in the UI, with a one-shot `POST /credentials/reencrypt` to bring existing plaintext credentials under encryption, and a clear error message when a credential can't be read because the key changed or was lost ([26c2056](https://github.com/odense-rpa/automation-server/commit/26c2056), [f154e60](https://github.com/odense-rpa/automation-server/commit/f154e60), [f59202e](https://github.com/odense-rpa/automation-server/commit/f59202e))
+- **Configurable CORS**: origins are no longer wide open by default. `CORS_ALLOW_ORIGINS` now controls the allow-list, defaulting to same-origin only ([f3ceabe](https://github.com/odense-rpa/automation-server/commit/f3ceabe))
+- **Auth-bypass guard**: the server now logs a throttled warning when the access token table is empty (auth effectively open), and refuses to delete the last active access token ([55c8884](https://github.com/odense-rpa/automation-server/commit/55c8884)); the frontend surfaces the API's error detail when that deletion is refused ([f203295](https://github.com/odense-rpa/automation-server/commit/f203295))
+
+### Added
+
+- **Workqueue auto-clean**: workqueues can now be configured to automatically delete old, terminal workitems after a configurable age, surfaced on both the workqueue overview and detail views ([51aa3f9](https://github.com/odense-rpa/automation-server/commit/51aa3f9), [11fc5ae](https://github.com/odense-rpa/automation-server/commit/11fc5ae), [d8b5800](https://github.com/odense-rpa/automation-server/commit/d8b5800))
+- **`git_options` field** for processes, giving control over git clone behavior ([6ff1ae9](https://github.com/odense-rpa/automation-server/commit/6ff1ae9))
+
+### Changed
+
+- **Frontend signs out on 401** instead of failing every subsequent call with a stale token ([2f17992](https://github.com/odense-rpa/automation-server/commit/2f17992))
+- Auth warning moved next to the dark mode toggle in the navigation bar ([a3b786c](https://github.com/odense-rpa/automation-server/commit/a3b786c))
+- **Docker healthcheck now checks readiness, not just liveness**: `/health/ready` returns 503 when the database is unreachable, so containers correctly report unhealthy on DB loss ([c4c8bbc](https://github.com/odense-rpa/automation-server/commit/c4c8bbc))
+
+### Fixed
+
+- **Scheduler dispatches processes with empty requirements** to any available resource instead of leaving their sessions stuck in NEW forever; the worker now fails loudly on an unsupported `target_type` instead of silently no-oping ([b8b92ca](https://github.com/odense-rpa/automation-server/commit/b8b92ca))
+- **Models aligned with the hand-written schema** so `alembic --autogenerate` no longer proposes destructive migrations ([68bc577](https://github.com/odense-rpa/automation-server/commit/68bc577))
+- Worker shutdown no longer raises if the ping thread never started ([7f95542](https://github.com/odense-rpa/automation-server/commit/7f95542))
+- `bump-version.sh` now syncs the frontend lockfile, preventing version drift on release ([31ba7bf](https://github.com/odense-rpa/automation-server/commit/31ba7bf), [0ab3aec](https://github.com/odense-rpa/automation-server/commit/0ab3aec), [67c828b](https://github.com/odense-rpa/automation-server/commit/67c828b))
+
+### Internal
+
+- Removed dead code: `SystemLog` model and table, `password_salt` setting, stale `backend/env.example` ([71bdf55](https://github.com/odense-rpa/automation-server/commit/71bdf55))
+- CI now lints the worker package ([d1b55b5](https://github.com/odense-rpa/automation-server/commit/d1b55b5))
+- Nightly prerelease build now points at `main` instead of the retired development branch ([8d8b03a](https://github.com/odense-rpa/automation-server/commit/8d8b03a))
+- Removed `release.sh`; release steps are now PR-based and documented in `CLAUDE.md` ([772b415](https://github.com/odense-rpa/automation-server/commit/772b415))
+- Added an opt-in Claude Code skill for administering Automation Server over its REST API ([95769f2](https://github.com/odense-rpa/automation-server/commit/95769f2))
+- README now links the integrations directory ([0a385aa](https://github.com/odense-rpa/automation-server/commit/0a385aa))
+
+### Upgrade notes
+
+- **CORS defaults to deny-all.** If the frontend is served from a different origin than the API (a non-default deployment topology), set `CORS_ALLOW_ORIGINS` (comma-separated origins, or `*` to restore the previous wide-open behavior) or cross-origin requests will fail silently in the browser.
+- **Processes with blank `requirements` now dispatch to any resource.** Previously these sessions sat in NEW forever. If any process relies on a blank requirements field as an unintentional off switch, set explicit requirements before upgrading.
+- **The unused `systemlog` table is dropped** by this release's migration. It was never written to, but any external tooling reading it directly will break.
+- **`ENCRYPTION_KEY` is irreversible once set** — there is no key rotation yet. Back up the key before enabling it; losing it makes every encrypted credential unreadable.
+- **Healthcheck endpoint moved to `/health/ready`** and now returns 503 when the database is unreachable. External monitors or orchestration expecting an always-200 healthcheck need updating; `depends_on: service_healthy` consumers (e.g. the worker) will now correctly wait for the database.
+- **Deleting the last active access token now returns 409.** Scripts that delete-then-recreate a token must create the replacement first.
+
+---
+
 ## [0.4.1] - 2026-07-08
 
 ### Security
