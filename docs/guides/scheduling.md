@@ -37,6 +37,10 @@ A workqueue trigger fires whenever there are pending items in a workqueue. Autom
 
 This is useful for processing work as it arrives without polling on a fixed schedule.
 
+## Workqueue Auto-Clean
 
+Each workqueue can optionally auto-clean its own completed and failed workitems. Enable it and set a maximum age (in days) from the workqueue's edit form; workitems in a terminal state older than that are deleted automatically.
+
+The scheduler checks for workqueues with auto-clean enabled at most once per hour. Auto-clean is off by default and applies per workqueue — leave it disabled on any queue whose workitem history you need to keep.
 
 
