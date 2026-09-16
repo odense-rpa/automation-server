@@ -21,7 +21,7 @@ from app.api.v1.session_router import router as v1_session_router
 from app.api.v1.trigger_router import router as v1_trigger_router
 from app.api.v1.workitem_router import router as v1_workitem_router
 from app.api.v1.workqueue_router import router as v1_workqueue_router
-from app.config import settings
+from app.config import cors_origins, settings
 from app.database import crypto
 from app.database.crypto import EncryptionKeyError
 from app.database.repository.credential_repository import CredentialRepository
@@ -171,7 +171,7 @@ async def encryption_key_error_handler(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins(),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
