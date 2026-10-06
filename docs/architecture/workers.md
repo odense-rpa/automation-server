@@ -8,13 +8,15 @@ A "worker" is a Python process that connects to the backend, advertises its capa
 
 ## Capabilities
 
-Workers declare what they can do via the `ATS_CAPABILITIES` environment variable:
+Every worker advertises `python`, `playwright` and its OS name (for example `linux`) out of the box. Use the `ATS_CAPABILITIES` environment variable to add your own, for example on a worker that has SAP GUI installed:
 
 ```
-ATS_CAPABILITIES=playwright
+ATS_CAPABILITIES=sap
 ```
 
-When a process requires a specific capability (for example, `playwright` for browser automation), Automation Server only dispatches that process to workers that have declared that capability.
+Separate multiple capabilities with commas or spaces. Capabilities are lowercased, so use lowercase names in process requirements too.
+
+When a process requires a specific capability (for example, `sap`), Automation Server only dispatches that process to workers that have declared that capability. A process with no requirements runs on any available worker.
 
 You can run multiple workers with different capabilities on the same machine or across different machines.
 
@@ -37,7 +39,7 @@ Workers don't have to run on the same machine as the backend. Set these variable
 ```bash
 ATS_URL=https://your-automation-server/api
 ATS_TOKEN=your-secret-token
-ATS_CAPABILITIES=playwright
+ATS_CAPABILITIES=sap
 ```
 
 See [Configuration](../getting-started/configuration.md) for details.

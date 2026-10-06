@@ -96,7 +96,7 @@ ATS_CAPABILITIES=
 
 - **`ATS_TOKEN`** — authentication token workers use to connect to the backend. Leave empty for development. Set a strong secret in production.
 - **`ATS_URL`** — the URL workers use to reach the backend API. The default `http://backend:8000` works within Docker Compose. Change this if your worker runs on a separate machine.
-- **`ATS_CAPABILITIES`** — comma-separated list of capabilities the worker advertises. Processes are matched to workers based on these. For example, `playwright` means the worker can run browser automations. Leave this blank if you haven't customized your workers — processes without a required capability will run on any available worker.
+- **`ATS_CAPABILITIES`** — extra capabilities the worker advertises, separated by commas or spaces. Processes are matched to workers based on these. Every worker already advertises `python`, `playwright` and its OS name; add your own for anything else, for example `sap` on a worker with SAP GUI installed. Leave this blank if you haven't customized your workers — processes without a required capability will run on any available worker.
 
 ## Deployment
 
