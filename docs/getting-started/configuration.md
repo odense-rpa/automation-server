@@ -91,7 +91,7 @@ origin, such as a separately hosted SPA. Set to `*` to allow any origin.
 ```
 ATS_TOKEN=
 ATS_URL=http://backend:8000
-ATS_CAPABILITIES=playwright
+ATS_CAPABILITIES=
 ```
 
 - **`ATS_TOKEN`** — authentication token workers use to connect to the backend. Leave empty for development. Set a strong secret in production.
