@@ -545,6 +545,14 @@ const incidentsAPI = {
       throw new Error(`Error dismissing all incidents: ${error}`)
     }
   },
+  dismissIncidents: async (ids) => {
+    try {
+      const response = await axios.post(`/incidents/dismiss`, { ids })
+      return response.data.dismissed
+    } catch (error) {
+      throw new Error(`Error dismissing incidents: ${error}`)
+    }
+  },
   getIncident: async (id) => {
     try {
       const response = await axios.get(`/incidents/${id}`)

@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from app.api.v1.schemas import PaginatedResponse
 from app.database.models import Incident, Session
@@ -117,6 +117,10 @@ class IncidentService:
     async def dismiss_all_open(self) -> int:
         """Dismiss all open (NEW) incidents. Returns the count dismissed."""
         return await self.repository.dismiss_all_open()
+
+    async def dismiss_open_by_ids(self, ids: List[int]) -> int:
+        """Dismiss the given incidents that are still open (NEW). Returns the count dismissed."""
+        return await self.repository.dismiss_open_by_ids(ids)
 
     async def search_incidents(
         self,

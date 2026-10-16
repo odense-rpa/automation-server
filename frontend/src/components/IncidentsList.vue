@@ -4,6 +4,9 @@
             <div class="flex items-center gap-2">
                 <span v-if="openCount > 0" class="badge badge-error">{{ openCount }} open</span>
                 <search-input v-model="searchTerm" placeholder="Search incidents..." />
+                <button v-if="incidents.length > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissPage">
+                    <font-awesome-icon :icon="['fas', 'check']" />Dismiss page
+                </button>
                 <button v-if="openCount > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissAll">
                     <font-awesome-icon :icon="['fas', 'broom']" />Dismiss all
                 </button>
@@ -209,6 +212,19 @@ export default {
         handlePageChange(newPage) {
             this.page = newPage
             this.fetchIncidents()
+        },
+        async dismissPage() {
+            const ids = this.incidents.map((incident) => incident.id)
+            const confirmed = confirm(`Dismiss the ${ids.length} incidents on this page? This cannot be undone.`)
+            if (!confirmed) return
+            try {
+                const count = await incidentsAPI.dismissIncidents(ids)
+                this.alertStore.addAlert({ type: 'success', message: `${count} incidents dismissed.` })
+                this.expandedId = null
+                await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
+            } catch (error) {
+                this.alertStore.addAlert({ type: 'error', message: error })
+            }
         },
         async dismissAll() {
             const confirmed = confirm(`Dismiss all ${this.openCount} open incidents? This cannot be undone.`)
