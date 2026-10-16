@@ -4,6 +4,22 @@
             <div class="flex items-center gap-2">
                 <span v-if="openCount > 0" class="badge badge-error">{{ openCount }} open</span>
                 <search-input v-model="searchTerm" placeholder="Search incidents..." />
+                <select v-model="pageSizeOption" class="select select-sm select-bordered" title="Incidents per page">
+                    <option :value="5">5</option>
+                    <option :value="10">10</option>
+                    <option :value="15">15</option>
+                    <option value="custom">Custom</option>
+                    <option value="all">All</option>
+                </select>
+                <input
+                    v-if="pageSizeOption === 'custom'"
+                    v-model.number="customPageSize"
+                    type="number"
+                    min="1"
+                    :max="maxPageSize"
+                    class="input input-sm input-bordered w-20"
+                    title="Incidents per page"
+                />
                 <dropdown-button v-if="openCount > 0" :items="dismissItems" @item-clicked="handleDismissAction">
                     <button class="btn btn-sm flex items-center space-x-2">
                         <font-awesome-icon :icon="['fas', 'broom']" />Dismiss
@@ -163,7 +179,9 @@ export default {
     setup() {
         const tableStateStore = useTableStateStore()
         const alertStore = useAlertStore()
-        return { tableStateStore, alertStore }
+        // Backend limit for GET /incidents (incident_router.py: size le=200)
+        const maxPageSize = 200
+        return { tableStateStore, alertStore, maxPageSize }
     },
     props: {
         size: {
@@ -179,6 +197,7 @@ export default {
             expandedId: null,
             selectedIds: [],
             searchTimeout: null,
+            pageSizeTimeout: null,
             refreshInterval: null
         }
     },
@@ -200,6 +219,31 @@ export default {
                 { text: 'Dismiss page', action: 'page', disabled: this.incidents.length === 0 },
                 { text: `Dismiss all (${this.openCount})`, action: 'all' }
             ]
+        },
+        pageSizeOption: {
+            get() {
+                return this.tableStateStore.getOption('incidents', 'pageSize', this.size)
+            },
+            set(value) {
+                this.tableStateStore.setOption('incidents', 'pageSize', value)
+            }
+        },
+        customPageSize: {
+            get() {
+                return this.tableStateStore.getOption('incidents', 'customPageSize', this.size)
+            },
+            set(value) {
+                this.tableStateStore.setOption('incidents', 'customPageSize', value)
+            }
+        },
+        effectivePageSize() {
+            if (this.pageSizeOption === 'all') return this.maxPageSize
+            if (this.pageSizeOption === 'custom') {
+                const n = Math.floor(Number(this.customPageSize))
+                if (!Number.isFinite(n) || n < 1) return this.size
+                return Math.min(n, this.maxPageSize)
+            }
+            return this.pageSizeOption
         },
         searchTerm: {
             get() {
@@ -231,11 +275,18 @@ export default {
             this.searchTimeout = setTimeout(async () => {
                 await this.fetchIncidents()
             }, 300)
+        },
+        effectivePageSize() {
+            clearTimeout(this.pageSizeTimeout)
+            this.pageSizeTimeout = setTimeout(async () => {
+                this.page = 1
+                await this.fetchIncidents()
+            }, 300)
         }
     },
     methods: {
         async fetchIncidents() {
-            const response = await incidentsAPI.getIncidents(this.page, this.size, this.searchTerm, 'new')
+            const response = await incidentsAPI.getIncidents(this.page, this.effectivePageSize, this.searchTerm, 'new')
             this.incidents = response.items || []
             // Only keep ticks for rows that are still on screen
             const visibleIds = new Set(this.incidents.map((incident) => incident.id))
@@ -312,6 +363,7 @@ export default {
             }, 15000)
         },
         stopAutoRefresh() {
+            clearTimeout(this.pageSizeTimeout)
             clearInterval(this.refreshInterval)
         }
     }
