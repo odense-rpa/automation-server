@@ -4,6 +4,9 @@
             <div class="flex items-center gap-2">
                 <span v-if="openCount > 0" class="badge badge-error">{{ openCount }} open</span>
                 <search-input v-model="searchTerm" placeholder="Search incidents..." />
+                <button v-if="selectedIds.length > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissSelected">
+                    <font-awesome-icon :icon="['fas', 'check']" />Dismiss selected ({{ selectedIds.length }})
+                </button>
                 <button v-if="incidents.length > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissPage">
                     <font-awesome-icon :icon="['fas', 'check']" />Dismiss page
                 </button>
@@ -19,7 +22,18 @@
             <table class="table w-full mb-3">
                 <thead>
                     <tr>
-                        <th class="w-6"></th>
+                        <th class="w-px whitespace-nowrap">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    class="checkbox checkbox-sm"
+                                    :checked="allSelected"
+                                    :indeterminate="someSelected"
+                                    @change="toggleSelectAll"
+                                />
+                                <span>Select all</span>
+                            </label>
+                        </th>
                         <th class="text-center">Id</th>
                         <th>Process</th>
                         <th class="text-center">Status</th>
@@ -32,11 +46,20 @@
                             class="hover:bg-base-300 cursor-pointer"
                             @click="toggleExpand(incident.id)"
                         >
-                            <td class="text-center p-2">
-                                <font-awesome-icon
-                                    :icon="['fas', 'caret-right']"
-                                    :class="['transition-transform duration-200', { 'rotate-90': expandedId === incident.id }]"
-                                />
+                            <td class="w-px">
+                                <div class="flex items-center gap-3">
+                                    <input
+                                        v-model="selectedIds"
+                                        type="checkbox"
+                                        class="checkbox checkbox-sm"
+                                        :value="incident.id"
+                                        @click.stop
+                                    />
+                                    <font-awesome-icon
+                                        :icon="['fas', 'caret-right']"
+                                        :class="['transition-transform duration-200', { 'rotate-90': expandedId === incident.id }]"
+                                    />
+                                </div>
                             </td>
                             <td class="text-center">{{ incident.id }}</td>
                             <td>
@@ -156,11 +179,18 @@ export default {
             totalPages: 1,
             openCount: 0,
             expandedId: null,
+            selectedIds: [],
             searchTimeout: null,
             refreshInterval: null
         }
     },
     computed: {
+        allSelected() {
+            return this.incidents.length > 0 && this.selectedIds.length === this.incidents.length
+        },
+        someSelected() {
+            return this.selectedIds.length > 0 && !this.allSelected
+        },
         searchTerm: {
             get() {
                 return this.tableStateStore.getSearchTerm('incidents')
@@ -197,6 +227,9 @@ export default {
         async fetchIncidents() {
             const response = await incidentsAPI.getIncidents(this.page, this.size, this.searchTerm, 'new')
             this.incidents = response.items || []
+            // Only keep ticks for rows that are still on screen
+            const visibleIds = new Set(this.incidents.map((incident) => incident.id))
+            this.selectedIds = this.selectedIds.filter((id) => visibleIds.has(id))
             this.totalPages = response.total_pages || 1
             if (this.page > this.totalPages && this.totalPages > 0) {
                 this.page = this.totalPages
@@ -213,18 +246,28 @@ export default {
             this.page = newPage
             this.fetchIncidents()
         },
-        async dismissPage() {
-            const ids = this.incidents.map((incident) => incident.id)
-            const confirmed = confirm(`Dismiss the ${ids.length} incidents on this page? This cannot be undone.`)
-            if (!confirmed) return
+        toggleSelectAll() {
+            this.selectedIds = this.allSelected ? [] : this.incidents.map((incident) => incident.id)
+        },
+        async dismissIncidents(ids, confirmMessage) {
+            if (!confirm(confirmMessage)) return
             try {
                 const count = await incidentsAPI.dismissIncidents(ids)
                 this.alertStore.addAlert({ type: 'success', message: `${count} incidents dismissed.` })
                 this.expandedId = null
+                this.selectedIds = []
                 await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
             } catch (error) {
                 this.alertStore.addAlert({ type: 'error', message: error })
             }
+        },
+        async dismissPage() {
+            const ids = this.incidents.map((incident) => incident.id)
+            await this.dismissIncidents(ids, `Dismiss the ${ids.length} incidents on this page? This cannot be undone.`)
+        },
+        async dismissSelected() {
+            const ids = [...this.selectedIds]
+            await this.dismissIncidents(ids, `Dismiss the ${ids.length} selected incidents? This cannot be undone.`)
         },
         async dismissAll() {
             const confirmed = confirm(`Dismiss all ${this.openCount} open incidents? This cannot be undone.`)
