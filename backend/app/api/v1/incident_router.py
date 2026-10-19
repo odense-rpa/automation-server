@@ -14,7 +14,7 @@ from .dependencies import (
     get_unit_of_work,
     resolve_access_token,
 )
-from .schemas import IncidentResolve, PaginatedResponse
+from .schemas import IncidentDismiss, IncidentResolve, PaginatedResponse
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
@@ -70,6 +70,16 @@ async def dismiss_all_incidents(
     token: AccessToken = Depends(resolve_access_token),
 ) -> dict:
     count = await service.dismiss_all_open()
+    return {"dismissed": count}
+
+
+@router.post("/dismiss", responses=error_descriptions("Incident", _403=True))
+async def dismiss_incidents(
+    dismiss: IncidentDismiss,
+    service: IncidentService = Depends(get_incident_service),
+    token: AccessToken = Depends(resolve_access_token),
+) -> dict:
+    count = await service.dismiss_open_by_ids(dismiss.ids)
     return {"dismissed": count}
 
 

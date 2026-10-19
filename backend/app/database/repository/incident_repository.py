@@ -24,6 +24,9 @@ class AbstractIncidentRepository(AbstractRepository[Incident]):
     async def dismiss_all_open(self) -> int:
         raise NotImplementedError
 
+    async def dismiss_open_by_ids(self, ids: List[int]) -> int:
+        raise NotImplementedError
+
     async def get_paginated(
         self,
         search: Optional[str] = None,
@@ -69,6 +72,17 @@ class IncidentRepository(AbstractIncidentRepository, DatabaseRepository[Incident
     async def dismiss_all_open(self) -> int:
         result = await self.session.execute(
             update(Incident)
+            .where(Incident.status == enums.IncidentStatus.NEW)
+            .where(Incident.deleted == False)  # noqa: E712
+            .values(status=enums.IncidentStatus.DISMISSED)
+        )
+        await self.session.commit()
+        return result.rowcount
+
+    async def dismiss_open_by_ids(self, ids: List[int]) -> int:
+        result = await self.session.execute(
+            update(Incident)
+            .where(Incident.id.in_(ids))
             .where(Incident.status == enums.IncidentStatus.NEW)
             .where(Incident.deleted == False)  # noqa: E712
             .values(status=enums.IncidentStatus.DISMISSED)
