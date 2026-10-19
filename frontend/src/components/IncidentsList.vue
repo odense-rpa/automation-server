@@ -4,15 +4,11 @@
             <div class="flex items-center gap-2">
                 <span v-if="openCount > 0" class="badge badge-error">{{ openCount }} open</span>
                 <search-input v-model="searchTerm" placeholder="Search incidents..." />
-                <button v-if="selectedIds.length > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissSelected">
-                    <font-awesome-icon :icon="['fas', 'check']" />Dismiss selected ({{ selectedIds.length }})
-                </button>
-                <button v-if="incidents.length > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissPage">
-                    <font-awesome-icon :icon="['fas', 'check']" />Dismiss page
-                </button>
-                <button v-if="openCount > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissAll">
-                    <font-awesome-icon :icon="['fas', 'broom']" />Dismiss all
-                </button>
+                <dropdown-button v-if="openCount > 0" :items="dismissItems" @item-clicked="handleDismissAction">
+                    <button class="btn btn-sm flex items-center space-x-2">
+                        <font-awesome-icon :icon="['fas', 'broom']" />Dismiss
+                    </button>
+                </dropdown-button>
             </div>
         </template>
         <div v-if="incidents.length === 0" class="text-center mb-4">
@@ -147,6 +143,7 @@
 
 <script>
 import ContentCard from './ContentCard.vue'
+import DropdownButton from './DropdownButton.vue'
 import PageNavigation from '@/components/PageNavigation.vue'
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import SearchInput from '@/components/SearchInput.vue'
@@ -158,6 +155,7 @@ export default {
     name: 'IncidentsList',
     components: {
         ContentCard,
+        DropdownButton,
         PageNavigation,
         ProcessLabel,
         SearchInput
@@ -190,6 +188,18 @@ export default {
         },
         someSelected() {
             return this.selectedIds.length > 0 && !this.allSelected
+        },
+        dismissItems() {
+            const selected = this.selectedIds.length
+            return [
+                {
+                    text: selected > 0 ? `Dismiss selected (${selected})` : 'Dismiss selected',
+                    action: 'selected',
+                    disabled: selected === 0
+                },
+                { text: 'Dismiss page', action: 'page', disabled: this.incidents.length === 0 },
+                { text: `Dismiss all (${this.openCount})`, action: 'all' }
+            ]
         },
         searchTerm: {
             get() {
@@ -260,6 +270,11 @@ export default {
             } catch (error) {
                 this.alertStore.addAlert({ type: 'error', message: error })
             }
+        },
+        handleDismissAction(action) {
+            if (action === 'selected') this.dismissSelected()
+            else if (action === 'page') this.dismissPage()
+            else if (action === 'all') this.dismissAll()
         },
         async dismissPage() {
             const ids = this.incidents.map((incident) => incident.id)
