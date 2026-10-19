@@ -133,7 +133,13 @@
                 </tbody>
             </table>
 
-            <div class="pr-4">
+            <div class="flex items-center justify-end gap-2 pr-4">
+                <label class="flex items-center gap-2 text-sm text-base-content/70">
+                    Per page
+                    <select v-model="pageSize" class="select select-sm select-bordered">
+                        <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
+                    </select>
+                </label>
                 <page-navigation :currentPage="page" :totalPages="totalPages"
                     @change-page="handlePageChange"></page-navigation>
             </div>
@@ -163,7 +169,9 @@ export default {
     setup() {
         const tableStateStore = useTableStateStore()
         const alertStore = useAlertStore()
-        return { tableStateStore, alertStore }
+        // 200 is the backend limit for GET /incidents (incident_router.py: size le=200)
+        const pageSizeOptions = [5, 10, 20, 50, 100, 200]
+        return { tableStateStore, alertStore, pageSizeOptions }
     },
     props: {
         size: {
@@ -201,6 +209,16 @@ export default {
                 { text: `Dismiss all (${this.openCount})`, action: 'all' }
             ]
         },
+        pageSize: {
+            get() {
+                const stored = this.tableStateStore.getOption('incidents', 'pageSize', this.size)
+                // Fall back to the default if the session holds a value that is no longer offered
+                return this.pageSizeOptions.includes(stored) ? stored : this.size
+            },
+            set(value) {
+                this.tableStateStore.setOption('incidents', 'pageSize', value)
+            }
+        },
         searchTerm: {
             get() {
                 return this.tableStateStore.getSearchTerm('incidents')
@@ -231,11 +249,15 @@ export default {
             this.searchTimeout = setTimeout(async () => {
                 await this.fetchIncidents()
             }, 300)
+        },
+        async pageSize() {
+            this.page = 1
+            await this.fetchIncidents()
         }
     },
     methods: {
         async fetchIncidents() {
-            const response = await incidentsAPI.getIncidents(this.page, this.size, this.searchTerm, 'new')
+            const response = await incidentsAPI.getIncidents(this.page, this.pageSize,this.searchTerm, 'new')
             this.incidents = response.items || []
             // Only keep ticks for rows that are still on screen
             const visibleIds = new Set(this.incidents.map((incident) => incident.id))
