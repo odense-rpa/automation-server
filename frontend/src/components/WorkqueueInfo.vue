@@ -6,6 +6,14 @@
           <dd class="col-span-3 mb-2">{{ workqueue.name }}</dd>
           <dt class="col-span-2 font-semibold mb-2">Description:</dt>
           <dd class="col-span-3 mb-2">{{ workqueue.description }}</dd>
+          <template v-if="information">
+            <dt class="col-span-2 font-semibold mb-2">Items:</dt>
+            <dd class="col-span-3 mb-2 flex flex-wrap gap-1">
+              <span v-for="stat in stats" :key="stat.key" class="badge badge-md badge-ghost whitespace-nowrap">
+                {{ stat.label }}: <span class="font-semibold ml-1">{{ information[stat.key] }}</span>
+              </span>
+            </dd>
+          </template>
         </dl>
       </div>
       <div class="w-full lg:w-1/2 p-2">
@@ -34,7 +42,20 @@ export default {
         workqueue: {
             type: Object,
             required: true
+        },
+        information: {
+            type: Object,
+            default: null
         }
-    }
+    },
+    data: () => ({
+        stats: [
+            { key: 'new', label: 'New' },
+            { key: 'in_progress', label: 'In progress' },
+            { key: 'pending_user_action', label: 'Pending user' },
+            { key: 'completed', label: 'Completed' },
+            { key: 'failed', label: 'Failed' }
+        ]
+    })
 }
 </script>

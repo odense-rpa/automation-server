@@ -46,6 +46,26 @@ async def test_get_workqueues_information(session: AsyncSession, client: AsyncCl
     assert deleted_queue["pending_user_action"] == 0
 
 
+async def test_get_workqueue_information(session: AsyncSession, client: AsyncClient):
+    await generate_basic_data(session)
+
+    workqueue_id = (await client.get("/workqueues/")).json()[0]["id"]
+    response = await client.get(f"/workqueues/{workqueue_id}/information")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["id"] == workqueue_id
+    assert data["name"] == "Workqueue"
+    assert data["new"] == 1
+    assert data["in_progress"] == 1
+    assert data["completed"] == 1
+    assert data["failed"] == 1
+    assert data["pending_user_action"] == 1
+
+    response = await client.get("/workqueues/999999/information")
+    assert response.status_code == 404
+
+
 async def test_get_workqueues(session: AsyncSession, client: AsyncClient):
     await generate_basic_data(session)
 
