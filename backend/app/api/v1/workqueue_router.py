@@ -57,6 +57,23 @@ async def get_workqueue_by_name(
         return workqueue
 
 
+def _build_information(
+    queue: Workqueue, counts: dict[enums.WorkItemStatus, int]
+) -> WorkqueueInformation:
+    return WorkqueueInformation(
+        id=queue.id,
+        name=queue.name,
+        description=queue.description,
+        enabled=queue.enabled,
+        auto_clean_max_age_days=queue.auto_clean_max_age_days,
+        new=counts.get(enums.WorkItemStatus.NEW, 0),
+        in_progress=counts.get(enums.WorkItemStatus.IN_PROGRESS, 0),
+        completed=counts.get(enums.WorkItemStatus.COMPLETED, 0),
+        failed=counts.get(enums.WorkItemStatus.FAILED, 0),
+        pending_user_action=counts.get(enums.WorkItemStatus.PENDING_USER_ACTION, 0),
+    )
+
+
 @router.get("")
 async def get_workqueues(
     include_deleted: bool = False,
@@ -80,26 +97,10 @@ async def get_workqueues_information(
         workqueues = await uow.workqueues.get_all(include_deleted)
         all_counts = await uow.workqueues.get_all_workitem_counts()
 
-        result = []
-        for queue in workqueues:
-            counts = all_counts.get(queue.id, {})
-            queue_info = WorkqueueInformation(
-                id=queue.id,
-                name=queue.name,
-                description=queue.description,
-                enabled=queue.enabled,
-                auto_clean_max_age_days=queue.auto_clean_max_age_days,
-                new=counts.get(enums.WorkItemStatus.NEW, 0),
-                in_progress=counts.get(enums.WorkItemStatus.IN_PROGRESS, 0),
-                completed=counts.get(enums.WorkItemStatus.COMPLETED, 0),
-                failed=counts.get(enums.WorkItemStatus.FAILED, 0),
-                pending_user_action=counts.get(
-                    enums.WorkItemStatus.PENDING_USER_ACTION, 0
-                ),
-            )
-            result.append(queue_info)
-
-        return result
+        return [
+            _build_information(queue, all_counts.get(queue.id, {}))
+            for queue in workqueues
+        ]
 
 
 @router.get("/{workqueue_id}")
@@ -108,6 +109,17 @@ async def get_workqueue(
     token: AccessToken = Depends(resolve_access_token),
 ) -> Workqueue:
     return workqueue
+
+
+@router.get("/{workqueue_id}/information")
+async def get_workqueue_information(
+    workqueue: Workqueue = Depends(get_workqueue),
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> WorkqueueInformation:
+    async with uow:
+        all_counts = await uow.workqueues.get_all_workitem_counts()
+        return _build_information(workqueue, all_counts.get(workqueue.id, {}))
 
 
 @router.get("/by_name/{workqueue_name}")

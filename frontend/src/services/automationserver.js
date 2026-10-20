@@ -164,6 +164,14 @@ const workqueuesAPI = {
       throw new Error(`Error reading workqueue: ${error}`)
     }
   },
+  getWorkqueueInformation: async (queue_id) => {
+    try {
+      const response = await axios.get(`/workqueues/${queue_id}/information`)
+      return response.data
+    } catch (error) {
+      throw new Error(`Error reading workqueue information: ${error}`)
+    }
+  },
   updateWorkqueue: async (queue_id, workqueueData) => {
     try {
       const response = await axios.put(`/workqueues/${queue_id}`, workqueueData)

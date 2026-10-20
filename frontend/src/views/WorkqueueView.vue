@@ -7,7 +7,7 @@
         </button>
       </template>
       <div class="card-body">
-        <workqueue-info :workqueue="workqueue" v-if="workqueue && !showClearForm" />
+        <workqueue-info :workqueue="workqueue" :information="information" v-if="workqueue && !showClearForm" />
         <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue" @back="showClearForm = false" />
       </div>
     </content-card>
@@ -28,6 +28,7 @@ export default {
   name: 'WorkqueueView',
   data: () => ({
     workqueue: null,
+    information: null,
     showClearForm: false
   }),
   components: {
@@ -39,6 +40,7 @@ export default {
   async created() {
     try {
       this.workqueue = await workqueuesAPI.getWorkqueue(this.$route.params.id)
+      await this.fetchInformation()
     } catch (error) {
       alertStore.addAlert({ type: 'error', message: error })
     }
@@ -62,7 +64,16 @@ export default {
         alertStore.addAlert({ type: 'error', message: error.message });
       }
     },
-    onWorkitemsRefreshed() {}
+    async fetchInformation() {
+      try {
+        this.information = await workqueuesAPI.getWorkqueueInformation(this.workqueue.id)
+      } catch (error) {
+        alertStore.addAlert({ type: 'error', message: error.message })
+      }
+    },
+    onWorkitemsRefreshed() {
+      if (this.workqueue) this.fetchInformation()
+    }
   }
 }
 </script>
