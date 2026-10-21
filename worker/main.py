@@ -1,17 +1,18 @@
 import logging
-import pathlib
-import socket
-import time
-import platform
 import os
+import pathlib
+import platform
+import socket
 import threading
+import time
+
 from requests.exceptions import ConnectionError
 
 from automationclient import (
+    automationserver_token,
+    automationserver_url,
     resources,
     sessions,
-    automationserver_url,
-    automationserver_token,
 )
 from runners import python
 

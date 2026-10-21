@@ -1,11 +1,11 @@
-import requests
 import logging
 import traceback
 from contextlib import contextmanager
 from datetime import datetime
 
-from . import automationserver_url
-from . import headers
+import requests
+
+from . import automationserver_url, headers
 
 logger = logging.getLogger(__name__)
 

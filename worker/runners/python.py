@@ -1,16 +1,14 @@
-import subprocess
+import fcntl
+import logging
 import os
 import shlex
-import tempfile
-import logging
+import subprocess
 import sys
-import fcntl
-
+import tempfile
 from pathlib import Path
-from typing import Optional, Tuple, Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import git
-
 
 logger = logging.getLogger(__name__)
 
