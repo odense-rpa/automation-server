@@ -1,9 +1,9 @@
-import requests
 import logging
 from contextlib import contextmanager
 
-from . import automationserver_url
-from . import headers
+import requests
+
+from . import automationserver_url, headers
 
 base_url = f"{automationserver_url}/resources"
 
