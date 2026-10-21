@@ -5,6 +5,39 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-10-21
+
+### Security
+
+- **eMudhra / emSign CA compromise response** (GHSA-6q48-6c7w-9gw2, GHSA-hq85-5cpj-mr62, [f837c3b](https://github.com/odense-rpa/automation-server/commit/f837c3b)). Eight eMudhra intermediate CA certificates chaining to `emSign ECC Root CA - G3` had weak private keys; anything that bundles its own CA store trusted them until updated:
+  - Backend and worker: certifi 2026.6.17 → 2026.10.19 (drops the affected root; used by `requests`, `httpx` and `urllib3`)
+  - Docker images: uv 0.11.28 → 0.13.4 (uv verifies TLS against its own vendored `webpki-root-certs`; 0.13.4 removes the root)
+- Backend dependency refresh: cryptography 49.0.0 → 50.0.2, fastapi 0.139.0 → 0.156.4 (starlette 1.3.1 → 1.9.0), urllib3 2.7.0 → 2.8.0, pydantic 2.13.4 → 2.14.1, asyncpg 0.31.0 → 0.32.0, alembic 1.18.5 → 1.20.0, uvicorn 0.50.2 → 0.54.0
+- Worker dependency refresh: gitpython 3.1.50 → 3.2.1, urllib3 2.7.0 → 2.8.0, pydantic 2.13.4 → 2.14.1
+- Frontend: `npm audit fix` and semver-compatible updates (vue 3.4.26 → 3.5.44, vue-router 4.3.2 → 4.6.4, pinia 2.1.7 → 2.3.1, axios 1.18.1 → 1.20.0, postcss 8.5.16 → 8.5.31 fixing GHSA-fxqj-rqcc-2cmp / GHSA-r28c-9q8g-f849, source-map-js DoS GHSA-68fv-2mgg-jv7q); no production-dependency advisories remain
+
+### Added
+
+- **Dashboard incident bulk actions**: dismiss the current page or the selected incidents, grouped in a dropdown next to the list ([0d52168](https://github.com/odense-rpa/automation-server/commit/0d52168), [bcf6903](https://github.com/odense-rpa/automation-server/commit/bcf6903), [e63d950](https://github.com/odense-rpa/automation-server/commit/e63d950))
+- **Dashboard incident page size selector**, placed next to the paging controls ([0e55ba2](https://github.com/odense-rpa/automation-server/commit/0e55ba2), [181844d](https://github.com/odense-rpa/automation-server/commit/181844d))
+
+### Fixed
+
+- `.env.example` now defaults `ATS_CAPABILITIES` to empty instead of a built-in capability ([18d8bf6](https://github.com/odense-rpa/automation-server/commit/18d8bf6))
+
+### Internal
+
+- Backend now declares `sqlmodel<0.0.40` and `sqlalchemy<2.1` explicitly. sqlmodel ≥0.0.40 rejects naive datetimes and SQLAlchemy 2.1 resolves bare `postgresql://` URLs to psycopg 3 instead of psycopg2; both need a dedicated migration before upgrading.
+- Worker ruff configuration pinned to `select = ["F", "I"]` to match the backend (ruff 0.17 widened its default rule set); import order fixed accordingly.
+- README shows a custom worker capability example instead of the built-in playwright one ([6b47e75](https://github.com/odense-rpa/automation-server/commit/6b47e75))
+
+### Upgrade notes
+
+- **Rebuild and redeploy all images.** The certifi and uv fixes only take effect in freshly built images; running containers keep trusting the compromised emSign root until replaced. Rebuilding also picks up the base images' updated OS `ca-certificates` packages.
+- Local developer machines need uv ≥ 0.13.4 as well.
+
+---
+
 ## [0.7.0] - 2026-09-16
 
 ### Security
@@ -48,24 +81,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ENCRYPTION_KEY` is irreversible once set** — there is no key rotation yet. Back up the key before enabling it; losing it makes every encrypted credential unreadable.
 - **Healthcheck endpoint moved to `/health/ready`** and now returns 503 when the database is unreachable. External monitors or orchestration expecting an always-200 healthcheck need updating; `depends_on: service_healthy` consumers (e.g. the worker) will now correctly wait for the database.
 - **Deleting the last active access token now returns 409.** Scripts that delete-then-recreate a token must create the replacement first.
-
----
-
-## [Unreleased]
-
-### Security
-
-- **eMudhra / emSign CA compromise response** (GHSA-6q48-6c7w-9gw2, GHSA-hq85-5cpj-mr62). Eight eMudhra intermediate CA certificates chaining to `emSign ECC Root CA - G3` had weak private keys; anything that bundles its own CA store trusted them until updated:
-  - Backend and worker: certifi 2026.6.17 → 2026.10.19 (drops the affected root; used by `requests`, `httpx` and `urllib3`)
-  - Docker images: uv 0.11.28 → 0.13.4 (uv verifies TLS against its own vendored `webpki-root-certs`; 0.13.4 removes the root)
-- Backend dependency refresh: cryptography 49.0.0 → 50.0.2, fastapi 0.139.0 → 0.156.4 (starlette 1.3.1 → 1.9.0), urllib3 2.7.0 → 2.8.0, pydantic 2.13.4 → 2.14.1, asyncpg 0.31.0 → 0.32.0, alembic 1.18.5 → 1.20.0, uvicorn 0.50.2 → 0.54.0
-- Worker dependency refresh: gitpython 3.1.50 → 3.2.1, urllib3 2.7.0 → 2.8.0, pydantic 2.13.4 → 2.14.1
-- Frontend: `npm audit fix` and semver-compatible updates (vue 3.4.26 → 3.5.44, vue-router 4.3.2 → 4.6.4, pinia 2.1.7 → 2.3.1, axios 1.18.1 → 1.20.0, postcss 8.5.16 → 8.5.31 fixing GHSA-fxqj-rqcc-2cmp / GHSA-r28c-9q8g-f849, source-map-js DoS GHSA-68fv-2mgg-jv7q); no production-dependency advisories remain
-
-### Internal
-
-- Backend now declares `sqlmodel<0.0.40` and `sqlalchemy<2.1` explicitly. sqlmodel ≥0.0.40 rejects naive datetimes and SQLAlchemy 2.1 resolves bare `postgresql://` URLs to psycopg 3 instead of psycopg2; both need a dedicated migration before upgrading.
-- Worker ruff configuration pinned to `select = ["F", "I"]` to match the backend (ruff 0.17 widened its default rule set); import order fixed accordingly.
 
 ---
 
