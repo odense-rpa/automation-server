@@ -53,7 +53,7 @@ export default {
           type: 'success',
           message: message
         });
-        this.$refs.workitemsTable.fetchWorkItems();
+        this.$refs.workitemsTable.refresh();
       } catch (error) {
         alertStore.addAlert({ type: 'error', message: error.message });
       }

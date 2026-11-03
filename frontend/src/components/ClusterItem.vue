@@ -29,12 +29,14 @@
 <script>
 import { sessionsAPI } from '@/services/automationserver'
 import ProcessLabel from '@/components/ProcessLabel.vue'
+import polling from '@/mixins/polling'
 
 export default {
   name: 'ClusterItem',
   components: {
     ProcessLabel
   },
+  mixins: [polling],
   props: {
     resource: {
       type: Object,
@@ -44,25 +46,21 @@ export default {
   data() {
     return {
       session: null,
-      status: '',
-      timer: null
+      status: ''
     }
   },
-  async mounted() {
-    await this.refresh()
-    this.timer = setInterval(() => {
-      this.refresh()
-    }, 5000)
-  },
-  beforeUnmount() {
-    clearInterval(this.timer)
+  created() {
+    this.poll(() => this.refresh(), 5000)
+    this.refresh()
   },
   methods: {
     async refresh() {
-      this.session = await sessionsAPI.getByResourceId(this.resource.id)
-      if (this.session) {
-        this.status = this.session.status
-      } else this.status = ''
+      try {
+        this.session = await sessionsAPI.getByResourceId(this.resource.id)
+        this.status = this.session ? this.session.status : ''
+      } catch {
+        // Keep the last state; the next refresh tries again
+      }
     }
   }
 }

@@ -84,6 +84,7 @@
 </template>
 
 <script>
+import polling from '@/mixins/polling'
 import { triggersAPI } from '@/services/automationserver'
 import { useTableStateStore } from '@/stores/tableStateStore'
 import ContentCard from './ContentCard.vue'
@@ -95,6 +96,7 @@ export default {
     ContentCard,
     SearchInput
   },
+  mixins: [polling],
   setup() {
     return { tableStateStore: useTableStateStore() }
   },
@@ -105,7 +107,6 @@ export default {
       hasLoaded: false,
       error: null,
       searchTerm: '',
-      refreshInterval: null
     }
   },
   computed: {
@@ -133,14 +134,9 @@ export default {
       this.refreshExecutions()
     }
   },
-  async created() {
-    await this.refreshExecutions()
-    this.refreshInterval = setInterval(this.refreshExecutions, 60000)
-  },
-  unmounted() {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval)
-    }
+  created() {
+    this.poll(() => this.refreshExecutions(), 60000)
+    this.refreshExecutions()
   },
   methods: {
     async refreshExecutions() {

@@ -11,8 +11,9 @@
                 </dropdown-button>
             </div>
         </template>
+        <p v-if="error" class="text-error text-sm mb-2">{{ error }}</p>
         <div v-if="incidents.length === 0" class="text-center mb-4">
-            <p class="text-base-content/60 font-semibold">{{ searchTerm ? 'No incidents found matching search.' : 'No incidents — all good!' }}</p>
+            <p class="text-base-content/60 font-semibold">{{ emptyText(searchTerm ? 'No incidents found matching search.' : 'No incidents — all good!') }}</p>
         </div>
         <div v-else>
             <table class="table w-full mb-3">
@@ -154,8 +155,8 @@ import PageNavigation from '@/components/PageNavigation.vue'
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import { incidentsAPI } from '@/services/automationserver'
-import { useTableStateStore } from '../stores/tableStateStore'
 import { useAlertStore } from '@/stores/alertStore'
+import pagedList from '@/mixins/pagedList'
 
 export default {
     name: 'IncidentsList',
@@ -166,12 +167,12 @@ export default {
         ProcessLabel,
         SearchInput
     },
+    mixins: [pagedList],
     setup() {
-        const tableStateStore = useTableStateStore()
         const alertStore = useAlertStore()
         // 200 is the backend limit for GET /incidents (incident_router.py: size le=200)
         const pageSizeOptions = [5, 10, 20, 50, 100, 200]
-        return { tableStateStore, alertStore, pageSizeOptions }
+        return { alertStore, pageSizeOptions }
     },
     props: {
         size: {
@@ -181,16 +182,16 @@ export default {
     },
     data() {
         return {
-            incidents: [],
-            totalPages: 1,
+            tableKey: 'incidents',
             openCount: 0,
             expandedId: null,
-            selectedIds: [],
-            searchTimeout: null,
-            refreshInterval: null
+            selectedIds: []
         }
     },
     computed: {
+        incidents() {
+            return this.items
+        },
         allSelected() {
             return this.incidents.length > 0 && this.selectedIds.length === this.incidents.length
         },
@@ -218,65 +219,41 @@ export default {
             set(value) {
                 this.tableStateStore.setOption('incidents', 'pageSize', value)
             }
-        },
-        searchTerm: {
-            get() {
-                return this.tableStateStore.getSearchTerm('incidents')
-            },
-            set(value) {
-                this.tableStateStore.setSearchTerm('incidents', value)
-            }
-        },
-        page: {
-            get() {
-                return this.tableStateStore.getPage('incidents')
-            },
-            set(value) {
-                this.tableStateStore.setPage('incidents', value)
-            }
         }
     },
-    async created() {
-        await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
-        this.startAutoRefresh()
-    },
-    unmounted() {
-        this.stopAutoRefresh()
+    created() {
+        // The list itself is loaded by the pagedList mixin; the open count and the
+        // 15 s refresh of both are handled here
+        this.poll(() => this.refreshAll(), 15000)
+        this.fetchOpenCount()
     },
     watch: {
-        searchTerm() {
-            clearTimeout(this.searchTimeout)
-            this.searchTimeout = setTimeout(async () => {
-                await this.fetchIncidents()
-            }, 300)
-        },
-        async pageSize() {
+        pageSize() {
             this.page = 1
-            await this.fetchIncidents()
+            this.refresh()
         }
     },
     methods: {
-        async fetchIncidents() {
-            const response = await incidentsAPI.getIncidents(this.page, this.pageSize,this.searchTerm, 'new')
-            this.incidents = response.items || []
+        fetchPage({ page, size, search }) {
+            return incidentsAPI.getIncidents(page, size, search, 'new')
+        },
+        onPageLoaded(incidents) {
             // Only keep ticks for rows that are still on screen
-            const visibleIds = new Set(this.incidents.map((incident) => incident.id))
+            const visibleIds = new Set(incidents.map((incident) => incident.id))
             this.selectedIds = this.selectedIds.filter((id) => visibleIds.has(id))
-            this.totalPages = response.total_pages || 1
-            if (this.page > this.totalPages && this.totalPages > 0) {
-                this.page = this.totalPages
-                this.fetchIncidents()
-            }
         },
         async fetchOpenCount() {
-            this.openCount = await incidentsAPI.getOpenIncidentCount()
+            try {
+                this.openCount = await incidentsAPI.getOpenIncidentCount()
+            } catch {
+                // The list shows the error; the badge keeps its last value
+            }
+        },
+        refreshAll() {
+            return Promise.all([this.refresh(), this.fetchOpenCount()])
         },
         toggleExpand(id) {
             this.expandedId = this.expandedId === id ? null : id
-        },
-        handlePageChange(newPage) {
-            this.page = newPage
-            this.fetchIncidents()
         },
         toggleSelectAll() {
             this.selectedIds = this.allSelected ? [] : this.incidents.map((incident) => incident.id)
@@ -288,7 +265,7 @@ export default {
                 this.alertStore.addAlert({ type: 'success', message: `${count} incidents dismissed.` })
                 this.expandedId = null
                 this.selectedIds = []
-                await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
+                await this.refreshAll()
             } catch (error) {
                 this.alertStore.addAlert({ type: 'error', message: error.message })
             }
@@ -313,7 +290,7 @@ export default {
                 const count = await incidentsAPI.dismissAllIncidents()
                 this.alertStore.addAlert({ type: 'success', message: `${count} incidents dismissed.` })
                 this.expandedId = null
-                await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
+                await this.refreshAll()
             } catch (error) {
                 this.alertStore.addAlert({ type: 'error', message: error.message })
             }
@@ -323,19 +300,11 @@ export default {
                 await incidentsAPI.resolveIncident(id, status)
                 this.alertStore.addAlert({ type: 'success', message: `Incident ${status}.` })
                 this.expandedId = null
-                await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
+                await this.refreshAll()
             } catch (error) {
                 this.alertStore.addAlert({ type: 'error', message: error.message })
             }
         },
-        startAutoRefresh() {
-            this.refreshInterval = setInterval(async () => {
-                await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
-            }, 15000)
-        },
-        stopAutoRefresh() {
-            clearInterval(this.refreshInterval)
-        }
     }
 }
 </script>

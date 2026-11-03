@@ -14,7 +14,7 @@
             </select>
         </template>
         <div v-if="items.length === 0" class="text-center mb-4">
-            <p class="text-base-content/60 font-semibold">No process activity in the selected time window.</p>
+            <p class="text-base-content/60 font-semibold">{{ loaded ? 'No process activity in the selected time window.' : 'Loading...' }}</p>
         </div>
         <table v-else class="table w-full mb-3">
             <thead>
@@ -101,12 +101,14 @@
 import ContentCard from './ContentCard.vue'
 import { sessionsAPI } from '@/services/automationserver'
 import { useTableStateStore } from '@/stores/tableStateStore'
+import polling from '@/mixins/polling'
 
 export default {
     name: 'ProcessActivitySummary',
     components: {
         ContentCard
     },
+    mixins: [polling],
     setup() {
         const tableStateStore = useTableStateStore()
         return { tableStateStore }
@@ -114,7 +116,7 @@ export default {
     data() {
         return {
             items: [],
-            refreshInterval: null
+            loaded: false
         }
     },
     computed: {
@@ -132,24 +134,18 @@ export default {
             this.fetchData()
         }
     },
-    async created() {
-        await this.fetchData()
-        this.startAutoRefresh()
-    },
-    unmounted() {
-        this.stopAutoRefresh()
+    created() {
+        this.poll(() => this.fetchData(), 15000)
+        this.fetchData()
     },
     methods: {
         async fetchData() {
-            this.items = await sessionsAPI.getProcessActivitySummary(this.selectedHours)
-        },
-        startAutoRefresh() {
-            this.refreshInterval = setInterval(async () => {
-                await this.fetchData()
-            }, 15000)
-        },
-        stopAutoRefresh() {
-            clearInterval(this.refreshInterval)
+            try {
+                this.items = await sessionsAPI.getProcessActivitySummary(this.selectedHours)
+                this.loaded = true
+            } catch {
+                // Keep the last data on screen; the next refresh tries again
+            }
         }
     }
 }

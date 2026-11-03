@@ -34,6 +34,7 @@ import ClusterItem from '@/components/ClusterItem.vue'
 import ClusterSessionItem from './ClusterSessionItem.vue'
 import InstantSchedule from './InstantSchedule.vue'
 import { resourcesAPI, sessionsAPI } from '@/services/automationserver'
+import polling from '@/mixins/polling'
 
 export default {
   name: 'ClusterMonitor',
@@ -43,21 +44,17 @@ export default {
     ClusterSessionItem,
     InstantSchedule
   },
+  mixins: [polling],
   data() {
     return {
       resources: [],
-      sessions: [],
-      timer: null
+      sessions: []
     }
   },
 
-  async mounted() {
-    this.resources = await resourcesAPI.getResources()
-    this.timer = setInterval(this.updateSessions, 5000)
-    this.sessions = await sessionsAPI.getNewSessions()
-  },
-  beforeUnmount() {
-    clearInterval(this.timer)
+  created() {
+    this.poll(() => this.refresh(), 5000)
+    this.refresh()
   },
   computed: {
     sortedResources() {
@@ -66,9 +63,19 @@ export default {
 
   },
   methods: {
-    async updateSessions() {
-      var sessions = await sessionsAPI.getNewSessions()
-      this.sessions = sessions.filter((session) => session.resource_id === null)
+    async refresh() {
+      try {
+        // Resources too, so workers that come online show up without a reload
+        const [resources, sessions] = await Promise.all([
+          resourcesAPI.getResources(),
+          sessionsAPI.getNewSessions()
+        ])
+        this.resources = resources
+        // Queued sessions not yet assigned to a resource
+        this.sessions = sessions.filter((session) => session.resource_id === null)
+      } catch {
+        // Keep the last state; the next refresh tries again
+      }
     }
   }
 }

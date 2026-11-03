@@ -3,8 +3,9 @@
         <template v-slot:header-right>
             <search-input v-model="searchTerm" placeholder="Search sessions..." />
         </template>
+        <p v-if="error" class="text-error text-sm mb-2">{{ error }}</p>
         <div v-if="sessions.length === 0" class="text-center mb-4">
-            <p class="text-base-content/60 font-semibold">No sessions found matching search.</p>
+            <p class="text-base-content/60 font-semibold">{{ emptyText('No sessions found matching search.') }}</p>
         </div>
         <div v-else>
             <!-- Table -->
@@ -72,7 +73,7 @@ import PageNavigation from "@/components/PageNavigation.vue";
 import { sessionsAPI } from "@/services/automationserver";
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import SearchInput from '@/components/SearchInput.vue'
-import { useTableStateStore } from '../stores/tableStateStore'
+import pagedList from '@/mixins/pagedList'
 
 export default {
     name: "SessionsList",
@@ -82,10 +83,7 @@ export default {
         ProcessLabel,
         SearchInput
     },
-    setup() {
-        const tableStateStore = useTableStateStore()
-        return { tableStateStore }
-    },
+    mixins: [pagedList],
     props: {
         size: {
             type: Number,
@@ -94,73 +92,18 @@ export default {
     },
     data() {
         return {
-            sessions: [],
-            totalPages: 1,
-            searchTimeout: null,
-            refreshInterval: null
+            tableKey: 'sessions',
+            refreshMs: 60000
         };
     },
     computed: {
-        searchTerm: {
-            get() {
-                return this.tableStateStore.getSearchTerm('sessions')
-            },
-            set(value) {
-                this.tableStateStore.setSearchTerm('sessions', value)
-            }
-        },
-        page: {
-            get() {
-                return this.tableStateStore.getPage('sessions')
-            },
-            set(value) {
-                this.tableStateStore.setPage('sessions', value)
-            }
-        }
-    },
-    async created() {
-        await this.fetchSessions();
-        this.startAutoRefresh();
-    },
-    async unmounted() {
-        this.stopAutoRefresh();
-    },
-    watch: {
-        searchTerm() {
-            clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout(async () => {
-                // The store already resets page to 1 when search term changes
-                await this.fetchSessions();
-            }, 300); // 300ms delay
+        sessions() {
+            return this.items;
         }
     },
     methods: {
-        async fetchSessions() {
-            const response = await sessionsAPI.getSessions(
-                false,
-                this.page,
-                this.size,
-                this.searchTerm
-            );
-
-            this.sessions = response.items || [];
-            this.totalPages = response.total_pages || 1;
-            if (this.page > this.totalPages && this.totalPages > 0) {
-                this.page = this.totalPages;
-                this.fetchSessions();
-            }
-        },
-        handlePageChange(newPage) {
-            this.page = newPage;
-            this.fetchSessions();
-        },
-        startAutoRefresh() {
-            this.refreshInterval = setInterval(() => {
-                this.fetchSessions();
-            }, 60000); // Refresh every 60 seconds
-        },
-        stopAutoRefresh() {
-            clearInterval(this.refreshInterval);
+        fetchPage({ page, size, search }) {
+            return sessionsAPI.getSessions(false, page, size, search);
         }
     }
 };

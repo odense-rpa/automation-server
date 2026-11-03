@@ -5,8 +5,9 @@
         </template>
 
 
+        <p v-if="error" class="text-error text-sm mb-2">{{ error }}</p>
         <div v-if="logs.length === 0" class="text-center mb-4">
-            <p class="text-base-content/60 font-semibold">No logs found matching search.</p>
+            <p class="text-base-content/60 font-semibold">{{ emptyText('No logs found matching search.') }}</p>
         </div>
         <div v-else>
             <table class="table w-full mb-3 rounded-b-lg">
@@ -35,7 +36,7 @@ import PageNavigation from "@/components/PageNavigation.vue";
 import SearchInput from "./SearchInput.vue";
 import LogMessage from "./LogMessage.vue";
 import { auditLogsAPI } from "@/services/automationserver";
-import { useTableStateStore } from "@/stores/tableStateStore";
+import pagedList from "@/mixins/pagedList";
 
 export default {
     name: "AuditLogList",
@@ -45,6 +46,7 @@ export default {
         SearchInput,
         LogMessage,
     },
+    mixins: [pagedList],
     props: {
         session_id: {
             type: Number,
@@ -55,67 +57,18 @@ export default {
             default: 50
         }
     },
-    data() {
-        return {
-            logs: [],
-            totalPages: 1,
-            searchTimeout: null,
-        };
-    },
-    setup() {
-        const tableStateStore = useTableStateStore();
-        return { tableStateStore };
-    },
     computed: {
-        searchTerm: {
-            get() {
-                return this.tableStateStore.getSearchTerm('auditlog-' + this.session_id);
-            },
-            set(value) {
-                this.tableStateStore.setSearchTerm('auditlog-' + this.session_id, value);
-            }
+        tableKey() {
+            return 'auditlog-' + this.session_id;
         },
-        page: {
-            get() {
-                return this.tableStateStore.getPage('auditlog-' + this.session_id);
-            },
-            set(value) {
-                this.tableStateStore.setPage('auditlog-' + this.session_id, value);
-            }
-        }
-    },
-    async created() {
-        await this.fetchLogs();
-    },
-    watch: {
-        searchTerm() {
-            clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout(async () => {
-                // The store already resets page to 1 when search term changes
-                await this.fetchLogs();
-            }, 300); // 300ms delay
+        logs() {
+            return this.items;
         }
     },
     methods: {
-        async fetchLogs() {
-            const response = await auditLogsAPI.getAuditLogs(
-                this.session_id,
-                this.page,
-                this.size,
-                this.searchTerm
-            );
-
-            this.logs = response.items || [];
-            this.totalPages = response.total_pages || 1;
-            if (this.page > this.totalPages && this.totalPages > 0) {
-                this.page = this.totalPages;
-                this.fetchLogs();
-            }
-        },
-        handlePageChange(newPage) {
-            this.page = newPage;
-            this.fetchLogs();
-        },
+        fetchPage({ page, size, search }) {
+            return auditLogsAPI.getAuditLogs(this.session_id, page, size, search);
+        }
     }
 };
 </script>
