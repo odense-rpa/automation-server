@@ -1,5 +1,6 @@
 <template>
     <div>
+        <item-load-error v-if="loadError" :message="loadError" @retry="loadSession" />
         <content-card title="Session" v-if="session" class="mb-3">
             <div class="flex flex-wrap m-1">
                 <!-- Left Column -->
@@ -37,15 +38,18 @@ import ContentCard from '@/components/ContentCard.vue'
 import { sessionsAPI } from "@/services/automationserver";
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import AuditLogList from '@/components/AuditLogList.vue';
-import { useAlertStore } from '@/stores/alertStore';
+import ItemLoadError from '@/components/ItemLoadError.vue';
+import itemPage from '@/mixins/itemPage';
 
 export default {
     name: "EditSessionView",
     components: {
         ContentCard,
         ProcessLabel,
-        AuditLogList
+        AuditLogList,
+        ItemLoadError
     },
+    mixins: [itemPage],
     mounted() {
         this.loadSession();
     },
@@ -55,15 +59,12 @@ export default {
         };
     },
     methods: {
-        loadSession() {
-            sessionsAPI
-                .getSession(this.$route.params.id)
-                .then((response) => {
-                    this.session = response;
-                })
-                .catch((error) => {
-                    useAlertStore().addAlert({ type: 'error', message: error.message });
-                });
+        async loadSession() {
+            const id = this.$route.params.id;
+            this.session = await this.loadItem(() => sessionsAPI.getSession(id), {
+                what: `Session ${id}`,
+                list: { name: 'sessions', label: 'Sessions' }
+            });
         }
     }
 

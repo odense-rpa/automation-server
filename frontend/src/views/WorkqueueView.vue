@@ -1,5 +1,6 @@
 <template>
   <div>
+    <item-load-error v-if="loadError" :message="loadError" @retry="fetchWorkqueue" />
     <content-card title="Workqueue" class="mb-3">
       <template v-slot:header-right>
         <button @click="$router.push({ name: 'workqueue.edit', params: { id: workqueue.id } })" class="btn btn-primary btn-sm" v-if="workqueue">
@@ -18,6 +19,8 @@ import { workqueuesAPI } from '@/services/automationserver.js'
 import ContentCard from '@/components/ContentCard.vue'
 import WorkitemsTable from '@/components/WorkitemsTable.vue'
 import WorkqueueInfo from '@/components/WorkqueueInfo.vue'
+import ItemLoadError from '@/components/ItemLoadError.vue'
+import itemPage from '@/mixins/itemPage'
 const alertStore = useAlertStore()
 
 export default {
@@ -30,16 +33,20 @@ export default {
     ContentCard,
     WorkqueueInfo,
     WorkitemsTable,
+    ItemLoadError,
   },
-  async created() {
-    try {
-      this.workqueue = await workqueuesAPI.getWorkqueue(this.$route.params.id)
-      await this.fetchInformation()
-    } catch (error) {
-      alertStore.addAlert({ type: 'error', message: error.message })
-    }
+  mixins: [itemPage],
+  created() {
+    this.fetchWorkqueue()
   },
   methods: {
+    async fetchWorkqueue() {
+      this.workqueue = await this.loadItem(() => workqueuesAPI.getWorkqueue(this.$route.params.id), {
+        what: `Workqueue ${this.$route.params.id}`,
+        list: { name: 'workqueues', label: 'Workqueues' }
+      })
+      if (this.workqueue) await this.fetchInformation()
+    },
     async clearQueue(workqueueid, workitem_status, days_older_than) {
       try {
         await workqueuesAPI.clearWorkqueue(workqueueid, workitem_status, days_older_than)

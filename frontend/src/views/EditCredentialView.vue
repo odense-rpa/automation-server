@@ -1,4 +1,5 @@
 <template>
+  <item-load-error v-if="loadError" :message="loadError" @retry="fetchCredential($route.params.id)" />
   <content-card title="Credential">
     <credential-form :credential="credential" @save="saveCredential" @delete="deleteCredential" v-if="credential" />
   </content-card>
@@ -11,6 +12,8 @@ import { useAlertStore } from '../stores/alertStore'
 
 import ContentCard from '@/components/ContentCard.vue'
 import CredentialForm from '@/components/CredentialForm.vue'
+import ItemLoadError from '@/components/ItemLoadError.vue'
+import itemPage from '@/mixins/itemPage'
 
 const alertStore = useAlertStore()
 
@@ -20,7 +23,8 @@ export default {
       credential: null
     }
   },
-  components: { ContentCard, CredentialForm },
+  components: { ContentCard, CredentialForm, ItemLoadError },
+  mixins: [itemPage],
   methods: {
     async saveCredential(credential) {
       try {
@@ -56,14 +60,15 @@ export default {
     },
 
     async fetchCredential(id) {
-      try {
-        // The edit form never shows the password, so don't keep it in the page either
-        // eslint-disable-next-line no-unused-vars
-        const { password, ...credential } = await credentialsAPI.readCredential(id)
-        this.credential = credential
-      } catch (error) {
-        alertStore.addAlert({ type: 'error', message: 'Error fetching credential: ' + error })
-      }
+      const loaded = await this.loadItem(() => credentialsAPI.readCredential(id), {
+        what: `Credential ${id}`,
+        list: { name: 'credentials', label: 'Credentials' }
+      })
+      if (!loaded) return
+      // The edit form never shows the password, so don't keep it in the page either
+      // eslint-disable-next-line no-unused-vars
+      const { password, ...credential } = loaded
+      this.credential = credential
     }
   },
   async mounted() {

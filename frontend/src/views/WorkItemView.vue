@@ -1,5 +1,7 @@
 <template>
-    <div v-if="workItem !== null"> 
+    <div>
+        <item-load-error v-if="loadError" :message="loadError" @retry="load" />
+        <div v-if="workItem !== null">
         <content-card title="WorkItem" class="mb-3">
             <div class="Card-content">
                 <workitem-info :workitem="workItem"  />
@@ -34,8 +36,7 @@
                 </table>
             </div>
         </ContentCard>
-
-
+        </div>
     </div>
 </template>
 <script>
@@ -43,6 +44,9 @@ import ContentCard from '@/components/ContentCard.vue';
 import WorkitemInfo from '@/components/WorkitemInfo.vue';
 import JsonTree from '@/components/JsonTree.vue';
 import LogMessage from '@/components/LogMessage.vue';
+import ItemLoadError from '@/components/ItemLoadError.vue';
+import itemPage from '@/mixins/itemPage';
+import { useAlertStore } from '@/stores/alertStore';
 
 import { auditLogsAPI, sessionsAPI, workitemsApi } from '@/services/automationserver.js';
 
@@ -52,8 +56,10 @@ export default {
         ContentCard,
         WorkitemInfo,
         JsonTree,
-        LogMessage
+        LogMessage,
+        ItemLoadError
     },
+    mixins: [itemPage],
     data() {
         return {
             workItem: null,
@@ -61,31 +67,32 @@ export default {
             logs: []
         };
     },
+    mounted() {
+        this.load();
+    },
     methods: {
-        // your methods here
+        async load() {
+            const { id, itemId } = this.$route.params;
+            this.workItem = await this.loadItem(() => workitemsApi.getWorkItem(itemId), {
+                what: `Work item ${itemId}`,
+                list: { name: 'workqueue.detail', params: { id }, label: 'the workqueue' }
+            });
+            if (this.workItem) await this.loadLogs(itemId);
+        },
+        // The item is shown even if its logs can't be loaded
+        async loadLogs(itemId) {
+            try {
+                this.logs = await auditLogsAPI.getByWorkItemId(itemId);
+                // Log entries written outside a session have no session_id
+                const sessionIds = [...new Set(this.logs.map(log => log.session_id).filter(Boolean))];
+                this.sessions = await Promise.all(sessionIds.map(id => sessionsAPI.getSession(id)));
+            } catch (error) {
+                useAlertStore().addAlert({ type: 'error', message: error.message });
+            }
+        },
         logsBySessionId(id) {
             return this.logs.filter(log => log.session_id === id);
         }
-    },
-    async mounted() {
-        // lifecycle hook
-        this.workItem = await workitemsApi.getWorkItem(this.$route.params.itemId);
-
-        this.logs = await auditLogsAPI.getByWorkItemId(this.$route.params.itemId);
-
-        // Map sessionIds and make them distinct
-
-        const sessions = [...new Set(this.logs.map(log => log.session_id))];
-
-        for (const id of sessions)
-            this.sessions.push(await sessionsAPI.getSession(id));
-
-        //this.sessions = sessions.map(id =>await auditLogsAPI.getBySessionId(session_id));
-        //this.sessions = [...new Set(sessions)];
-    }
-    , computed: {
-        // your computed properties here
     }
 };
-
 </script>
