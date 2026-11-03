@@ -31,4 +31,8 @@ def cors_origins() -> list[str]:
     the shipped compose topology where the frontend and API share an nginx
     proxy and never make a cross-origin request in the first place.
     """
-    return [origin.strip() for origin in settings.cors_allow_origins.split(",") if origin.strip()]
+    return [
+        origin.strip()
+        for origin in settings.cors_allow_origins.split(",")
+        if origin.strip()
+    ]

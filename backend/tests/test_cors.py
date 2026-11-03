@@ -48,9 +48,7 @@ async def test_default_sends_no_cross_origin_header():
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        response = await client.get(
-            "/ping", headers={"Origin": "http://evil.example"}
-        )
+        response = await client.get("/ping", headers={"Origin": "http://evil.example"})
 
     assert response.status_code == 200
     assert "access-control-allow-origin" not in response.headers
@@ -75,8 +73,6 @@ async def test_configured_origin_rejects_other_origins():
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
-        response = await client.get(
-            "/ping", headers={"Origin": "http://other.example"}
-        )
+        response = await client.get("/ping", headers={"Origin": "http://other.example"})
 
     assert "access-control-allow-origin" not in response.headers

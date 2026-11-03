@@ -28,7 +28,9 @@ class Credential(Base, table=True):
 
 
 class WorkItem(Base, table=True):
-    __table_args__ = (Index("ix_workitem_workqueue_id_status", "workqueue_id", "status"),)
+    __table_args__ = (
+        Index("ix_workitem_workqueue_id_status", "workqueue_id", "status"),
+    )
 
     id: int | None = Field(default=None, primary_key=True)
     data: typing.Dict = Field(default={}, sa_type=JSONB)

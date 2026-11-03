@@ -23,7 +23,9 @@ class AbstractSessionRepository(AbstractRepository[Session]):
     async def get_active_sessions(self) -> list[Session]:
         raise NotImplementedError
 
-    async def get_failed_without_incident(self, max_age_days: int = 14) -> list[Session]:
+    async def get_failed_without_incident(
+        self, max_age_days: int = 14
+    ) -> list[Session]:
         raise NotImplementedError
 
     async def create_log(self, log_entry: dict) -> AuditLog:
@@ -114,7 +116,9 @@ class SessionRepository(AbstractSessionRepository, DatabaseRepository[Session]):
             ).all()
         )
 
-    async def get_failed_without_incident(self, max_age_days: int = 14) -> list[Session]:
+    async def get_failed_without_incident(
+        self, max_age_days: int = 14
+    ) -> list[Session]:
         """Return failed, non-deleted sessions without an incident, created within the last max_age_days days."""
         cutoff = datetime.now() - timedelta(days=max_age_days)
         return list(

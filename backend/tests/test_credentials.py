@@ -341,9 +341,7 @@ async def test_reencrypt_without_key_is_refused(
 
     # Nothing was written
     row = (
-        await session.execute(
-            text("SELECT username FROM credential WHERE id = 1")
-        )
+        await session.execute(text("SELECT username FROM credential WHERE id = 1"))
     ).one()
     assert row[0] == "Secret username"
 

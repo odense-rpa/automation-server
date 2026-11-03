@@ -90,7 +90,7 @@ before pushing:
 
 ```bash
 # backend job
-cd backend && uv run ruff check . && uv run pytest
+cd backend && uv run ruff check . && uv run ruff format --check . && uv run pytest
 
 # frontend job — use raw eslint, NOT `npm run lint` (that script passes
 # --fix and mutates files instead of failing)
