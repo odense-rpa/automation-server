@@ -44,39 +44,26 @@
           </tr>
         </thead>
         <tbody>
-          <tr
+          <link-row
             v-for="execution in filteredExecutions"
             :key="`${execution.trigger_id}-${execution.next_execution}`"
-            class="hover:bg-base-300"
+            :to="{ name: 'process.edit', params: { id: execution.process_id } }"
           >
-            <td class="text-left p-0">
-              <router-link :to="{ name: 'process.edit', params: { id: execution.process_id } }"
-                class="block px-4 py-3 no-underline text-inherit">{{ execution.process_name }}</router-link>
+            <td class="text-left">
+              <router-link :to="{ name: 'process.edit', params: { id: execution.process_id } }" class="link link-hover">{{ execution.process_name }}</router-link>
             </td>
-            <td class="text-center p-0">
-              <router-link :to="{ name: 'process.edit', params: { id: execution.process_id } }"
-                class="block px-4 py-3 no-underline text-inherit">
-                <span class="badge badge-sm badge-ghost">
-                  {{ execution.trigger_type }}
-                </span>
-              </router-link>
+            <td class="text-center">
+              <span class="badge badge-sm badge-ghost">
+                {{ execution.trigger_type }}
+              </span>
             </td>
-            <td class="text-center p-0">
-              <router-link :to="{ name: 'process.edit', params: { id: execution.process_id } }"
-                class="block px-4 py-3 no-underline text-inherit">{{ formatExecutionTime(execution.next_execution) }}</router-link>
+            <td class="text-center">{{ formatExecutionTime(execution.next_execution) }}</td>
+            <td class="text-center">{{ formatRelativeTime(execution.next_execution) }}</td>
+            <td class="text-left">
+              <span v-if="execution.parameters" class="text-xs">{{ execution.parameters }}</span>
+              <span v-else class="text-base-content/50">-</span>
             </td>
-            <td class="text-center p-0">
-              <router-link :to="{ name: 'process.edit', params: { id: execution.process_id } }"
-                class="block px-4 py-3 no-underline text-inherit">{{ formatRelativeTime(execution.next_execution) }}</router-link>
-            </td>
-            <td class="text-left p-0">
-              <router-link :to="{ name: 'process.edit', params: { id: execution.process_id } }"
-                class="block px-4 py-3 no-underline text-inherit">
-                <span v-if="execution.parameters" class="text-xs">{{ execution.parameters }}</span>
-                <span v-else class="text-base-content/50">-</span>
-              </router-link>
-            </td>
-          </tr>
+          </link-row>
         </tbody>
       </table>
     </div>
@@ -89,12 +76,13 @@ import { triggersAPI } from '@/services/automationserver'
 import { useTableStateStore } from '@/stores/tableStateStore'
 import ContentCard from './ContentCard.vue'
 import SearchInput from './SearchInput.vue'
+import LinkRow from '@/components/LinkRow.vue'
 
 export default {
   name: 'UpNextDisplay',
   components: {
     ContentCard,
-    SearchInput
+    SearchInput, LinkRow
   },
   mixins: [polling],
   setup() {

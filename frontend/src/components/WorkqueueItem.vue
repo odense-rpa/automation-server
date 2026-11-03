@@ -1,45 +1,23 @@
 <template>
-  <tr class="hover:bg-base-300">
-    <td class="p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workqueue.name }}</router-link>
+  <link-row :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }">
+    <td>
+      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }" class="link link-hover">{{ workqueue.name }}</router-link>
     </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">
-        <font-awesome-icon :icon="['fas', 'circle-check']" v-if="workqueue.enabled" class="text-success" title="Enabled" />
-        <font-awesome-icon :icon="['fas', 'xmark-circle']" v-else class="text-base-content/40" title="Disabled" />
-      </router-link>
+    <td class="text-center">
+      <font-awesome-icon :icon="['fas', 'circle-check']" v-if="workqueue.enabled" class="text-success" title="Enabled" />
+      <font-awesome-icon :icon="['fas', 'xmark-circle']" v-else class="text-base-content/40" title="Disabled" />
     </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">
-        <span v-if="workqueue.auto_clean_max_age_days != null" :title="`Completed and failed items older than ${workqueue.auto_clean_max_age_days} days are deleted automatically`">
-          {{ workqueue.auto_clean_max_age_days }} days
-        </span>
-        <span v-else class="text-base-content/40" title="Auto-clean disabled">—</span>
-      </router-link>
+    <td class="text-center">
+      <span v-if="workqueue.auto_clean_max_age_days != null" :title="`Completed and failed items older than ${workqueue.auto_clean_max_age_days} days are deleted automatically`">
+        {{ workqueue.auto_clean_max_age_days }} days
+      </span>
+      <span v-else class="text-base-content/40" title="Auto-clean disabled">—</span>
     </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workqueue.in_progress }}</router-link>
-    </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workqueue.new }}</router-link>
-    </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workqueue.pending_user_action }}</router-link>
-    </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workqueue.completed }}</router-link>
-    </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.detail', params: { id: workqueue.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workqueue.failed }}</router-link>
-    </td>
+    <td class="text-center">{{ workqueue.in_progress }}</td>
+    <td class="text-center">{{ workqueue.new }}</td>
+    <td class="text-center">{{ workqueue.pending_user_action }}</td>
+    <td class="text-center">{{ workqueue.completed }}</td>
+    <td class="text-center">{{ workqueue.failed }}</td>
     <td class="text-center">
       <dropdown-button
         :items="[
@@ -52,16 +30,17 @@
         @item-clicked="handleItemClick"
       />
     </td>
-  </tr>
+  </link-row>
 </template>
 
 <script>
  import DropdownButton from "./DropdownButton.vue";
+ import LinkRow from '@/components/LinkRow.vue'
 
 export default {
   name: 'WorkqueueItem',
   components: {
-    DropdownButton
+    DropdownButton, LinkRow
   },
   props: {
     workqueue: {
