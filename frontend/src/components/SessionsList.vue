@@ -21,40 +21,18 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="session in sessions" :key="session.id"
-                        :class="['hover:bg-base-300', { 'bg-error/30': session.status === 'failed' }]">
-                        <td class="text-center p-0">
-                            <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
-                                class="block px-4 py-3 no-underline text-inherit">{{ session.id }}</router-link>
+                    <link-row v-for="session in sessions" :key="session.id"
+                        :to="{ name: 'session.edit', params: { id: session.id } }"
+                        :class="{ 'bg-error/30': session.status === 'failed' }">
+                        <td class="text-center">
+                          <router-link :to="{ name: 'session.edit', params: { id: session.id } }" class="link link-hover">{{ session.id }}</router-link>
                         </td>
-                        <td class="p-0">
-                            <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
-                                class="block px-4 py-3 no-underline text-inherit">
-                                <process-label :process-id="session.process_id" />
-                            </router-link>
-                        </td>
-                        <td class="text-center p-0">
-                            <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
-                                class="block px-4 py-3 no-underline text-inherit">
-                                <font-awesome-icon v-if="session.status === 'new'" :icon="['fas', 'circle']" class="text-info" :title="session.status" />
-                                <font-awesome-icon v-else-if="session.status === 'in progress'" :icon="['fas', 'spinner']" spin class="text-warning" :title="session.status" />
-                                <font-awesome-icon v-else-if="session.status === 'completed'" :icon="['fas', 'circle-check']" class="text-success" :title="session.status" />
-                                <font-awesome-icon v-else-if="session.status === 'failed'" :icon="['fas', 'triangle-exclamation']" class="text-error" :title="session.status" />
-                            </router-link>
-                        </td>
-                        <td class="text-center p-0">
-                            <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
-                                class="block px-4 py-3 no-underline text-inherit">{{ $formatDateTime(session.created_at) }}</router-link>
-                        </td>
-                        <td class="text-center p-0">
-                            <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
-                                class="block px-4 py-3 no-underline text-inherit">{{ $formatDateTime(session.dispatched_at) }}</router-link>
-                        </td>
-                        <td class="text-center p-0">
-                            <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
-                                class="block px-4 py-3 no-underline text-inherit">{{ $formatDateTime(session.updated_at) }}</router-link>
-                        </td>
-                    </tr>
+                        <td><process-label :process-id="session.process_id" /></td>
+                        <td class="text-center"><status-badge kind="session" :status="session.status" compact /></td>
+                        <td class="text-center">{{ $formatDateTime(session.created_at) }}</td>
+                        <td class="text-center">{{ $formatDateTime(session.dispatched_at) }}</td>
+                        <td class="text-center">{{ $formatDateTime(session.updated_at) }}</td>
+                    </link-row>
                 </tbody>
             </table>
 
@@ -74,6 +52,8 @@ import { sessionsAPI } from "@/services/automationserver";
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import pagedList from '@/mixins/pagedList'
+import StatusBadge from '@/components/StatusBadge.vue'
+import LinkRow from '@/components/LinkRow.vue'
 
 export default {
     name: "SessionsList",
@@ -81,7 +61,7 @@ export default {
         PageNavigation,
         ContentCard,
         ProcessLabel,
-        SearchInput
+        SearchInput, StatusBadge, LinkRow
     },
     mixins: [pagedList],
     props: {

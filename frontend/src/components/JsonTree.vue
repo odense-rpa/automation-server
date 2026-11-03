@@ -6,9 +6,7 @@
         <button type="button" class="btn btn-ghost btn-xs" @click="setDepth(0)">Collapse all</button>
       </template>
       <button type="button" class="btn btn-ghost btn-xs" @click="raw = !raw">{{ raw ? 'Tree' : 'Raw' }}</button>
-      <button type="button" class="btn btn-ghost btn-xs ml-auto" :title="copied ? 'Copied!' : 'Copy'" @click="copy">
-        <font-awesome-icon :icon="['fas', copied ? 'check' : 'copy']" />
-      </button>
+      <copy-button :text="pretty" class="ml-auto" />
     </div>
 
     <pre v-if="raw" class="bg-base-200 rounded p-2 overflow-x-auto">{{ pretty }}</pre>
@@ -30,11 +28,12 @@
 
 <script>
 import JsonNode from './JsonNode.vue'
+import CopyButton from './CopyButton.vue'
 import { isContainer, childCount } from '@/utils/json.js'
 
 export default {
   name: 'JsonTree',
-  components: { JsonNode },
+  components: { JsonNode, CopyButton },
   props: {
     data: { default: null },
     // Levels open by default; deeper nodes start collapsed
@@ -44,8 +43,7 @@ export default {
     return {
       depth: this.openDepth,
       renderKey: 0,
-      raw: false,
-      copied: false
+      raw: false
     }
   },
   computed: {
@@ -67,11 +65,6 @@ export default {
     setDepth(depth) {
       this.depth = depth
       this.renderKey++ // re-create nodes so manual toggles reset
-    },
-    async copy() {
-      await navigator.clipboard.writeText(this.pretty)
-      this.copied = true
-      setTimeout(() => { this.copied = false }, 1500)
     }
   }
 }

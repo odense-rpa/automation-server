@@ -1,30 +1,39 @@
 <template>
-    <span v-if="process">{{ process.name }}</span>
+  <span v-if="entry">
+    {{ entry.name }}<span v-if="entry.deleted" class="text-base-content/60"> (deleted)</span>
+  </span>
+  <span v-else-if="loaded" class="text-base-content/60">Unknown process #{{ processId }}</span>
 </template>
 
 <script>
-import { processesAPI } from '@/services/automationserver.js'
+import { useNameStore } from '@/stores/nameStore'
 
 export default {
-    name: 'ProcessLabel',
-    props: {
-        processId: {
-            type: Number,
-            required: true
-        }
-    },
-    data() {
-        return {
-            process: {}
-        }
-    },
-    async mounted() {
-        try {
-            this.process = await processesAPI.getProcess(this.processId);
-        } catch (error) {
-            this.process = { name: '-- Deleted --' }; 
-        }
+  name: 'ProcessLabel',
+  props: {
+    processId: {
+      type: Number,
+      required: true
     }
-
+  },
+  computed: {
+    names() {
+      return useNameStore()
+    },
+    entry() {
+      return this.names.processes[this.processId]
+    },
+    loaded() {
+      return this.names.loadedAt.processes > 0
+    }
+  },
+  watch: {
+    processId: {
+      handler(id) {
+        this.names.ensure('processes', id)
+      },
+      immediate: true
+    }
+  }
 }
 </script>

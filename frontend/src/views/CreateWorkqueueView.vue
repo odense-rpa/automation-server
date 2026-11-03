@@ -9,6 +9,7 @@ import { useAlertStore } from '../stores/alertStore'
 import { workqueuesAPI } from '@/services/automationserver.js'
 import ContentCard from '@/components/ContentCard.vue'
 import WorkqueueForm from '@/components/WorkqueueForm.vue'
+import { useNameStore } from '@/stores/nameStore'
 
 const alertStore = useAlertStore()
 
@@ -33,6 +34,7 @@ export default {
     async saveWorkqueue(workqueue) {
       try {
         await workqueuesAPI.createWorkqueue(workqueue)
+        useNameStore().invalidate('workqueues')
         alertStore.addAlert({
           type: 'success',
           message: "'" + workqueue.name + "' was created"

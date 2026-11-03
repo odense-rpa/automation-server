@@ -63,9 +63,7 @@
                                 <process-label :process-id="incident.process_id" />
                             </td>
                             <td class="text-center">
-                                <font-awesome-icon v-if="incident.status === 'new'" :icon="['fas', 'triangle-exclamation']" class="text-error" :title="incident.status" />
-                                <font-awesome-icon v-else-if="incident.status === 'dismissed'" :icon="['fas', 'check']" class="text-warning" :title="incident.status" />
-                                <font-awesome-icon v-else-if="incident.status === 'rescheduled'" :icon="['fas', 'redo']" class="text-success" :title="incident.status" />
+                                <status-badge kind="incident" :status="incident.status" compact />
                             </td>
                             <td class="text-center">{{ $formatDateTime(incident.created_at) }}</td>
                         </tr>
@@ -86,7 +84,7 @@
                                                 </router-link>
                                             </dd>
                                             <dt class="font-semibold text-right">Status</dt>
-                                            <dd class="capitalize">{{ incident.status }}</dd>
+                                            <dd><status-badge kind="incident" :status="incident.status" /></dd>
                                             <template v-if="incident.resolution_note">
                                                 <dt class="font-semibold text-right">Resolution note</dt>
                                                 <dd>{{ incident.resolution_note }}</dd>
@@ -157,6 +155,7 @@ import SearchInput from '@/components/SearchInput.vue'
 import { incidentsAPI } from '@/services/automationserver'
 import { useAlertStore } from '@/stores/alertStore'
 import pagedList from '@/mixins/pagedList'
+import StatusBadge from '@/components/StatusBadge.vue'
 
 export default {
     name: 'IncidentsList',
@@ -165,7 +164,7 @@ export default {
         DropdownButton,
         PageNavigation,
         ProcessLabel,
-        SearchInput
+        SearchInput, StatusBadge
     },
     mixins: [pagedList],
     setup() {

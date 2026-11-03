@@ -28,70 +28,40 @@
                 </tr>
             </thead>
             <tbody>
-                <tr
+                <link-row
                     v-for="item in items"
                     :key="item.process_id"
-                    class="hover:bg-base-300"
+                    :to="{ name: 'sessions', query: { search: item.process_name } }"
                 >
-                    <td class="p-0">
-                        <router-link
-                            :to="{ name: 'process.edit', params: { id: item.process_id } }"
-                            class="block px-4 py-3 no-underline text-inherit"
-                        >
-                            {{ item.process_name }}
-                        </router-link>
+                    <td>
+                      <router-link :to="{ name: 'process.edit', params: { id: item.process_id } }" class="link link-hover">{{ item.process_name }}</router-link>
                     </td>
-                    <td class="text-center p-0">
-                        <router-link
-                            :to="{ name: 'sessions', query: { search: item.process_name } }"
-                            class="block px-4 py-3 no-underline text-inherit"
-                        >
-                            <span :class="item.completed > 0 ? 'text-success font-semibold' : 'opacity-40'">
-                                {{ item.completed }}
-                            </span>
-                        </router-link>
+                    <td class="text-center">
+                      <span :class="item.completed > 0 ? 'text-success font-semibold' : 'opacity-40'">
+                          {{ item.completed }}
+                      </span>
                     </td>
-                    <td class="text-center p-0">
-                        <router-link
-                            :to="{ name: 'sessions', query: { search: item.process_name } }"
-                            class="block px-4 py-3 no-underline text-inherit"
-                        >
-                            <span :class="item.failed > 0 ? 'text-error font-semibold' : 'opacity-40'">
-                                {{ item.failed }}
-                            </span>
-                        </router-link>
+                    <td class="text-center">
+                      <span :class="item.failed > 0 ? 'text-error font-semibold' : 'opacity-40'">
+                          {{ item.failed }}
+                      </span>
                     </td>
-                    <td class="text-center p-0">
-                        <router-link
-                            :to="{ name: 'sessions', query: { search: item.process_name } }"
-                            class="block px-4 py-3 no-underline text-inherit"
-                        >
-                            <span v-if="item.in_progress > 0" class="text-warning font-semibold">
-                                <font-awesome-icon :icon="['fas', 'spinner']" spin />
-                                {{ item.in_progress }}
-                            </span>
-                            <span v-else class="opacity-40">0</span>
-                        </router-link>
+                    <td class="text-center">
+                      <span v-if="item.in_progress > 0" class="text-warning font-semibold">
+                          <font-awesome-icon :icon="['fas', 'spinner']" spin />
+                          {{ item.in_progress }}
+                      </span>
+                      <span v-else class="opacity-40">0</span>
                     </td>
-                    <td class="text-center p-0">
-                        <router-link
-                            :to="{ name: 'sessions', query: { search: item.process_name } }"
-                            class="block px-4 py-3 no-underline text-inherit"
-                        >
-                            <span :class="item.new > 0 ? 'text-info font-semibold' : 'opacity-40'">
-                                {{ item.new }}
-                            </span>
-                        </router-link>
+                    <td class="text-center">
+                      <span :class="item.new > 0 ? 'text-info font-semibold' : 'opacity-40'">
+                          {{ item.new }}
+                      </span>
                     </td>
-                    <td class="text-center p-0">
-                        <router-link
-                            :to="{ name: 'sessions', query: { search: item.process_name } }"
-                            class="block px-4 py-3 no-underline text-inherit"
-                        >
-                            {{ $formatDateTime(item.last_activity) }}
-                        </router-link>
+                    <td class="text-center">
+                      <router-link :to="{ name: 'sessions', query: { search: item.process_name } }" class="link link-hover">{{ $formatDateTime(item.last_activity) }}</router-link>
                     </td>
-                </tr>
+                </link-row>
             </tbody>
         </table>
     </content-card>
@@ -102,11 +72,12 @@ import ContentCard from './ContentCard.vue'
 import { sessionsAPI } from '@/services/automationserver'
 import { useTableStateStore } from '@/stores/tableStateStore'
 import polling from '@/mixins/polling'
+import LinkRow from '@/components/LinkRow.vue'
 
 export default {
     name: 'ProcessActivitySummary',
     components: {
-        ContentCard
+        ContentCard, LinkRow
     },
     mixins: [polling],
     setup() {

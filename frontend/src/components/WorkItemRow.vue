@@ -1,46 +1,25 @@
 <template>
-  <tr :class="{
-    'hover:bg-base-200': true,
+  <link-row :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }" :class="{
     'bg-error/30': workitem.status === 'failed',
     'bg-warning/30': workitem.status === 'pending user action'
   }">
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ workitem.id }}</router-link>
+    <td class="text-center">
+      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }" class="link link-hover">{{ workitem.id }}</router-link>
     </td>
-    <td class="p-0 max-w-xs group/ref relative">
-      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 pr-8 no-underline text-inherit truncate" :title="workitem.reference">{{ workitem.reference }}</router-link>
-      <button class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs opacity-0 group-hover/ref:opacity-100 transition-opacity"
-        @click.stop="copyReference" :title="copiedReference ? 'Copied!' : 'Copy reference'">
-        <font-awesome-icon :icon="['fas', copiedReference ? 'check' : 'copy']" />
-      </button>
+    <td class="max-w-xs group/ref relative">
+      <div class="truncate pr-6" :title="workitem.reference">{{ workitem.reference }}</div>
+      <copy-button :text="workitem.reference || ''" label="Copy reference"
+        class="absolute right-2 inset-y-0 my-auto opacity-0 group-hover/ref:opacity-100 focus:opacity-100 transition-opacity" />
     </td>
     <!-- max-w-0 lets the cell take the remaining width (w-full on its header) and still truncate -->
-    <td class="p-0 max-w-0">
-      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit truncate" :title="workitem.message">{{ workitem.message }}</router-link>
-    </td>
+    <td class="max-w-0"><div class="truncate" :title="workitem.message">{{ workitem.message }}</div></td>
     <td class="whitespace-nowrap"><json-preview :data="workitem.data" :title="`Work item ${workitem.id}: ${workitem.reference}`" /></td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit">
-        <font-awesome-icon v-if="workitem.status === 'new'" :icon="['fas', 'circle']" class="text-info" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'in progress'" :icon="['fas', 'spinner']" spin class="text-warning" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'completed'" :icon="['fas', 'circle-check']" class="text-success" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'failed'" :icon="['fas', 'triangle-exclamation']" class="text-error" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'pending user action'" :icon="['fas', 'lock']" class="text-warning" :title="workitem.status" />
-        <font-awesome-icon v-if="workitem.locked" :icon="['fas', 'lock']" class="text-base-content/40 ml-1" title="Locked" />
-      </router-link>
+    <td class="text-center">
+      <status-badge kind="workitem" :status="workitem.status" compact />
+      <font-awesome-icon v-if="workitem.locked" :icon="['fas', 'lock']" class="text-base-content/40 ml-1" title="Locked" />
     </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit xl:whitespace-nowrap">{{ $formatDateTime(workitem.created_at) }}</router-link>
-    </td>
-    <td class="text-center p-0">
-      <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit xl:whitespace-nowrap">{{ $formatDateTime(workitem.updated_at) }}</router-link>
-    </td>
+    <td class="text-center"><div class="xl:whitespace-nowrap">{{ $formatDateTime(workitem.created_at) }}</div></td>
+    <td class="text-center"><div class="xl:whitespace-nowrap">{{ $formatDateTime(workitem.updated_at) }}</div></td>
     <td class="text-center">
       <dropdown-button :label="'Actions'" :items="[
         { text: 'Retry', icon: ['fas', 'redo'], action: 'retry' },
@@ -49,7 +28,7 @@
         { text: 'Details', icon: ['fas', 'info'], action: 'details' }
       ]" @item-clicked="triggerAction" />
     </td>
-  </tr>
+  </link-row>
 </template>
 
 <script>
@@ -57,6 +36,9 @@ import JsonPreview from "./JsonPreview.vue";
 import DropdownButton from "./DropdownButton.vue";
 import { workitemsApi } from "@/services/automationserver";
 import { useAlertStore } from "@/stores/alertStore";
+import StatusBadge from '@/components/StatusBadge.vue'
+import CopyButton from '@/components/CopyButton.vue'
+import LinkRow from '@/components/LinkRow.vue'
 
 const alertStore = useAlertStore();
 
@@ -64,7 +46,7 @@ export default {
   name: "WorkItemRow",
   components: {
     JsonPreview,
-    DropdownButton
+    DropdownButton, StatusBadge, CopyButton, LinkRow
   },
   props: {
     workitem: {
@@ -74,15 +56,9 @@ export default {
   },
   data() {
     return {
-      copiedReference: false
     };
   },
   methods: {
-    copyReference() {
-      navigator.clipboard.writeText(this.workitem.reference);
-      this.copiedReference = true;
-      setTimeout(() => { this.copiedReference = false; }, 1500);
-    },
     async triggerAction(action) {
       let status = '';
       if (action === 'retry') status = 'new';
