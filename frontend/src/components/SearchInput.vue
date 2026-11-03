@@ -14,7 +14,10 @@
       />
       <button
         v-if="modelValue"
-        class="absolute right-1 top-1/2 -translate-y-1/2 btn btn-ghost btn-circle btn-xs no-animation !transition-none"
+        type="button"
+        aria-label="Clear search"
+        class="absolute right-1 inset-y-0 my-auto btn btn-ghost btn-circle btn-xs"
+        @mousedown.prevent
         @click="$emit('update:modelValue', '')"
       >
         <font-awesome-icon :icon="['fas', 'times']" class="text-xs" />
