@@ -43,7 +43,9 @@
           class="input input-bordered w-full"
           v-model="editedCredential.password"
           id="password"
-          required
+          autocomplete="new-password"
+          :required="!isEdit"
+          :placeholder="isEdit ? 'Leave empty to keep the current password' : ''"
         />
       </div>
     </div>
@@ -57,7 +59,8 @@
           class="input input-bordered w-full"
           v-model="repeatPassword"
           id="repeatPassword"
-          required
+          autocomplete="new-password"
+          :required="!isEdit"
         />
         <div v-if="passwordMismatch" class="text-error mt-2">Passwords do not match</div>
       </div>
@@ -100,12 +103,16 @@ export default {
   },
   data() {
     return {
-      editedCredential: { ...this.credential },
-      repeatPassword: this.credential.password || '',
+      // The password is never prefilled: when editing, an empty field keeps it
+      editedCredential: { ...this.credential, password: '' },
+      repeatPassword: '',
       jsonAsString: ''
     }
   },
   computed: {
+    isEdit() {
+      return Boolean(this.credential.id)
+    },
     passwordMismatch() {
       return this.editedCredential.password !== this.repeatPassword
     }
@@ -113,8 +120,8 @@ export default {
   watch: {
     credential: {
       handler(newVal) {
-        this.editedCredential = { ...newVal }
-        this.repeatPassword = newVal.password || ''
+        this.editedCredential = { ...newVal, password: '' }
+        this.repeatPassword = ''
         this.jsonAsString = newVal.data
           ? typeof newVal.data === 'string'
             ? newVal.data
@@ -135,8 +142,12 @@ export default {
           alertStore.addAlert({ message: 'Invalid JSON format in data field', type: 'error' })
           return
         }
-        this.editedCredential.data = data
-        this.$emit('save', this.editedCredential)
+        const payload = { ...this.editedCredential, data }
+        // Leaving the password out tells the API to keep the current one
+        if (this.isEdit && !payload.password) {
+          delete payload.password
+        }
+        this.$emit('save', payload)
       } catch (error) {
         alertStore.addAlert({ message: 'Invalid JSON format in data field', type: 'error' })
       }

@@ -12,6 +12,7 @@ from .schemas import (
     CredentialEncryptionStatus,
     CredentialRead,
     CredentialReencryptResult,
+    CredentialSummary,
     CredentialUpdate,
 )
 
@@ -21,6 +22,15 @@ def to_credential_read(
 ) -> CredentialRead:
     return CredentialRead(
         **credential.model_dump(), encrypted=credential.id not in unencrypted_ids
+    )
+
+
+def to_credential_summary(
+    credential: Credential, unencrypted_ids: set[int]
+) -> CredentialSummary:
+    return CredentialSummary(
+        **credential.model_dump(exclude={"password"}),
+        encrypted=credential.id not in unencrypted_ids,
     )
 
 
@@ -56,13 +66,14 @@ async def get_credentials(
     include_deleted: bool = False,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
-) -> list[CredentialRead]:
+) -> list[CredentialSummary]:
+    # No passwords in the listing: only the UI uses it, and it doesn't need them
     async with uow:
         result = await uow.credentials.get_all(include_deleted)
         unencrypted_ids = await uow.credentials.get_unencrypted_ids()
 
         result.sort(key=lambda x: x.name)
-        return [to_credential_read(c, unencrypted_ids) for c in result]
+        return [to_credential_summary(c, unencrypted_ids) for c in result]
 
 
 # Declared before /{credential_id}: that route parses the path segment as an
@@ -162,8 +173,13 @@ async def update_credential(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> CredentialRead:
+    data = update.model_dump()
+    # An omitted password keeps the current one, so the UI never has to send it
+    # back (or hold it) just to save other fields
+    if "password" not in update.model_fields_set:
+        data.pop("password")
     async with uow:
-        updated = await uow.credentials.update(credential, update.model_dump())
+        updated = await uow.credentials.update(credential, data)
         unencrypted_ids = await uow.credentials.get_unencrypted_ids()
         return to_credential_read(updated, unencrypted_ids)
 

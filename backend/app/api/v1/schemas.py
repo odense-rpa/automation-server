@@ -157,17 +157,24 @@ class CredentialUpdate(CredentialCreate):
     pass
 
 
-class CredentialRead(BaseModel):
+class CredentialSummary(BaseModel):
+    """A credential without its password, for listings."""
+
     id: int
     name: str
     data: Optional[Dict] = None
     username: Optional[str] = None
-    password: Optional[str] = None
     deleted: bool
     created_at: datetime
     updated_at: datetime
     # True when username and password are stored encrypted at rest
     encrypted: bool
+
+
+class CredentialRead(CredentialSummary):
+    # Only returned for a single credential: the worker (git credentials) and
+    # automations (via /by_name) read passwords from these endpoints
+    password: Optional[str] = None
 
 
 class CredentialEncryptionStatus(BaseModel):
