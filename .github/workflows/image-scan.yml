@@ -1,0 +1,69 @@
+# .github/workflows/image-scan.yml
+#
+# Daily vulnerability scan of the images for the latest release. Published
+# images freeze their OS and Python packages at build time, so new CVEs
+# show up after release. Results go to the repository's Security tab
+# (code scanning), and the run fails if a fixable HIGH/CRITICAL finding
+# exists, so it needs a patch release.
+name: Image Scan
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  latest-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Resolve latest release version
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          echo "Latest release: $TAG"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+  scan:
+    needs: latest-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend, worker]
+    env:
+      IMAGE: ghcr.io/${{ github.repository_owner }}/ats-${{ matrix.component }}:${{ needs.latest-release.outputs.version }}
+    steps:
+      - name: Scan image (SARIF)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.70.0
+          image-ref: ${{ env.IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-${{ matrix.component }}.sarif
+
+      - name: Upload results to code scanning
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: trivy-${{ matrix.component }}.sarif
+          category: image-${{ matrix.component }}
+
+      - name: Fail on fixable HIGH/CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.70.0
+          image-ref: ${{ env.IMAGE }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true

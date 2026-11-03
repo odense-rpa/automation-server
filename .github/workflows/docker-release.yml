@@ -48,6 +48,27 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
 
+      - name: Build image for scanning
+        uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.component }}
+          target: ${{ matrix.target }}
+          load: true
+          platforms: linux/amd64
+          tags: ats-${{ matrix.component }}:scan
+
+      # Block the release on fixable HIGH/CRITICAL vulnerabilities. The
+      # multi-platform build below reuses the scanned amd64 layers from the
+      # builder cache, so what gets pushed matches what was scanned.
+      - name: Scan image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.70.0
+          image-ref: ats-${{ matrix.component }}:scan
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
