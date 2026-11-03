@@ -29,7 +29,33 @@ Editing is safe against automations writing at the same time: if a datastore cha
 
 ## From an automation
 
-The API uses the same `ATS_URL` and `ATS_TOKEN` as the rest of the framework.
+With [automation-server-client](https://github.com/odense-rpa/automation-server-client) 0.5.0 or later:
+
+```python
+from automation_server_client import Datastore
+
+# Read, change and save; retried if another run wrote in the meantime
+Datastore.update(
+    "team-distribution",
+    lambda data: {**data, "A": data.get("A", 0) + 1},
+)
+
+# Or step by step
+state = Datastore.get("team-distribution")  # empty ({}) if it doesn't exist yet
+state.data["last_run"] = "2026-11-03"
+state.save()  # raises DatastoreConflict if someone else wrote since get()
+
+# Overwrite, whatever is there now
+Datastore.set("team-distribution", {"A": 0, "B": 0})
+```
+
+- A datastore is created the first time it is saved. Reading one that doesn't exist yet gives an empty document and creates nothing.
+- `update()` is the safe choice when [several runs can write at once](#concurrent-runs): on a conflict it reads again and calls your function again, so the function must not have side effects.
+- Every write is logged to the session's audit log with the datastore's name, version and size (not its contents), so you can see which run changed a datastore.
+
+### Using the API directly
+
+Without the client library, the API uses the same `ATS_URL` and `ATS_TOKEN` as the rest of the framework.
 
 | Request | Purpose |
 |---|---|
@@ -61,7 +87,7 @@ Reading a datastore that doesn't exist yet returns `404`; treat that as "start f
 
 If a process can run in more than one session at the same time (a workqueue trigger that scales up across several workers, for example), two runs can read the same document, change it, and write it back. Without care, one run silently overwrites the other's change.
 
-To prevent that, send the `version` you read as `expected_version`. The write only succeeds if nobody else wrote in the meantime; otherwise it is refused with `409`, and you read again and retry:
+The client library's `Datastore.update()` takes care of this. Using the API directly, send the `version` you read as `expected_version`. The write only succeeds if nobody else wrote in the meantime; otherwise it is refused with `409`, and you read again and retry:
 
 ```python
 def update_datastore(name: str, change, attempts: int = 5) -> dict:
