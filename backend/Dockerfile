@@ -11,13 +11,13 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 
 # Install dependencies
-RUN uv sync --frozen --no-install-workspace
+RUN uv sync --frozen --no-dev --no-install-workspace
 
 # Copy application code
 COPY . .
 
 # Install the project
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
 # Runtime stage
 FROM python:3.13-slim AS runtime
@@ -31,7 +31,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     postgresql-client \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    python -m pip uninstall -y pip
 
 # Create non-root user
 RUN useradd -m -u 1001 appuser && \
@@ -42,7 +43,8 @@ RUN useradd -m -u 1001 appuser && \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/app/.venv/bin:$PATH" \
-    UV_SYSTEM_PYTHON=1
+    UV_SYSTEM_PYTHON=1 \
+    UV_NO_DEV=1
 
 # Set working directory
 WORKDIR /app
