@@ -172,6 +172,28 @@ const credentialsAPI = {
     call('Error encrypting credentials', () => axios.post(`/credentials/reencrypt`))
 }
 
+// Datastores: named JSON documents that automations keep state in
+const datastoresAPI = {
+  getDatastores: (include_deleted = false) =>
+    call('Error fetching datastores', () =>
+      axios.get(`/datastores`, { params: { include_deleted } })
+    ),
+  getDatastore: (datastore_id) =>
+    call('Error reading datastore', () => axios.get(`/datastores/${datastore_id}`)),
+  createDatastore: (datastoreData) =>
+    call('Error creating datastore', () => axios.post(`/datastores`, datastoreData)),
+  // Pass expected_version (the version that was read) to get a 409 instead of
+  // overwriting a change someone else made in the meantime
+  updateDatastore: (datastore_id, datastoreData) =>
+    call('Error saving datastore', () => axios.put(`/datastores/${datastore_id}`, datastoreData)),
+  deleteDatastore: (datastore_id) =>
+    call('Error deleting datastore', () => axios.delete(`/datastores/${datastore_id}`)),
+  getEncryptionStatus: () =>
+    call('Error fetching encryption status', () => axios.get(`/datastores/encryption`)),
+  reencryptDatastores: () =>
+    call('Error encrypting datastores', () => axios.post(`/datastores/reencrypt`))
+}
+
 const resourcesAPI = {
   getResources: (include_deleted = false) =>
     call('Error fetching resources', () =>
@@ -301,6 +323,7 @@ export {
   processesAPI,
   workqueuesAPI,
   credentialsAPI,
+  datastoresAPI,
   resourcesAPI,
   sessionsAPI,
   auditLogsAPI,

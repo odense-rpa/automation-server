@@ -11,6 +11,12 @@ from .credential_repository import (
 from .credential_repository import (
     CredentialRepository as CredentialRepository,
 )
+from .datastore_repository import (
+    AbstractDatastoreRepository as AbstractDatastoreRepository,
+)
+from .datastore_repository import (
+    DatastoreRepository as DatastoreRepository,
+)
 from .incident_repository import (
     AbstractIncidentRepository as AbstractIncidentRepository,
 )

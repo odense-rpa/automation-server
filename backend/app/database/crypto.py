@@ -8,9 +8,10 @@ and plaintext values, so existing rows keep working after a key is added.
 
 import base64
 import hashlib
+import json
 
 from cryptography.fernet import Fernet, InvalidToken
-from sqlalchemy import String
+from sqlalchemy import String, Text
 from sqlalchemy.types import TypeDecorator
 
 from app.config import settings
@@ -76,3 +77,35 @@ class EncryptedStr(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         return decrypt(value)
+
+
+def dump_json(value) -> str:
+    """Compact JSON, as stored. Its UTF-8 length is a document's size.
+
+    NaN and Infinity are refused (ValueError): they aren't JSON, and would
+    be read back as something other than what was written.
+    """
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
+class EncryptedJSON(TypeDecorator):
+    """JSON document encrypted at rest when an encryption key is configured.
+
+    Stored as TEXT rather than JSONB: an encrypted value is opaque to
+    PostgreSQL, so documents are only ever read and written whole. Like
+    EncryptedStr, plaintext JSON (no key configured, or rows written before
+    one was) is read as-is.
+    """
+
+    impl = Text
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        return encrypt(dump_json(value))
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        return json.loads(decrypt(value))

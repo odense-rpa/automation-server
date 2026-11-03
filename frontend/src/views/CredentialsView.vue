@@ -6,54 +6,15 @@
       <router-link :to="{ name: 'credential.create' }" class="btn btn-primary btn-sm">+ Create</router-link>
     </template>
 
-    <!-- Encrypted with a key the server no longer has: nothing can be read -->
-    <div v-if="credentialsUnreadable" class="alert alert-error mb-4">
-      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
-      <span>
-        {{ encryption.encrypted_count }}
-        {{ encryption.encrypted_count === 1 ? 'credential is' : 'credentials are' }}
-        encrypted with a key this server does not have, so they cannot be read and are missing
-        from the list below.
-        <template v-if="encryption.key_configured">
-          The configured <code>ENCRYPTION_KEY</code> does not match the one they were saved with.
-          Restore the previous value and restart the server,
-        </template>
-        <template v-else>
-          No <code>ENCRYPTION_KEY</code> is configured. Restore the value the server was previously
-          started with and restart it,
-        </template>
-        or delete and re-enter the affected credentials.
-      </span>
-    </div>
-
-    <!-- No encryption key on the server: everything is stored as plaintext -->
-    <div
-      v-else-if="encryption && !encryption.key_configured"
-      class="alert alert-warning mb-4"
-    >
-      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
-      <span>
-        No encryption key is configured on the server — credential usernames and passwords are
-        stored as plaintext. Set <code>ENCRYPTION_KEY</code> and restart the server to encrypt them
-        at rest.
-      </span>
-    </div>
-
-    <!-- Key configured, but rows written before it was set are still plaintext -->
-    <div
-      v-else-if="encryption && encryption.unencrypted_count > 0"
-      class="alert alert-warning mb-4"
-    >
-      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
-      <span>
-        {{ encryption.unencrypted_count }}
-        {{ encryption.unencrypted_count === 1 ? 'credential is' : 'credentials are' }}
-        still stored as plaintext from before the encryption key was set.
-      </span>
-      <button class="btn btn-sm" @click="reencrypt" :disabled="reencrypting">
-        {{ reencrypting ? 'Encrypting…' : 'Encrypt all now' }}
-      </button>
-    </div>
+    <encryption-banner
+      :status="encryption"
+      singular="credential"
+      plural="credentials"
+      stored="credential usernames and passwords"
+      recover="delete and re-enter the affected credentials"
+      :reencrypting="reencrypting"
+      @reencrypt="reencrypt"
+    />
 
     <!-- An empty list is explained by the banner above when the key is lost -->
     <div v-if="filteredCredentials.length === 0 && !credentialsUnreadable" class="text-center mb-4">
@@ -69,6 +30,7 @@ import { credentialsAPI } from "@/services/automationserver";
 import CredentialsTable from "@/components/CredentialsTable.vue";
 import ContentCard from "@/components/ContentCard.vue";
 import SearchInput from "@/components/SearchInput.vue";
+import EncryptionBanner from "@/components/EncryptionBanner.vue";
 import { useAlertStore } from "../stores/alertStore";
 import { useTableStateStore } from "../stores/tableStateStore";
 
@@ -77,7 +39,8 @@ export default {
   components: {
     CredentialsTable,
     ContentCard,
-    SearchInput
+    SearchInput,
+    EncryptionBanner
   },
   setup() {
     const tableStateStore = useTableStateStore();

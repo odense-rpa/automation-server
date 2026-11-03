@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     scheduler_error_backoff: int = 30  # seconds to wait after scheduler errors
     scheduler_max_parameter_length: int = 1000  # maximum parameter length
 
+    # Maximum size of one datastore document: UTF-8 bytes of its JSON, before
+    # encryption (encrypted it takes about a third more in the database)
+    datastore_max_bytes: int = 1_048_576
+
     # Comma-separated list of allowed CORS origins. Empty means same-origin
     # only, which is correct for the shipped compose topology where the
     # frontend and API share an nginx proxy. Set to "*" for development.

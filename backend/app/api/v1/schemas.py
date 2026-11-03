@@ -1,9 +1,15 @@
 import shlex
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Annotated, Any, Dict, Generic, List, Optional, TypeVar
 
 from cronsim import CronSim, CronSimError
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    field_validator,
+    model_validator,
+)
 from typing_extensions import Self
 
 from app import enums
@@ -177,6 +183,84 @@ class CredentialRead(CredentialSummary):
     password: Optional[str] = None
 
 
+class DatastoreSummary(BaseModel):
+    """A datastore without its document, for listings."""
+
+    id: int
+    name: str
+    description: Optional[str] = ""
+    version: int
+    size_bytes: int
+    deleted: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class DatastoreRead(DatastoreSummary):
+    data: Dict
+
+
+def check_no_nul(value: str) -> str:
+    """PostgreSQL text can't hold NUL characters.
+
+    (Lone surrogates can't be stored either, but they are refused by the
+    service: a validation error echoes its input, and FastAPI can't encode
+    a lone surrogate in the error response.)
+    """
+    if "\x00" in value:
+        raise ValueError("cannot contain NUL characters")
+    return value
+
+
+def check_datastore_name(name: str) -> str:
+    """A name automations can use in /datastores/by_name/{name}.
+
+    Refused rather than cleaned up: trimming spaces on some paths and not
+    others would let two names that look the same address different
+    datastores.
+    """
+    check_no_nul(name)
+    if not name:
+        raise ValueError("cannot be empty")
+    if name != name.strip():
+        raise ValueError("cannot start or end with spaces")
+    if "/" in name:
+        raise ValueError("cannot contain /")
+    if name in (".", ".."):
+        raise ValueError("cannot be . or ..")
+    return name
+
+
+# Used for the body field and the by_name path parameter alike
+DatastoreName = Annotated[str, AfterValidator(check_datastore_name)]
+DatastoreDescription = Annotated[str, AfterValidator(check_no_nul)]
+
+
+class DatastoreCreate(BaseModel):
+    name: DatastoreName
+    description: Optional[DatastoreDescription] = ""
+    data: Dict = {}
+
+
+class DatastoreUpdate(BaseModel):
+    """Update by id (the UI). Fields left out are kept as they are."""
+
+    data: Optional[Dict] = None
+    name: Optional[DatastoreName] = None
+    description: Optional[DatastoreDescription] = None
+    # The version that was read; the write fails with 409 if it changed since.
+    # Leave out to overwrite regardless (last writer wins).
+    expected_version: Optional[int] = Field(default=None, ge=1)
+
+
+class DatastoreWrite(BaseModel):
+    """Write by name (automations): creates the datastore if it doesn't exist."""
+
+    data: Dict
+    # As for DatastoreUpdate; 0 means "must not exist yet"
+    expected_version: Optional[int] = Field(default=None, ge=0)
+
+
 class CredentialEncryptionStatus(BaseModel):
     # True when the server has an ENCRYPTION_KEY configured
     key_configured: bool
@@ -196,6 +280,14 @@ class CredentialReencryptResult(BaseModel):
     reencrypted: int
     # Credentials still stored as plaintext afterwards
     remaining: int
+
+
+class DatastoreEncryptionStatus(CredentialEncryptionStatus):
+    """The same fields as for credentials, counting datastore documents."""
+
+
+class DatastoreReencryptResult(CredentialReencryptResult):
+    """The same fields as for credentials, counting datastore documents."""
 
 
 class ResourceCreate(BaseModel):

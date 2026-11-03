@@ -9,7 +9,7 @@ from sqlmodel import Column, Field, Relationship, SQLModel
 from typing_extensions import Self
 
 import app.enums as enums
-from app.database.crypto import EncryptedStr
+from app.database.crypto import EncryptedJSON, EncryptedStr
 
 
 class Base(SQLModel):
@@ -22,6 +22,34 @@ class Credential(Base, table=True):
     data: typing.Optional[typing.Dict] = Field(default={}, sa_type=JSONB, nullable=True)
     username: str | None = Field(sa_type=EncryptedStr)
     password: str | None = Field(sa_type=EncryptedStr)
+    deleted: bool = False
+    created_at: datetime = Field(default_factory=lambda: datetime.now())
+    updated_at: datetime = Field(default_factory=lambda: datetime.now())
+
+
+class Datastore(Base, table=True):
+    """A named JSON document that automations keep state in between runs."""
+
+    __table_args__ = (
+        # Unique among datastores that aren't deleted: deleting and recreating
+        # one under the same name is expected to happen
+        Index(
+            "uq_datastore_name_active",
+            "name",
+            unique=True,
+            postgresql_where=text("NOT deleted"),
+        ),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    description: str | None = Field(default="")
+    data: typing.Dict = Field(default={}, sa_type=EncryptedJSON, nullable=False)
+    # Incremented on every write; writers pass the version they read, so
+    # concurrent updates are detected instead of silently lost
+    version: int = Field(default=1)
+    # UTF-8 size of the unencrypted JSON (dump_json); limited to 1 MB on write
+    size_bytes: int = Field(default=2)
     deleted: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now())
     updated_at: datetime = Field(default_factory=lambda: datetime.now())

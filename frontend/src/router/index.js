@@ -77,6 +77,27 @@ const routes = [
     ]
   },
   {
+    path: '/datastores',
+    name: 'datastores.container',
+    children: [
+      {
+        path: '',
+        name: 'datastores',
+        component: () => import('../views/DatastoresView.vue')
+      },
+      {
+        path: 'create',
+        name: 'datastore.create',
+        component: () => import('../views/CreateDatastoreView.vue')
+      },
+      {
+        path: ':id',
+        name: 'datastore.detail',
+        component: () => import('../views/DatastoreView.vue')
+      }
+    ]
+  },
+  {
     path: '/administration',
     name: 'Administration.container',
     children: [
