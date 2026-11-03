@@ -24,6 +24,8 @@
           active-class="bg-white/15">Workqueues</router-link>
         <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/credentials"
           active-class="bg-white/15">Credentials</router-link>
+        <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/datastores"
+          active-class="bg-white/15">Datastores</router-link>
         <router-link class="block py-2.5 px-4 rounded hover:bg-white/10" to="/administration"
           active-class="bg-white/15">Administration</router-link>
       </nav>
