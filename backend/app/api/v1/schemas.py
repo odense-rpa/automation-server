@@ -309,6 +309,10 @@ class IncidentResolve(BaseModel):
     resolution_note: Optional[str] = None
 
 
+class IncidentDismiss(BaseModel):
+    ids: List[int] = Field(min_length=1, max_length=200)
+
+
 class UpcomingExecutionRead(BaseModel):
     trigger_id: int = Field(description="Unique identifier for the trigger")
     process_id: int = Field(description="Unique identifier for the associated process")

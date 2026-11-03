@@ -9,8 +9,8 @@
     
     <!-- Dropdown Menu -->
     <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-      <li v-for="(item, index) in items" :key="index">
-        <a href="#" @click.prevent="itemClicked(item)">
+      <li v-for="(item, index) in items" :key="index" :class="{ disabled: item.disabled }">
+        <a href="#" :aria-disabled="item.disabled || null" @click.prevent="itemClicked(item)">
           <font-awesome-icon :icon="item.icon" v-if="item.icon" />
           {{ item.text }}
         </a>
@@ -39,6 +39,7 @@ export default {
   },
   methods: {
     itemClicked(item) {
+      if (item.disabled) return;
       this.$emit('item-clicked', item.action, item); // Emit the item clicked event
       
       // Remove focus from the dropdown button to close the dropdown

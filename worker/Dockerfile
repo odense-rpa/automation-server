@@ -2,7 +2,7 @@
 FROM python:3.13-slim AS base
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13.4 /uv /uvx /bin/
 
 # Create non-root user
 RUN useradd -m -u 1001 worker && \
@@ -27,7 +27,7 @@ RUN apt-get update && \
 ENV PLAYWRIGHT_BROWSERS_PATH=/playwright
 RUN pip install playwright && \
     playwright install-deps chromium && \
-    pip uninstall -y playwright
+    pip uninstall -y playwright pip
 
 # Create playwright browser cache directory
 RUN mkdir -p /playwright && \
@@ -54,7 +54,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="miwn@odense.dk" \
-      version="0.7.0" \
+      version="0.8.1" \
       description="Automation Server Worker"
 
 # Run the main Python script

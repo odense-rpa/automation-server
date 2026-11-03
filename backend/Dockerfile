@@ -2,7 +2,7 @@
 FROM python:3.13-slim AS builder
 
 # Install uv
-COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.13.4 /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -11,26 +11,26 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 
 # Install dependencies
-RUN uv sync --frozen --no-install-workspace
+RUN uv sync --frozen --no-dev --no-install-workspace
 
 # Copy application code
 COPY . .
 
 # Install the project
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
-# Runtime stage
+# Runtime stage: runs from the prebuilt venv only. uv is a build tool here and
+# is deliberately absent, so the container cannot install packages at runtime.
 FROM python:3.13-slim AS runtime
 
-# Install uv for runtime
-COPY --from=ghcr.io/astral-sh/uv:0.11.28 /uv /uvx /bin/
-
-# Install runtime dependencies
+# Upgrade base packages (security fixes) and install runtime dependencies
 RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
     postgresql-client \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* && \
+    python -m pip uninstall -y pip
 
 # Create non-root user
 RUN useradd -m -u 1001 appuser && \
@@ -40,8 +40,7 @@ RUN useradd -m -u 1001 appuser && \
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/app/.venv/bin:$PATH" \
-    UV_SYSTEM_PYTHON=1
+    PATH="/app/.venv/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
@@ -71,7 +70,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="your-email@example.com" \
-      version="0.7.0" \
+      version="0.8.1" \
       description="Automation Server Backend"
 
 # Use exec form for proper signal handling

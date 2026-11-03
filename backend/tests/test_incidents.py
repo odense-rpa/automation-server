@@ -370,3 +370,93 @@ async def test_error_trace_captured(session: AsyncSession, client: AsyncClient):
     assert error_entry is not None
     assert error_entry["exception_type"] == "RuntimeError"
     assert error_entry["message"] == "RuntimeError: Division by zero"
+
+
+async def _add_incident(
+    session: AsyncSession,
+    status: enums.IncidentStatus = enums.IncidentStatus.NEW,
+    deleted: bool = False,
+) -> int:
+    failed_session = models.Session(
+        process_id=1,
+        status=enums.SessionStatus.FAILED,
+        deleted=False,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    session.add(failed_session)
+    await session.commit()
+    await session.refresh(failed_session)
+
+    incident = models.Incident(
+        session_id=failed_session.id,
+        process_id=1,
+        status=status,
+        deleted=deleted,
+    )
+    session.add(incident)
+    await session.commit()
+    await session.refresh(incident)
+    return incident.id
+
+
+async def test_dismiss_incidents_only_dismisses_given_ids(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+    first = await _add_incident(session)
+    second = await _add_incident(session)
+    untouched = await _add_incident(session)
+
+    response = await client.post("/incidents/dismiss", json={"ids": [first, second]})
+    assert response.status_code == 200
+    assert response.json() == {"dismissed": 2}
+
+    response = await client.get("/incidents/open")
+    assert [i["id"] for i in response.json()] == [untouched]
+
+    response = await client.get("/incidents?status=dismissed")
+    assert {i["id"] for i in response.json()["items"]} == {first, second}
+
+
+async def test_dismiss_incidents_skips_resolved_and_deleted(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+    open_id = await _add_incident(session)
+    dismissed_id = await _add_incident(session, enums.IncidentStatus.DISMISSED)
+    rescheduled_id = await _add_incident(session, enums.IncidentStatus.RESCHEDULED)
+    deleted_id = await _add_incident(session, deleted=True)
+
+    response = await client.post(
+        "/incidents/dismiss",
+        json={"ids": [open_id, dismissed_id, rescheduled_id, deleted_id]},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"dismissed": 1}
+
+    # A rescheduled incident must stay rescheduled
+    response = await client.get(f"/incidents/{rescheduled_id}")
+    assert response.json()["status"] == enums.IncidentStatus.RESCHEDULED
+
+
+async def test_dismiss_incidents_unknown_ids(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    response = await client.post("/incidents/dismiss", json={"ids": [998, 999]})
+    assert response.status_code == 200
+    assert response.json() == {"dismissed": 0}
+
+
+async def test_dismiss_incidents_requires_ids(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    response = await client.post("/incidents/dismiss", json={"ids": []})
+    assert response.status_code == 422
+
+    response = await client.post("/incidents/dismiss", json={"ids": list(range(201))})
+    assert response.status_code == 422

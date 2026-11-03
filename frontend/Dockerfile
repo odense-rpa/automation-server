@@ -23,8 +23,8 @@ RUN npm run build
 # Production stage
 FROM nginx:1.30-alpine
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Upgrade base packages (security fixes) and install curl for health checks
+RUN apk upgrade --no-cache && apk add --no-cache curl
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -41,7 +41,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="miwn@odense.dk" \
-      version="0.7.0" \
+      version="0.8.1" \
       description="Automation Server Frontend"
 
 # Start nginx
