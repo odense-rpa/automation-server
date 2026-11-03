@@ -42,8 +42,8 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 The setting is optional:
 
-- **Unset** — credentials are stored as plaintext. The server logs a warning on every startup, and the Credentials page shows a banner explaining that no key is configured.
-- **Set** — credentials are encrypted whenever they are created or saved. Credentials that existed before the key was set remain plaintext until they are written again.
+- **Unset** — credentials and datastore documents are stored as plaintext. The server logs a warning on every startup, and the Credentials page shows a banner explaining that no key is configured.
+- **Set** — credentials and datastore documents are encrypted whenever they are created or saved. Those that existed before the key was set remain plaintext until they are written again.
 
 The API always returns decrypted values to authenticated clients, so workers and automations are unaffected by this setting.
 
@@ -58,6 +58,8 @@ After setting a key on a server that already holds credentials, rewrite the exis
 
 Both cover soft-deleted credentials too, since their secrets are still on disk. Re-encryption does not change the credential values or their `updated_at` timestamp. Until it is run, the server logs a warning at startup naming how many credentials are still plaintext.
 
+Datastores work the same way, with their own endpoint and page: `POST /datastores/reencrypt` (status at `GET /datastores/encryption`) or **Encrypt all now** on the Datastores page. Re-encryption leaves a datastore's `version` unchanged, so it never conflicts with an automation that is updating it.
+
 ### If the key is lost or changed
 
 There is no key rotation: a credential can only be read with the key it was saved under. If the server is started with a different `ENCRYPTION_KEY`, or with none at all, credentials encrypted under the previous key cannot be decrypted.
@@ -69,6 +71,8 @@ The server does not fail silently or return corrupt values in this case:
 - Credential API requests answer `500` with the same explanation, so workers fail loudly rather than running with empty passwords.
 
 The fix is to restore the previous `ENCRYPTION_KEY` value and restart. If it is genuinely gone, the affected credentials must be deleted and re-entered.
+
+Datastore documents are encrypted with the same key, so the same applies to them: startup logs how many are unreadable, and datastore requests fail until the key is restored. If it is gone, delete the affected datastores and let their processes recreate them.
 
 :::warning
 Back up the encryption key somewhere other than the server it runs on. Losing it means re-entering every credential by hand.

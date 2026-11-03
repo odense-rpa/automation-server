@@ -240,6 +240,14 @@ class CredentialReencryptResult(BaseModel):
     remaining: int
 
 
+class DatastoreEncryptionStatus(CredentialEncryptionStatus):
+    """The same fields as for credentials, counting datastore documents."""
+
+
+class DatastoreReencryptResult(CredentialReencryptResult):
+    """The same fields as for credentials, counting datastore documents."""
+
+
 class ResourceCreate(BaseModel):
     name: str
     fqdn: str

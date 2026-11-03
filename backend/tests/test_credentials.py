@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.database.models as models
 from app.config import settings
-from app.main import check_credential_encryption
+from app.main import check_encryption
 
 from . import generate_basic_data  # noqa: F401
 
@@ -440,7 +440,7 @@ async def test_startup_warns_when_no_key_configured(
     monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await check_credential_encryption(session)
+        await check_encryption(session)
 
     assert "ENCRYPTION_KEY is not set" in caplog.text
 
@@ -454,7 +454,7 @@ async def test_startup_warns_about_leftover_plaintext_credentials(
     monkeypatch.setattr(settings, "encryption_key", "test-key")
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await check_credential_encryption(session)
+        await check_encryption(session)
 
     assert "2 credential(s) are still stored as PLAINTEXT" in caplog.text
 
@@ -475,7 +475,7 @@ async def test_startup_is_silent_when_everything_is_encrypted(
     assert response.status_code == 200
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await check_credential_encryption(session)
+        await check_encryption(session)
 
     assert caplog.text == ""
 
@@ -498,7 +498,7 @@ async def test_startup_reports_credentials_encrypted_with_a_lost_key(
     monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await check_credential_encryption(session)
+        await check_encryption(session)
 
     assert "ENCRYPTION_KEY is not set" in caplog.text
     assert "1 credential(s) are encrypted but ENCRYPTION_KEY is not set" in caplog.text
@@ -522,7 +522,7 @@ async def test_startup_reports_a_changed_key(
     monkeypatch.setattr(settings, "encryption_key", "a-different-key")
 
     with caplog.at_level(logging.WARNING, logger="app.main"):
-        await check_credential_encryption(session)
+        await check_encryption(session)
 
     assert "encrypted with a different key" in caplog.text
 

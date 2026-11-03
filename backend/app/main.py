@@ -26,6 +26,7 @@ from app.config import cors_origins, settings
 from app.database import crypto
 from app.database.crypto import EncryptionKeyError
 from app.database.repository.credential_repository import CredentialRepository
+from app.database.repository.datastore_repository import DatastoreRepository
 from app.database.session import async_engine
 from app.scheduler import scheduler_background_task
 
@@ -39,70 +40,90 @@ except PackageNotFoundError:
     APP_VERSION = "unknown"
 
 
-async def check_credential_encryption(session: AsyncSession | None = None) -> None:
-    """Report credential encryption problems at startup.
+async def check_encryption(session: AsyncSession | None = None) -> None:
+    """Report encryption problems with credentials and datastores at startup.
 
     Logged at WARNING and above because production runs at that level (see
     logging.basicConfig), so an INFO notice would be invisible in exactly the
     deployments that need it.
 
     Args:
-        session: Session to inspect stored credentials with. Defaults to a
-            new session on the application engine.
+        session: Session to inspect stored data with. Defaults to a new
+            session on the application engine.
     """
     key_configured = crypto.is_configured()
 
     if not key_configured:
         logger.warning(
-            "ENCRYPTION_KEY is not set — credential usernames and passwords are "
-            "stored as PLAINTEXT in the database. Set ENCRYPTION_KEY to encrypt "
-            "them at rest; see docs/getting-started/configuration.md."
+            "ENCRYPTION_KEY is not set — credential usernames and passwords, and "
+            "datastore documents, are stored as PLAINTEXT in the database. Set "
+            "ENCRYPTION_KEY to encrypt them at rest; see "
+            "docs/getting-started/configuration.md."
         )
 
     try:
         if session is not None:
-            await _report_credential_encryption(session, key_configured)
+            await _report_encryption_problems(session, key_configured)
         else:
             async with AsyncSession(async_engine, expire_on_commit=False) as own:
-                await _report_credential_encryption(own, key_configured)
+                await _report_encryption_problems(own, key_configured)
     except Exception as e:  # noqa: BLE001 - never block startup on this check
-        logger.warning(f"Could not check credential encryption status: {e}")
+        logger.warning(f"Could not check encryption status: {e}")
 
 
-async def _report_credential_encryption(
+async def _report_encryption_problems(
     session: AsyncSession, key_configured: bool
 ) -> None:
-    repository = CredentialRepository(session)
+    await _report_encryption(
+        CredentialRepository(session),
+        key_configured,
+        noun="credential",
+        recreate="delete and re-enter these credentials",
+        reencrypt="POST /credentials/reencrypt, or use 'Encrypt all now' on the "
+        "Credentials page",
+    )
+    await _report_encryption(
+        DatastoreRepository(session),
+        key_configured,
+        noun="datastore",
+        recreate="delete these datastores and let their processes recreate them",
+        reencrypt="POST /datastores/reencrypt, or use 'Encrypt all now' on the "
+        "Datastores page",
+    )
 
+
+async def _report_encryption(
+    repository, key_configured: bool, noun: str, recreate: str, reencrypt: str
+) -> None:
+    """Log what is wrong with one table's encrypted data, if anything."""
     if not key_configured:
-        # The damaging case: a key was configured once, credentials were
-        # encrypted with it, and it has since been removed. Those values are
-        # unreadable until it comes back.
+        # The damaging case: a key was configured once, data was encrypted
+        # with it, and it has since been removed. That data is unreadable
+        # until the key comes back.
         encrypted = await repository.get_encrypted_ids()
         if encrypted:
             logger.error(
-                f"{len(encrypted)} credential(s) are encrypted but ENCRYPTION_KEY "
-                "is not set — they CANNOT be read and every credential request "
+                f"{len(encrypted)} {noun}(s) are encrypted but ENCRYPTION_KEY "
+                f"is not set — they CANNOT be read and every {noun} request "
                 "will fail. Restore the ENCRYPTION_KEY value this server was "
-                "previously started with, or delete and re-enter these credentials."
+                f"previously started with, or {recreate}."
             )
         return
 
     if not await repository.can_decrypt():
         logger.error(
-            "Stored credentials are encrypted with a different key than the "
-            "configured ENCRYPTION_KEY — they CANNOT be read and every credential "
-            "request will fail. Restore the previous ENCRYPTION_KEY value, or "
-            "delete and re-enter the affected credentials."
+            f"Stored {noun}s are encrypted with a different key than the "
+            f"configured ENCRYPTION_KEY — they CANNOT be read and every {noun} "
+            f"request will fail. Restore the previous ENCRYPTION_KEY value, or "
+            f"{recreate}."
         )
         return
 
     unencrypted = await repository.get_unencrypted_ids()
     if unencrypted:
         logger.warning(
-            f"{len(unencrypted)} credential(s) are still stored as PLAINTEXT from "
-            "before ENCRYPTION_KEY was set. POST /credentials/reencrypt, or use "
-            "'Encrypt all now' on the Credentials page, to rewrite them."
+            f"{len(unencrypted)} {noun}(s) are still stored as PLAINTEXT from "
+            f"before ENCRYPTION_KEY was set. {reencrypt}, to rewrite them."
         )
 
 
@@ -115,7 +136,7 @@ async def lifespan(app: FastAPI):
         f"Starting up, database url is: {settings.database_url}, debug is {settings.debug}"
     )
 
-    await check_credential_encryption()
+    await check_encryption()
 
     try:
         yield

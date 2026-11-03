@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 
+from app.database import crypto
 from app.database.models import AccessToken, Datastore
 from app.database.unit_of_work import AbstractUnitOfWork
 from app.services import DatastoreService
@@ -18,7 +19,9 @@ from .dependencies import (
 )
 from .schemas import (
     DatastoreCreate,
+    DatastoreEncryptionStatus,
     DatastoreRead,
+    DatastoreReencryptResult,
     DatastoreSummary,
     DatastoreUpdate,
     DatastoreWrite,
@@ -96,7 +99,56 @@ async def create_datastore(
 
 
 # Declared before /{datastore_id}, which would otherwise try to parse
-# "by_name" as an id
+# "encryption", "reencrypt" and "by_name" as an id
+
+
+@router.get("/encryption", responses=error_descriptions("Datastore", _403=True))
+async def get_encryption_status(
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> DatastoreEncryptionStatus:
+    """Report whether datastore documents are encrypted at rest, and readable.
+
+    Reads the stored values with raw SQL, so this keeps answering when the
+    configured key cannot decrypt them.
+    """
+    async with uow:
+        return DatastoreEncryptionStatus(
+            key_configured=crypto.is_configured(),
+            unencrypted_count=len(await uow.datastores.get_unencrypted_ids()),
+            encrypted_count=len(await uow.datastores.get_encrypted_ids()),
+            decryptable=await uow.datastores.can_decrypt(),
+        )
+
+
+@router.post(
+    "/reencrypt",
+    responses={409: {"description": "No encryption key is configured"}}
+    | error_descriptions("Datastore", _403=True),
+)
+async def reencrypt_datastores(
+    uow: AbstractUnitOfWork = Depends(get_unit_of_work),
+    token: AccessToken = Depends(resolve_access_token),
+) -> DatastoreReencryptResult:
+    """Encrypt every datastore document that is still stored as plaintext.
+
+    Documents written before an encryption key was configured stay plaintext
+    until they are written again. This does that in one pass, without
+    changing their version, so it never conflicts with a writer.
+    """
+    if not crypto.is_configured():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "No encryption key is configured. Set ENCRYPTION_KEY on the "
+                "server and restart it before re-encrypting datastores."
+            ),
+        )
+
+    async with uow:
+        reencrypted = await uow.datastores.reencrypt_unencrypted()
+        remaining = len(await uow.datastores.get_unencrypted_ids())
+        return DatastoreReencryptResult(reencrypted=reencrypted, remaining=remaining)
 
 
 @router.get(

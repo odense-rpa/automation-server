@@ -1,9 +1,12 @@
+import logging
+
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database.crypto import ENCRYPTION_PREFIX
+from app.main import check_encryption
 
 
 async def create(client: AsyncClient, name="state", data=None, description=""):
@@ -213,3 +216,74 @@ async def test_document_encrypted_at_rest(
 
     response = await client.get(f"/datastores/{created['id']}")
     assert response.json()["data"] == {"secret-ish": "value"}
+
+
+# Encryption status and re-encryption
+
+
+async def test_encryption_status_and_reencrypt(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "encryption_key", "")
+    await create(client, name="a", data={"n": 1})
+    await create(client, name="b", data={})
+
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    status = (await client.get("/datastores/encryption")).json()
+    assert status == {
+        "key_configured": True,
+        "unencrypted_count": 2,
+        "encrypted_count": 0,
+        "decryptable": True,
+    }
+
+    result = await client.post("/datastores/reencrypt")
+    assert result.json() == {"reencrypted": 2, "remaining": 0}
+
+    status = (await client.get("/datastores/encryption")).json()
+    assert status["unencrypted_count"] == 0 and status["encrypted_count"] == 2
+
+    # Version unchanged: a writer holding version 1 isn't refused
+    response = await client.put(
+        "/datastores/by_name/a", json={"data": {"n": 2}, "expected_version": 1}
+    )
+    assert response.status_code == 200
+
+
+async def test_reencrypt_without_key_is_refused(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "encryption_key", "")
+    response = await client.post("/datastores/reencrypt")
+    assert response.status_code == 409
+
+
+async def test_encryption_status_with_a_changed_key(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "encryption_key", "original-key")
+    await create(client, data={"n": 1})
+
+    monkeypatch.setattr(settings, "encryption_key", "another-key")
+    status = (await client.get("/datastores/encryption")).json()
+    assert status["decryptable"] is False
+    assert status["encrypted_count"] == 1
+
+
+# Startup check
+
+
+async def test_startup_reports_datastores(
+    client: AsyncClient, session: AsyncSession, monkeypatch, caplog
+):
+    monkeypatch.setattr(settings, "encryption_key", "")
+    await create(client, data={"n": 1})
+
+    # Plaintext left over after a key is configured
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await check_encryption(session)
+    assert "1 datastore(s) are still stored as PLAINTEXT" in caplog.text
+    assert "POST /datastores/reencrypt" in caplog.text
+
+    # Encrypted, then the key is removed
+    await client.post("/datastores/reencrypt")
+    monkeypatch.setattr(settings, "encryption_key", "")
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="app.main"):
+        await check_encryption(session)
+    assert "1 datastore(s) are encrypted but ENCRYPTION_KEY is not set" in caplog.text

@@ -7,6 +7,7 @@ from sqlmodel import select
 from app.database.models import Datastore
 
 from .database_repository import AbstractRepository, DatabaseRepository
+from .encrypted_columns import EncryptedColumnsMixin
 
 
 class AbstractDatastoreRepository(AbstractRepository[Datastore]):
@@ -19,7 +20,9 @@ class AbstractDatastoreRepository(AbstractRepository[Datastore]):
         raise NotImplementedError
 
 
-class DatastoreRepository(DatabaseRepository[Datastore]):
+class DatastoreRepository(EncryptedColumnsMixin, DatabaseRepository[Datastore]):
+    encrypted_columns = ("data",)
+
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(Datastore, session)
 
