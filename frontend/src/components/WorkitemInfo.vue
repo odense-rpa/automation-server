@@ -29,18 +29,18 @@
     </div>
     <div class="p-2">
       <p class="font-semibold mb-2">Data:</p>
-      <json-view :jsonData="workitem.data" :expanded="true" />
+      <json-tree :data="workitem.data" />
     </div>
   </div>
 </template>
 
 <script>
-import JsonView from "./JsonView.vue";
+import JsonTree from "./JsonTree.vue";
 
 export default {
   name: 'WorkitemInfo',
     components: {
-        JsonView
+        JsonTree
     },
   props: {
     workitem: {

@@ -24,8 +24,8 @@
           <tr>
             <th class="text-center whitespace-nowrap">Id</th>
             <th class="whitespace-nowrap">Reference</th>
-            <th class="whitespace-nowrap">Message</th>
-            <th class="w-full">Data</th>
+            <th class="w-full">Message</th>
+            <th class="whitespace-nowrap">Data</th>
             <th class="text-center whitespace-nowrap">Status</th>
             <th class="text-center whitespace-nowrap">Created</th>
             <th class="text-center whitespace-nowrap">Last change</th>
