@@ -11,14 +11,6 @@
           <button class="btn btn-error btn-sm" @click="remove">Delete</button>
         </template>
 
-        <div class="alert mb-4 text-sm">
-          <font-awesome-icon :icon="['fas', 'info']" />
-          <span>
-            Stored encrypted when the server has an encryption key, but shown in full to anyone
-            with access. Use Credentials for passwords and keys.
-          </span>
-        </div>
-
         <!-- Someone (an automation or another user) wrote since this page loaded -->
         <div v-if="conflict" role="alert" class="alert alert-warning mb-4">
           <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
