@@ -27,7 +27,7 @@
 
         <dl v-else class="grid grid-cols-5 gap-x-2 max-w-3xl">
           <dt class="col-span-1 font-semibold mb-2">Description:</dt>
-          <dd class="col-span-4 mb-2">{{ datastore.description || '—' }}</dd>
+          <dd class="col-span-4 mb-2">{{ datastore.description }}</dd>
           <dt class="col-span-1 font-semibold mb-2">Version:</dt>
           <dd class="col-span-4 mb-2">{{ datastore.version }}</dd>
           <dt class="col-span-1 font-semibold mb-2">Size:</dt>
