@@ -27,8 +27,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="log in this.logsBySessionId(session.id)" :key="log.id" class="hover:bg-base-300">
-                            <!-- Force wrap long messages to prevent page break -->
-                            <td class="whitespace-pre-wrap break-words">{{ log.message }}</td>
+                            <td><log-message :message="log.message" /></td>
                             <td class="text-center whitespace-nowrap">{{ $formatDateTime(log.created_at) }}</td>
                         </tr>
                     </tbody>
@@ -43,6 +42,7 @@
 import ContentCard from '@/components/ContentCard.vue';
 import WorkitemInfo from '@/components/WorkitemInfo.vue';
 import JsonTree from '@/components/JsonTree.vue';
+import LogMessage from '@/components/LogMessage.vue';
 
 import { auditLogsAPI, sessionsAPI, workitemsApi } from '@/services/automationserver.js';
 
@@ -51,7 +51,8 @@ export default {
     components: {
         ContentCard,
         WorkitemInfo,
-        JsonTree
+        JsonTree,
+        LogMessage
     },
     data() {
         return {
