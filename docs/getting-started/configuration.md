@@ -28,7 +28,7 @@ POSTGRES_DB=automation
 
 Credentials for the PostgreSQL database. In development, the defaults from `.env.example` are fine. In production, use strong, unique values.
 
-## Credential Encryption
+## Encryption at Rest
 
 ```
 ENCRYPTION_KEY=
@@ -77,6 +77,14 @@ Datastore documents are encrypted with the same key, so the same applies to them
 :::warning
 Back up the encryption key somewhere other than the server it runs on. Losing it means re-entering every credential by hand.
 :::
+
+## Datastores
+
+```
+DATASTORE_MAX_BYTES=1048576
+```
+
+The largest document a [datastore](../guides/datastores.md) may hold, in bytes of JSON before encryption. Writes above it are refused with `413`. The default is 1 MB.
 
 ## CORS
 

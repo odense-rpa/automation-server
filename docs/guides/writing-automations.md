@@ -134,7 +134,7 @@ cred = Credential.get_by_name(ats, "my-system")
 print(cred.username, cred.password)
 ```
 
-Credentials may be [encrypted at rest](../getting-started/configuration.md#credential-encryption) on the server. This is transparent to automations — the API always returns decrypted values.
+Credentials may be [encrypted at rest](../getting-started/configuration.md#encryption-at-rest) on the server. This is transparent to automations — the API always returns decrypted values.
 
 ### Logging
 

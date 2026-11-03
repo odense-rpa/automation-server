@@ -26,6 +26,7 @@ This is powered by FastAPI's built-in Swagger UI, which lets you explore and tes
 | Resources | `/resources` | Registered workers |
 | Workqueues | `/workqueues` | Work item queues |
 | Workitems | `/workqueues/{id}/items` | Items within a queue |
+| Datastores | `/datastores` | Named JSON documents for state between runs |
 | Incidents | `/incidents` | Failed session incidents |
 | Audit logs | `/auditlogs` | Session log entries |
 

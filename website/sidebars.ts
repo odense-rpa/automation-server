@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/setup-a-process',
         'guides/writing-automations',
+        'guides/datastores',
         'guides/scheduling',
 
         'guides/logging-and-audit',

@@ -5,6 +5,12 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Datastores**: named JSON documents that automations use to keep state between runs (counters, last-seen markers, distribution tables). Read and written over `/datastores` by id or by name; writing by name creates the datastore on first use. Writes can pass `expected_version` and are refused with `409` if another run wrote in the meantime, so concurrent runs cannot silently overwrite each other. Documents are encrypted at rest when `ENCRYPTION_KEY` is set, with the same status, re-encryption and startup checks as credentials. Size limit per document is set with `DATASTORE_MAX_BYTES` (default 1 MB). The web interface lists, creates, edits and deletes datastores. See the new Datastores guide.
+
 ## [0.8.1] - 2026-11-03
 
 ### Security
