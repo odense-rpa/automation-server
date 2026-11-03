@@ -11,22 +11,19 @@
       <router-link :to="{ name: 'credential.edit', params: { id: credential.id } }"
         class="block px-4 py-3 no-underline text-inherit">{{ credential.username }}</router-link>
     </td>
-    <td class="p-0">
-      <router-link :to="{ name: 'credential.edit', params: { id: credential.id } }"
-        class="block px-4 py-3 no-underline text-inherit">
-        <json-view :jsonData="credential.data" />
-      </router-link>
+    <td class="px-4 py-3">
+      <json-preview :data="credential.data" :title="`Credential ${credential.name}`" />
     </td>
   </tr>
 </template>
 
 <script>
-import JsonView from '@/components/JsonView.vue'
+import JsonPreview from '@/components/JsonPreview.vue'
 
 export default {
   name: 'CredentialItem',
   components: {
-    JsonView
+    JsonPreview
   },
   props: {
     credential: {

@@ -16,11 +16,12 @@
         <font-awesome-icon :icon="['fas', copiedReference ? 'check' : 'copy']" />
       </button>
     </td>
-    <td class="p-0 max-w-xs">
+    <!-- max-w-0 lets the cell take the remaining width (w-full on its header) and still truncate -->
+    <td class="p-0 max-w-0">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
         class="block px-4 py-3 no-underline text-inherit truncate" :title="workitem.message">{{ workitem.message }}</router-link>
     </td>
-    <td><json-view :jsonData="workitem.data" /></td>
+    <td class="whitespace-nowrap"><json-preview :data="workitem.data" :title="`Work item ${workitem.id}: ${workitem.reference}`" /></td>
     <td class="text-center p-0">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
         class="block px-4 py-3 no-underline text-inherit">
@@ -34,11 +35,11 @@
     </td>
     <td class="text-center p-0">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ $formatDateTime(workitem.created_at) }}</router-link>
+        class="block px-4 py-3 no-underline text-inherit xl:whitespace-nowrap">{{ $formatDateTime(workitem.created_at) }}</router-link>
     </td>
     <td class="text-center p-0">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
-        class="block px-4 py-3 no-underline text-inherit">{{ $formatDateTime(workitem.updated_at) }}</router-link>
+        class="block px-4 py-3 no-underline text-inherit xl:whitespace-nowrap">{{ $formatDateTime(workitem.updated_at) }}</router-link>
     </td>
     <td class="text-center">
       <dropdown-button :label="'Actions'" :items="[
@@ -52,7 +53,7 @@
 </template>
 
 <script>
-import JsonView from "./JsonView.vue";
+import JsonPreview from "./JsonPreview.vue";
 import DropdownButton from "./DropdownButton.vue";
 import { workitemsApi } from "@/services/automationserver";
 import { useAlertStore } from "@/stores/alertStore";
@@ -62,7 +63,7 @@ const alertStore = useAlertStore();
 export default {
   name: "WorkItemRow",
   components: {
-    JsonView,
+    JsonPreview,
     DropdownButton
   },
   props: {

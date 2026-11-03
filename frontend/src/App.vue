@@ -51,7 +51,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 min-w-0 flex flex-col">
 
       <!-- Mobile top bar -->
       <header class="lg:hidden bg-neutral text-neutral-content p-3 flex items-center gap-3 sticky top-0 z-40">

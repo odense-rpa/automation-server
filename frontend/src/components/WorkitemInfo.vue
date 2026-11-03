@@ -27,21 +27,13 @@
         </dl>
       </div>
     </div>
-    <div class="p-2">
-      <p class="font-semibold mb-2">Data:</p>
-      <json-view :jsonData="workitem.data" :expanded="true" />
-    </div>
   </div>
 </template>
 
 <script>
-import JsonView from "./JsonView.vue";
 
 export default {
   name: 'WorkitemInfo',
-    components: {
-        JsonView
-    },
   props: {
     workitem: {
       type: Object,
