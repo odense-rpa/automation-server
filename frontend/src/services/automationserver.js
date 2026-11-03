@@ -6,8 +6,8 @@ import { useSettingsStore } from '@/stores/settingsStore'
 axios.interceptors.request.use((config) => {
   var settingsStore = useSettingsStore()
 
-  config.baseURL = settingsStore.apiUrl;
-  if(settingsStore.token) {
+  config.baseURL = settingsStore.apiUrl
+  if (settingsStore.token) {
     config.headers.Authorization = `Bearer ${settingsStore.token}`
   }
 
@@ -25,7 +25,21 @@ const apiErrorMessage = (error, fallback) => {
   if (Array.isArray(detail) && detail[0]?.msg) {
     return detail[0].msg
   }
-  return `${fallback}: ${error}`
+  if (error?.response) {
+    return `${fallback} (HTTP ${error.response.status})`
+  }
+  return `${fallback}: could not reach the server`
+}
+
+// Every API method goes through here: returns the response data, or throws an
+// Error whose message is the API's own explanation when it gives one.
+const call = async (failure, request) => {
+  try {
+    const response = await request()
+    return response.data
+  } catch (error) {
+    throw new Error(apiErrorMessage(error, failure), { cause: error })
+  }
 }
 
 // True while a 401 is already being handled, so a burst of requests that all
@@ -70,525 +84,215 @@ axios.interceptors.response.use(
 
 // Processes API
 const processesAPI = {
-  getProcesses: async (include_deleted = false) => {
-    try {
-      const response = await axios.get(`/processes`, { params: { include_deleted } })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching processes: ${error}`)
-    }
-  },
-  createProcess: async (processData) => {
-    try {
-      const response = await axios.post(`/processes`, processData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error creating process: ${error}`)
-    }
-  },
-  getProcess: async (process_id) => {
-    try {
-      const response = await axios.get(`/processes/${process_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading process: ${error}`)
-    }
-  },
-  updateProcess: async (process_id, processData) => {
-    try {
-      const response = await axios.put(`/processes/${process_id}`, processData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating process: ${error}`)
-    }
-  },
-  deleteProcess: async (process_id) => {
-    try {
-      const response = await axios.delete(`/processes/${process_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error deleting process: ${error}`)
-    }
-  },
-  getTriggers: async (process_id) => {
-    try {
-      const response = await axios.get(`/processes/${process_id}/trigger`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching triggers: ${error}`)
-    }
-  },
-  createTrigger: async (process_id, triggerData) => {
-    try {
-      const response = await axios.post(`/processes/${process_id}/trigger`, triggerData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error creating trigger: ${error}`)
-    }
-  }
+  getProcesses: (include_deleted = false) =>
+    call('Error fetching processes', () =>
+      axios.get(`/processes`, { params: { include_deleted } })
+    ),
+  createProcess: (processData) =>
+    call('Error creating process', () => axios.post(`/processes`, processData)),
+  getProcess: (process_id) =>
+    call('Error reading process', () => axios.get(`/processes/${process_id}`)),
+  updateProcess: (process_id, processData) =>
+    call('Error updating process', () => axios.put(`/processes/${process_id}`, processData)),
+  deleteProcess: (process_id) =>
+    call('Error deleting process', () => axios.delete(`/processes/${process_id}`)),
+  getTriggers: (process_id) =>
+    call('Error fetching triggers', () => axios.get(`/processes/${process_id}/trigger`)),
+  createTrigger: (process_id, triggerData) =>
+    call('Error creating trigger', () =>
+      axios.post(`/processes/${process_id}/trigger`, triggerData)
+    )
 }
 
 // Workqueues API
 const workqueuesAPI = {
-  getWorkqueues: async (include_deleted = false) => {
-    try {
-      const response = await axios.get(`/workqueues`, { params: { include_deleted } })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching workqueues: ${error}`)
-    }
-  },
-  getWorkqueuesWithInformation: async (include_deleted = false) => {
-    try {
-      const response = await axios.get(`/workqueues/information`, {
+  getWorkqueues: (include_deleted = false) =>
+    call('Error fetching workqueues', () =>
+      axios.get(`/workqueues`, { params: { include_deleted } })
+    ),
+  getWorkqueuesWithInformation: (include_deleted = false) =>
+    call('Error fetching workqueues', () =>
+      axios.get(`/workqueues/information`, {
         params: { include_deleted }
       })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching workqueues: ${error}`)
-    }
-  },
-  createWorkqueue: async (workqueueData) => {
-    try {
-      const response = await axios.post(`/workqueues`, workqueueData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error creating workqueue: ${error}`)
-    }
-  },
-  getWorkqueue: async (queue_id) => {
-    try {
-      const response = await axios.get(`/workqueues/${queue_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading workqueue: ${error}`)
-    }
-  },
-  getWorkqueueInformation: async (queue_id) => {
-    try {
-      const response = await axios.get(`/workqueues/${queue_id}/information`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading workqueue information: ${error}`)
-    }
-  },
-  updateWorkqueue: async (queue_id, workqueueData) => {
-    try {
-      const response = await axios.put(`/workqueues/${queue_id}`, workqueueData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating workqueue: ${error}`)
-    }
-  },
-  deleteWorkqueue: async (queue_id) => {
-    try {
-      const response = await axios.delete(`/workqueues/${queue_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error deleting workqueue: ${error}`)
-    }
-  },
-  clearWorkqueue: async(queue_id, workitem_status = null, days_older_than = null) => {
-    if (workitem_status === '') workitem_status = null;
-    if (days_older_than === '') days_older_than = null;
-
-    try {
-      const response = await axios.post(`/workqueues/${queue_id}/clear`, {
-      workitem_status,
-      days_older_than
+    ),
+  createWorkqueue: (workqueueData) =>
+    call('Error creating workqueue', () => axios.post(`/workqueues`, workqueueData)),
+  getWorkqueue: (queue_id) =>
+    call('Error reading workqueue', () => axios.get(`/workqueues/${queue_id}`)),
+  getWorkqueueInformation: (queue_id) =>
+    call('Error reading workqueue information', () =>
+      axios.get(`/workqueues/${queue_id}/information`)
+    ),
+  updateWorkqueue: (queue_id, workqueueData) =>
+    call('Error updating workqueue', () => axios.put(`/workqueues/${queue_id}`, workqueueData)),
+  deleteWorkqueue: (queue_id) =>
+    call('Error deleting workqueue', () => axios.delete(`/workqueues/${queue_id}`)),
+  clearWorkqueue: async (queue_id, workitem_status = null, days_older_than = null) => {
+    if (workitem_status === '') workitem_status = null
+    if (days_older_than === '') days_older_than = null
+    return call('Error clearing workqueue', () =>
+      axios.post(`/workqueues/${queue_id}/clear`, {
+        workitem_status,
+        days_older_than
       })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error clearing workqueue: ${error}`)
-    }
+    )
   },
-  addWorkitem: async (queue_id, workitemData) => {
-    try {
-      const response = await axios.post(`/workqueues/${queue_id}/add`, workitemData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error adding workitem: ${error}`)
-    }
-  },
-  getNextWorkitem: async (queue_id) => {
-    try {
-      const response = await axios.get(`/workqueues/${queue_id}/next_item`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching next workitem: ${error}`)
-    }
-  },
-  getWorkItems: async (workqueue_id, page = 1, size = 20, search = '') => {
-    try {
-      const response = await axios.get(`/workqueues/${workqueue_id}/items`, {
+  addWorkitem: (queue_id, workitemData) =>
+    call('Error adding workitem', () => axios.post(`/workqueues/${queue_id}/add`, workitemData)),
+  getNextWorkitem: (queue_id) =>
+    call('Error fetching next workitem', () => axios.get(`/workqueues/${queue_id}/next_item`)),
+  getWorkItems: (workqueue_id, page = 1, size = 20, search = '') =>
+    call('Error fetching sessions', () =>
+      axios.get(`/workqueues/${workqueue_id}/items`, {
         params: { page: page, size: size, search: search }
       })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching sessions: ${error}`)
-    }
-  }
+    )
 }
 
 // Credentials API
 const credentialsAPI = {
-  getCredentials: async (include_deleted = false) => {
-    try {
-      const response = await axios.get(`/credentials`, { params: { include_deleted } })
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error fetching credentials'))
-    }
-  },
-  createCredential: async (credentialData) => {
-    try {
-      const response = await axios.post(`/credentials`, credentialData)
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error creating credential'))
-    }
-  },
-  readCredential: async (credential_id) => {
-    try {
-      const response = await axios.get(`/credentials/${credential_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error reading credential'))
-    }
-  },
-  updateCredential: async (credential_id, credentialData) => {
-    try {
-      const response = await axios.put(`/credentials/${credential_id}`, credentialData)
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error updating credential'))
-    }
-  },
-  deleteCredential: async (credential_id) => {
-    try {
-      const response = await axios.delete(`/credentials/${credential_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error deleting credential'))
-    }
-  },
-  getEncryptionStatus: async () => {
-    try {
-      const response = await axios.get(`/credentials/encryption`)
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error fetching encryption status'))
-    }
-  },
-  reencryptCredentials: async () => {
-    try {
-      const response = await axios.post(`/credentials/reencrypt`)
-      return response.data
-    } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Error encrypting credentials'))
-    }
-  }
+  getCredentials: (include_deleted = false) =>
+    call('Error fetching credentials', () =>
+      axios.get(`/credentials`, { params: { include_deleted } })
+    ),
+  createCredential: (credentialData) =>
+    call('Error creating credential', () => axios.post(`/credentials`, credentialData)),
+  readCredential: (credential_id) =>
+    call('Error reading credential', () => axios.get(`/credentials/${credential_id}`)),
+  updateCredential: (credential_id, credentialData) =>
+    call('Error updating credential', () =>
+      axios.put(`/credentials/${credential_id}`, credentialData)
+    ),
+  deleteCredential: (credential_id) =>
+    call('Error deleting credential', () => axios.delete(`/credentials/${credential_id}`)),
+  getEncryptionStatus: () =>
+    call('Error fetching encryption status', () => axios.get(`/credentials/encryption`)),
+  reencryptCredentials: () =>
+    call('Error encrypting credentials', () => axios.post(`/credentials/reencrypt`))
 }
 
 const resourcesAPI = {
-  getResources: async (include_deleted = false) => {
-    try {
-      const response = await axios.get(`/resources`, { params: { include_deleted } })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching resources: ${error}`)
-    }
-  },
-  createResource: async (resourceData) => {
-    try {
-      const response = await axios.post(`/resources`, resourceData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error creating resource: ${error}`)
-    }
-  },
-  getResource: async (resource_id) => {
-    try {
-      const response = await axios.get(`/resources/${resource_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading resource: ${error}`)
-    }
-  },
-  updateResource: async (resource_id, resourceData) => {
-    try {
-      const response = await axios.put(`/resources/${resource_id}`, resourceData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating resource: ${error}`)
-    }
-  }
+  getResources: (include_deleted = false) =>
+    call('Error fetching resources', () =>
+      axios.get(`/resources`, { params: { include_deleted } })
+    ),
+  createResource: (resourceData) =>
+    call('Error creating resource', () => axios.post(`/resources`, resourceData)),
+  getResource: (resource_id) =>
+    call('Error reading resource', () => axios.get(`/resources/${resource_id}`)),
+  updateResource: (resource_id, resourceData) =>
+    call('Error updating resource', () => axios.put(`/resources/${resource_id}`, resourceData))
 }
 
 const sessionsAPI = {
-  getSessions: async (include_deleted = false, page = 1, size = 20, search = '') => {
-    try {
-      const response = await axios.get(`/sessions`, {
+  getSessions: (include_deleted = false, page = 1, size = 20, search = '') =>
+    call('Error fetching sessions', () =>
+      axios.get(`/sessions`, {
         params: { page: page, size: size, search: search, include_deleted: include_deleted }
       })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching sessions: ${error}`)
-    }
-  },
-  getSession: async (session_id) => {
-    try {
-      const response = await axios.get(`/sessions/${session_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading session: ${error}`)
-    }
-  },
-  createSession: async (process_id, parameters = null) => {
-    try {
-      const response = await axios.post(`/sessions`, { process_id: process_id, parameters: parameters })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error creating session: ${error}`)
-    }
-  },
-  updateStatus: async (session_id, status) => {
-    try {
-      const response = await axios.put(`/sessions/${session_id}/status`, { status })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating session status: ${error}`)
-    }
-  },
-  getByResourceId: async (resource_id) => {
-    try {
-      const response = await axios.get(`/sessions/by_resource_id/${resource_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching sessions by resource: ${error}`)
-    }
-  },
-  getNewSessions: async () => {
-    try {
-      const response = await axios.get(`/sessions/new`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching new sessions: ${error}`)
-    }
-  },
-  getProcessActivitySummary: async (hours = 24) => {
-    try {
-      const response = await axios.get(`/sessions/activity-summary`, { params: { hours } })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching process activity summary: ${error}`)
-    }
-  }
+    ),
+  getSession: (session_id) =>
+    call('Error reading session', () => axios.get(`/sessions/${session_id}`)),
+  createSession: (process_id, parameters = null) =>
+    call('Error creating session', () =>
+      axios.post(`/sessions`, { process_id: process_id, parameters: parameters })
+    ),
+  updateStatus: (session_id, status) =>
+    call('Error updating session status', () =>
+      axios.put(`/sessions/${session_id}/status`, { status })
+    ),
+  getByResourceId: (resource_id) =>
+    call('Error fetching sessions by resource', () =>
+      axios.get(`/sessions/by_resource_id/${resource_id}`)
+    ),
+  getNewSessions: () => call('Error fetching new sessions', () => axios.get(`/sessions/new`)),
+  getProcessActivitySummary: (hours = 24) =>
+    call('Error fetching process activity summary', () =>
+      axios.get(`/sessions/activity-summary`, { params: { hours } })
+    )
 }
 
 const triggersAPI = {
-  getTriggers: async (include_deleted = false) => {
-    try {
-      const response = await axios.get(`/triggers`, { params: { include_deleted } })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching triggers: ${error}`)
-    }
-  },
-  updateTrigger: async (trigger_id, triggerData) => {
-    try {
-      const response = await axios.put(`/triggers/${trigger_id}`, triggerData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating trigger: ${error}`)
-    }
-  },
-  deleteTrigger: async (trigger_id) => {
-    try {
-      const response = await axios.delete(`/triggers/${trigger_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error deleting trigger: ${error}`)
-    }
-  },
-  getUpcomingExecutions: async (hours_ahead = 24) => {
-    try {
-      const response = await axios.get(`/triggers/upcoming`, { params: { hours_ahead } })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching upcoming executions: ${error}`)
-    }
-  }
+  getTriggers: (include_deleted = false) =>
+    call('Error fetching triggers', () => axios.get(`/triggers`, { params: { include_deleted } })),
+  updateTrigger: (trigger_id, triggerData) =>
+    call('Error updating trigger', () => axios.put(`/triggers/${trigger_id}`, triggerData)),
+  deleteTrigger: (trigger_id) =>
+    call('Error deleting trigger', () => axios.delete(`/triggers/${trigger_id}`)),
+  getUpcomingExecutions: (hours_ahead = 24) =>
+    call('Error fetching upcoming executions', () =>
+      axios.get(`/triggers/upcoming`, { params: { hours_ahead } })
+    )
 }
 
 const auditLogsAPI = {
-  getAuditLogs: async (session_id, page = 1, size = 20, search = '') => {
-    try {
-      const response = await axios.get(`/audit-logs/${session_id}`, {
+  getAuditLogs: (session_id, page = 1, size = 20, search = '') =>
+    call('Error fetching sessions', () =>
+      axios.get(`/audit-logs/${session_id}`, {
         params: { page: page, size: size, search: search }
       })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching sessions: ${error}`)
-    }
-  },
-  getByWorkItemId: async (workitem_id) => {
-    try {
-      const response = await axios.get(`/audit-logs/by_workitem/${workitem_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching session logs by workitem: ${error}`)
-    }
-  }
+    ),
+  getByWorkItemId: (workitem_id) =>
+    call('Error fetching session logs by workitem', () =>
+      axios.get(`/audit-logs/by_workitem/${workitem_id}`)
+    )
 }
 
 const workitemsApi = {
-  getWorkItem: async (workitem_id) => {
-    try {
-      const response = await axios.get(`/workitems/${workitem_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading workitem: ${error}`)
-    }
-  },
-  updateWorkItem: async (workitem_id, workitemData) => {
-    try {
-      const response = await axios.put(`/workitems/${workitem_id}`, workitemData)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating workitem: ${error}`)
-    }
-  },
-  updateWorkItemStatus: async (workitem_id, status) => {
-    try {
-      const response = await axios.put(`/workitems/${workitem_id}/status`, { status })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error updating workitem status: ${error}`)
-    }
-  }
+  getWorkItem: (workitem_id) =>
+    call('Error reading workitem', () => axios.get(`/workitems/${workitem_id}`)),
+  updateWorkItem: (workitem_id, workitemData) =>
+    call('Error updating workitem', () => axios.put(`/workitems/${workitem_id}`, workitemData)),
+  updateWorkItemStatus: (workitem_id, status) =>
+    call('Error updating workitem status', () =>
+      axios.put(`/workitems/${workitem_id}/status`, { status })
+    )
 }
 
 const accessTokensApi = {
-  getAccessTokens: async () => {
-    try {
-      const response = await axios.get(`/accesstokens`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching access tokens: ${error}`)
-    }
-  },
+  getAccessTokens: () => call('Error fetching access tokens', () => axios.get(`/accesstokens`)),
 
-  getAccessToken: async (token) => {
-    try {
-      const response = await axios.get(`/accesstokens/${token}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading access token: ${error}`)
-    }
-  },
+  getAccessToken: (token) =>
+    call('Error reading access token', () => axios.get(`/accesstokens/${token}`)),
 
-  createAccessToken: async (identifier) => {
-    try {
-      const response = await axios.post(`/accesstokens`, { identifier })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error creating access token: ${error}`)
-    }
-  },
-  deleteAccessToken: async (token) => {
-    try {
-      const response = await axios.delete(`/accesstokens/${token}`)
-      return response.data
-    } catch (error) {
-      const detail = error.response?.data?.detail
-      if (typeof detail === 'string') {
-        throw new Error(detail)
-      }
-      throw new Error(`Error deleting access token: ${error}`)
-    }
-  }
+  createAccessToken: (identifier) =>
+    call('Error creating access token', () => axios.post(`/accesstokens`, { identifier })),
+  deleteAccessToken: (token) =>
+    call('Error deleting access token', () => axios.delete(`/accesstokens/${token}`))
 }
 
 const incidentsAPI = {
-  getIncidents: async (page = 1, size = 20, search = '', status = null) => {
-    try {
-      const response = await axios.get(`/incidents`, {
+  getIncidents: (page = 1, size = 20, search = '', status = null) =>
+    call('Error fetching incidents', () =>
+      axios.get(`/incidents`, {
         params: { page, size, search, ...(status && { status }) }
       })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching incidents: ${error}`)
-    }
-  },
-  getOpenIncidents: async () => {
-    try {
-      const response = await axios.get(`/incidents/open`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching open incidents: ${error}`)
-    }
-  },
-  getOpenIncidentCount: async () => {
-    try {
-      const response = await axios.get(`/incidents/open/count`)
-      return response.data.count
-    } catch (error) {
-      throw new Error(`Error fetching open incident count: ${error}`)
-    }
-  },
-  dismissAllIncidents: async () => {
-    try {
-      const response = await axios.post(`/incidents/dismiss-all`)
-      return response.data.dismissed
-    } catch (error) {
-      throw new Error(`Error dismissing all incidents: ${error}`)
-    }
-  },
-  dismissIncidents: async (ids) => {
-    try {
-      const response = await axios.post(`/incidents/dismiss`, { ids })
-      return response.data.dismissed
-    } catch (error) {
-      throw new Error(`Error dismissing incidents: ${error}`)
-    }
-  },
-  getIncident: async (id) => {
-    try {
-      const response = await axios.get(`/incidents/${id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading incident: ${error}`)
-    }
-  },
-  resolveIncident: async (id, status, resolution_note) => {
-    try {
-      const response = await axios.put(`/incidents/${id}/resolve`, { status, resolution_note })
-      return response.data
-    } catch (error) {
-      throw new Error(`Error resolving incident: ${error}`)
-    }
-  },
-  deleteIncident: async (id) => {
-    try {
-      const response = await axios.delete(`/incidents/${id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error deleting incident: ${error}`)
-    }
-  }
+    ),
+  getOpenIncidents: () => call('Error fetching open incidents', () => axios.get(`/incidents/open`)),
+  getOpenIncidentCount: () =>
+    call('Error fetching open incident count', () => axios.get(`/incidents/open/count`)).then(
+      (data) => data.count
+    ),
+  dismissAllIncidents: () =>
+    call('Error dismissing all incidents', () => axios.post(`/incidents/dismiss-all`)).then(
+      (data) => data.dismissed
+    ),
+  dismissIncidents: (ids) =>
+    call('Error dismissing incidents', () => axios.post(`/incidents/dismiss`, { ids })).then(
+      (data) => data.dismissed
+    ),
+  getIncident: (id) => call('Error reading incident', () => axios.get(`/incidents/${id}`)),
+  resolveIncident: (id, status, resolution_note) =>
+    call('Error resolving incident', () =>
+      axios.put(`/incidents/${id}/resolve`, { status, resolution_note })
+    ),
+  deleteIncident: (id) => call('Error deleting incident', () => axios.delete(`/incidents/${id}`))
 }
 
 // Health API
 const healthAPI = {
-  getHealth: async () => {
-    try {
-      const response = await axios.get(`/health`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error fetching health: ${error}`)
-    }
-  }
+  getHealth: () => call('Error fetching health', () => axios.get(`/health`))
 }
 
 // Export APIs for use in Vue components or elsewhere

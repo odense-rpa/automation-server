@@ -45,7 +45,7 @@ export default {
             try {
                 this.triggers = await processesAPI.getTriggers(this.processId);
             } catch (error) {
-                console.error('Failed to load triggers:', error);
+                alertStore.addAlert({ type: 'error', message: error.message });
                 this.triggers = [];
             } finally {
                 this.isLoading = false;

@@ -37,6 +37,7 @@ import ContentCard from '@/components/ContentCard.vue'
 import { sessionsAPI } from "@/services/automationserver";
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import AuditLogList from '@/components/AuditLogList.vue';
+import { useAlertStore } from '@/stores/alertStore';
 
 export default {
     name: "EditSessionView",
@@ -61,7 +62,7 @@ export default {
                     this.session = response;
                 })
                 .catch((error) => {
-                    console.error(error);
+                    useAlertStore().addAlert({ type: 'error', message: error.message });
                 });
         }
     }
