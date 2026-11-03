@@ -112,6 +112,12 @@ const routes = [
         component: () => import('../views/EditSessionView.vue')
       }
     ]
+  },
+  // Must stay last: anything no other route matched
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue')
   }
 ]
 
