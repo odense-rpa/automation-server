@@ -69,6 +69,18 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
 
+      # The backend must start exactly as shipped: no uv, no network.
+      - name: Check backend starts offline
+        if: matrix.component == 'backend'
+        run: |
+          docker run --rm --network none --entrypoint sh ats-backend:scan -c '
+            set -e
+            if command -v uv >/dev/null; then echo "uv found in runtime image" >&2; exit 1; fi
+            alembic --help >/dev/null
+            python -c "import app.main"
+            echo "Backend starts offline"
+          '
+
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
