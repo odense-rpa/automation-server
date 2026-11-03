@@ -28,7 +28,7 @@
                           <router-link :to="{ name: 'session.edit', params: { id: session.id } }" class="link link-hover">{{ session.id }}</router-link>
                         </td>
                         <td><process-label :process-id="session.process_id" /></td>
-                        <td class="text-center"><status-badge kind="session" :status="session.status" /></td>
+                        <td class="text-center"><status-badge kind="session" :status="session.status" compact /></td>
                         <td class="text-center">{{ $formatDateTime(session.created_at) }}</td>
                         <td class="text-center">{{ $formatDateTime(session.dispatched_at) }}</td>
                         <td class="text-center">{{ $formatDateTime(session.updated_at) }}</td>

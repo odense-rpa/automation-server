@@ -1,5 +1,11 @@
 <template>
-  <span class="badge badge-ghost gap-1.5 whitespace-nowrap" :title="label">
+  <!-- Compact: just the icon, for status columns in tables. The label is still
+       there as a tooltip and for screen readers -->
+  <span v-if="compact" :title="label">
+    <font-awesome-icon :icon="['fas', look.icon]" :spin="look.spin" :class="look.color" />
+    <span class="sr-only">{{ label }}</span>
+  </span>
+  <span v-else class="badge badge-ghost gap-1.5 whitespace-nowrap" :title="label">
     <font-awesome-icon :icon="['fas', look.icon]" :spin="look.spin" :class="look.color" />
     {{ label }}
   </span>
@@ -37,7 +43,9 @@ export default {
       type: String,
       required: true,
       validator: (value) => Object.keys(LOOKS).includes(value)
-    }
+    },
+    // Icon only (with tooltip and screen-reader text), for table columns
+    compact: { type: Boolean, default: false }
   },
   computed: {
     look() {

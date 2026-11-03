@@ -63,7 +63,7 @@
                                 <process-label :process-id="incident.process_id" />
                             </td>
                             <td class="text-center">
-                                <status-badge kind="incident" :status="incident.status" />
+                                <status-badge kind="incident" :status="incident.status" compact />
                             </td>
                             <td class="text-center">{{ $formatDateTime(incident.created_at) }}</td>
                         </tr>

@@ -15,7 +15,7 @@
     <td class="max-w-0"><div class="truncate" :title="workitem.message">{{ workitem.message }}</div></td>
     <td class="whitespace-nowrap"><json-preview :data="workitem.data" :title="`Work item ${workitem.id}: ${workitem.reference}`" /></td>
     <td class="text-center">
-      <status-badge kind="workitem" :status="workitem.status" />
+      <status-badge kind="workitem" :status="workitem.status" compact />
       <font-awesome-icon v-if="workitem.locked" :icon="['fas', 'lock']" class="text-base-content/40 ml-1" title="Locked" />
     </td>
     <td class="text-center"><div class="xl:whitespace-nowrap">{{ $formatDateTime(workitem.created_at) }}</div></td>
