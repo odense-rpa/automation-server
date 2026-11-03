@@ -22,10 +22,13 @@ async def test_get_credentials(session: AsyncSession, client: AsyncClient):
     assert data[0]["name"] == "Secret credential"
     assert data[0]["username"] == "Secret username"
     assert data[0]["deleted"] is False
+    # The listing never carries passwords
+    assert "password" not in data[0]
 
     response = await client.get("/credentials/?include_deleted=true")
     data = response.json()
     assert len(data) == 2
+    assert all("password" not in c for c in data)
 
     assert data[1]["name"] == "Secret deleted credential"
     assert data[1]["username"] == "Secret deleted username"
@@ -43,6 +46,8 @@ async def test_get_credential(session: AsyncSession, client: AsyncClient):
     assert data["name"] == "Secret credential"
     assert data["username"] == "Secret username"
     assert data["deleted"] is False
+    # The worker reads git credentials from this endpoint
+    assert data["password"] == "My secret password"
 
     response = await client.get("/credentials/2")
 
@@ -609,3 +614,70 @@ async def test_create_credential_with_empty_json_data(
     )
 
     assert response.status_code == 200
+
+
+async def test_by_name_returns_password(session: AsyncSession, client: AsyncClient):
+    # Automations read credentials through /by_name; it must keep the password
+    await generate_basic_data(session)
+
+    response = await client.get("/credentials/by_name/Secret credential")
+
+    assert response.status_code == 200
+    assert response.json()["password"] == "My secret password"
+
+
+async def test_update_without_password_keeps_it(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    response = await client.put(
+        "/credentials/1",
+        json={"name": "Renamed credential", "username": "New username"},
+    )
+    assert response.status_code == 200
+    assert response.json()["password"] == "My secret password"
+
+    data = (await client.get("/credentials/1")).json()
+    assert data["name"] == "Renamed credential"
+    assert data["username"] == "New username"
+    assert data["password"] == "My secret password"
+
+
+async def test_update_with_password_changes_it(
+    session: AsyncSession, client: AsyncClient
+):
+    await generate_basic_data(session)
+
+    response = await client.put(
+        "/credentials/1",
+        json={"name": "Secret credential", "password": "Rotated password"},
+    )
+    assert response.status_code == 200
+
+    data = (await client.get("/credentials/1")).json()
+    assert data["password"] == "Rotated password"
+
+
+async def test_update_without_password_still_encrypts(
+    session: AsyncSession, client: AsyncClient, monkeypatch
+):
+    # Plaintext from before a key was configured is encrypted on the next save,
+    # even when the save leaves the password out
+    monkeypatch.setattr(settings, "encryption_key", "set me in the env file")
+    await generate_basic_data(session)
+
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+    response = await client.put(
+        "/credentials/1",
+        json={"name": "Secret credential", "username": "Secret username"},
+    )
+    assert response.status_code == 200
+
+    row = (
+        await session.execute(text("SELECT password FROM credential WHERE id = 1"))
+    ).one()
+    assert row[0].startswith("enc:v1:")
+    assert (await client.get("/credentials/1")).json()["password"] == (
+        "My secret password"
+    )

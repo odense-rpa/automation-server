@@ -57,7 +57,10 @@ export default {
 
     async fetchCredential(id) {
       try {
-        this.credential = await credentialsAPI.readCredential(id)
+        // The edit form never shows the password, so don't keep it in the page either
+        // eslint-disable-next-line no-unused-vars
+        const { password, ...credential } = await credentialsAPI.readCredential(id)
+        this.credential = credential
       } catch (error) {
         alertStore.addAlert({ type: 'error', message: 'Error fetching credential: ' + error })
       }
