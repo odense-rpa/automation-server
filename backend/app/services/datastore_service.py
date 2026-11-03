@@ -22,6 +22,14 @@ class DatastoreNotFound(Exception):
     pass
 
 
+class DatastoreGone(Exception):
+    """The datastore was deleted while it was being written."""
+
+
+class DatastoreInvalid(Exception):
+    """The document can't be stored as JSON."""
+
+
 class DatastoreService:
     """Datastores: named JSON documents that automations keep state in.
 
@@ -35,7 +43,11 @@ class DatastoreService:
         self.max_bytes = max_bytes
 
     def _size(self, data: dict) -> int:
-        size = len(dump_json(data).encode("utf-8"))
+        try:
+            size = len(dump_json(data).encode("utf-8"))
+        except ValueError as error:
+            # NaN/Infinity, or a lone surrogate (UnicodeEncodeError)
+            raise DatastoreInvalid(f"Document is not valid JSON: {error}") from None
         if size > self.max_bytes:
             raise DatastoreTooLarge(size, self.max_bytes)
         return size
@@ -87,6 +99,8 @@ class DatastoreService:
             raise DatastoreNameTaken(name) from None
 
         if updated is None:
+            if not await self.repository.is_active(datastore_id):
+                raise DatastoreGone(current_name)
             raise DatastoreConflict(
                 f"Datastore '{current_name}' was changed by someone else"
             )
@@ -97,23 +111,38 @@ class DatastoreService:
     ) -> tuple[Datastore, bool]:
         """Write a datastore by name, creating it if it doesn't exist.
 
-        expected_version 0 means "must not exist yet". Returns the datastore
-        and whether it was created.
+        expected_version 0 means "must not exist yet". Without
+        expected_version the write always succeeds (last writer wins), also
+        when another writer creates or deletes the datastore at the same
+        time: it is retried against what is there then. Returns the
+        datastore and whether it was created.
         """
-        existing = await self.repository.get_by_name(name)
+        for _ in range(3):
+            existing = await self.repository.get_by_name(name)
 
-        if existing is None:
-            if expected_version not in (None, 0):
-                raise DatastoreNotFound(name)
+            if existing is None:
+                if expected_version not in (None, 0):
+                    raise DatastoreNotFound(name)
+                try:
+                    return await self.create(name, "", data), True
+                except DatastoreNameTaken:
+                    # Created by a concurrent writer between our read and insert
+                    if expected_version == 0:
+                        raise DatastoreConflict(
+                            f"Datastore '{name}' was created by someone else"
+                        ) from None
+                    continue
+
+            if expected_version == 0:
+                raise DatastoreConflict(f"Datastore '{name}' already exists")
+
             try:
-                return await self.create(name, "", data), True
-            except DatastoreNameTaken:
-                # Created by a concurrent writer between our read and insert
-                raise DatastoreConflict(
-                    f"Datastore '{name}' was created by someone else"
-                ) from None
+                return await self.write(existing, expected_version, data=data), False
+            except DatastoreGone:
+                # Deleted between our read and write
+                if expected_version is not None:
+                    raise DatastoreNotFound(name) from None
+                continue
 
-        if expected_version == 0:
-            raise DatastoreConflict(f"Datastore '{name}' already exists")
-
-        return await self.write(existing, expected_version, data=data), False
+        # Only reachable if creates and deletes keep racing this write
+        raise DatastoreConflict(f"Datastore '{name}' keeps changing, try again")

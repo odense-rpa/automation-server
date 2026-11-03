@@ -105,11 +105,26 @@ class EncryptedColumnsMixin:
         result = await self.session.execute(query, {"id": row_id})
         return dict(result.mappings().one())
 
-    async def _write_stored(self, row_id: int, values: dict) -> None:
-        """Write raw text to a row's columns, bypassing the column types."""
-        assignments = ", ".join(f"{column} = :{column}" for column in values)
-        query = text(f"UPDATE {self._encrypted_table} SET {assignments} WHERE id = :id")
-        await self.session.execute(query, {**values, "id": row_id})
+    async def _replace_stored(self, row_id: int, old: dict, new: dict) -> bool:
+        """Replace a row's stored text, but only if it still holds ``old``.
+
+        Raw SQL, bypassing the column types. The condition makes this safe
+        against a write that lands between reading ``old`` and this UPDATE:
+        that row is left alone rather than overwritten with stale data.
+
+        Returns:
+            Whether the row was updated.
+        """
+        assignments = ", ".join(f"{column} = :new_{column}" for column in new)
+        unchanged = " AND ".join(f"{column} = :old_{column}" for column in old)
+        query = text(
+            f"UPDATE {self._encrypted_table} SET {assignments}"
+            f" WHERE id = :id AND {unchanged}"
+        )
+        params = {f"new_{column}": value for column, value in new.items()}
+        params |= {f"old_{column}": value for column, value in old.items()}
+        result = await self.session.execute(query, {**params, "id": row_id})
+        return result.rowcount == 1
 
     async def reencrypt_unencrypted(self) -> int:
         """Encrypt every value that is still stored as plaintext.
@@ -120,6 +135,11 @@ class EncryptedColumnsMixin:
         changes (no updated_at, no version): re-encryption is not a change
         to the data itself.
 
+        A row written in between (by an automation, say) is skipped, not
+        overwritten: the write back only applies while the row still holds
+        the plaintext that was read. That write went through the column
+        types, so it is encrypted already.
+
         Returns:
             The number of rows rewritten. Zero when no key is configured,
             since there is nothing to encrypt with.
@@ -127,8 +147,8 @@ class EncryptedColumnsMixin:
         if not crypto.is_configured():
             return 0
 
-        ids = await self.get_unencrypted_ids()
-        for row_id in ids:
+        rewritten = 0
+        for row_id in await self.get_unencrypted_ids():
             stored = await self._read_stored(row_id)
             # Only the plaintext columns: a row can hold one of each
             plaintext = {
@@ -136,10 +156,13 @@ class EncryptedColumnsMixin:
                 for column, value in stored.items()
                 if value and not value.startswith(ENCRYPTION_PREFIX)
             }
+            if not plaintext:
+                continue
             encrypted = {
                 column: crypto.encrypt(value) for column, value in plaintext.items()
             }
-            await self._write_stored(row_id, encrypted)
+            if await self._replace_stored(row_id, plaintext, encrypted):
+                rewritten += 1
 
         await self.session.commit()
-        return len(ids)
+        return rewritten

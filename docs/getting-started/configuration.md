@@ -58,7 +58,7 @@ After setting a key on a server that already holds credentials, rewrite the exis
 
 Both cover soft-deleted credentials too, since their secrets are still on disk. Re-encryption does not change the credential values or their `updated_at` timestamp. Until it is run, the server logs a warning at startup naming how many credentials are still plaintext.
 
-Datastores work the same way, with their own endpoint and page: `POST /datastores/reencrypt` (status at `GET /datastores/encryption`) or **Encrypt all now** on the Datastores page. Re-encryption leaves a datastore's `version` unchanged, so it never conflicts with an automation that is updating it.
+Datastores work the same way, with their own endpoint and page: `POST /datastores/reencrypt` (status at `GET /datastores/encryption`) or **Encrypt all now** on the Datastores page. Re-encryption leaves a datastore's `version` unchanged, so it never conflicts with an automation that is updating it. A datastore an automation writes while re-encryption runs is left as the automation stored it, already encrypted.
 
 ### If the key is lost or changed
 

@@ -5,7 +5,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.database import crypto
 from app.database.crypto import ENCRYPTION_PREFIX
+from app.database.repository import DatastoreRepository
 from app.main import check_encryption
 
 
@@ -287,3 +289,156 @@ async def test_startup_reports_datastores(
     with caplog.at_level(logging.WARNING, logger="app.main"):
         await check_encryption(session)
     assert "1 datastore(s) are encrypted but ENCRYPTION_KEY is not set" in caplog.text
+
+
+# Review fixes: races, listing, validation
+
+
+async def test_listing_works_when_documents_cannot_be_decrypted(
+    client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "original-key")
+    await create(client, data={"n": 1})
+
+    monkeypatch.setattr(settings, "encryption_key", "another-key")
+    response = await client.get("/datastores")
+    assert response.status_code == 200
+    assert [d["name"] for d in response.json()] == ["state"]
+
+    # Reading the document itself explains the problem in datastore terms
+    response = await client.get("/datastores/by_name/state")
+    assert response.status_code == 500
+    assert "These datastores are encrypted" in response.json()["detail"]
+    assert "credentials" not in response.json()["detail"]
+
+
+async def test_reencrypt_skips_a_row_written_meanwhile(
+    client: AsyncClient, session: AsyncSession, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "")
+    created = await create(client, data={"n": 1})
+    monkeypatch.setattr(settings, "encryption_key", "test-key")
+
+    # An automation writes {"n": 2} between re-encryption's read and write
+    original = DatastoreRepository._read_stored
+
+    async def read_then_concurrent_write(self, row_id):
+        stored = await original(self, row_id)
+        await self.session.execute(
+            text("UPDATE datastore SET data = :data WHERE id = :id"),
+            {"data": crypto.encrypt('{"n":2}'), "id": row_id},
+        )
+        return stored
+
+    monkeypatch.setattr(DatastoreRepository, "_read_stored", read_then_concurrent_write)
+    result = (await client.post("/datastores/reencrypt")).json()
+    assert result == {"reencrypted": 0, "remaining": 0}
+
+    # The concurrent write survives; the stale plaintext was not written back
+    response = await client.get(f"/datastores/{created['id']}")
+    assert response.json()["data"] == {"n": 2}
+
+
+async def test_unconditional_write_by_name_survives_a_concurrent_create(
+    client: AsyncClient, monkeypatch
+):
+    await create(client, data={"n": 1})
+
+    # The first lookup misses the datastore another writer just created
+    original = DatastoreRepository.get_by_name
+    calls = []
+
+    async def miss_once(self, name):
+        calls.append(name)
+        return None if len(calls) == 1 else await original(self, name)
+
+    monkeypatch.setattr(DatastoreRepository, "get_by_name", miss_once)
+    response = await client.put("/datastores/by_name/state", json={"data": {"n": 2}})
+    assert response.status_code == 200
+    assert response.json()["data"] == {"n": 2}
+
+
+async def delete_before_first_write(monkeypatch):
+    """Soft-delete the datastore just before the first compare-and-set."""
+    original = DatastoreRepository.compare_and_set
+    calls = []
+
+    async def delete_then_write(self, datastore_id, expected_version, values):
+        calls.append(datastore_id)
+        if len(calls) == 1:
+            await self.session.execute(
+                text("UPDATE datastore SET deleted = true WHERE id = :id"),
+                {"id": datastore_id},
+            )
+            # Committed, as by another request: the failed write's rollback
+            # must not undo it
+            await self.session.commit()
+        return await original(self, datastore_id, expected_version, values)
+
+    monkeypatch.setattr(DatastoreRepository, "compare_and_set", delete_then_write)
+
+
+async def test_write_by_id_to_datastore_deleted_meanwhile(
+    client: AsyncClient, monkeypatch
+):
+    created = await create(client, data={"n": 1})
+    await delete_before_first_write(monkeypatch)
+
+    response = await client.put(
+        f"/datastores/{created['id']}", json={"data": {"n": 2}, "expected_version": 1}
+    )
+    assert response.status_code == 410
+
+
+async def test_write_by_name_to_datastore_deleted_meanwhile(
+    client: AsyncClient, monkeypatch
+):
+    await create(client, data={"n": 1})
+    await delete_before_first_write(monkeypatch)
+
+    # Unconditional: recreated, as a write after the delete would have done
+    response = await client.put("/datastores/by_name/state", json={"data": {"n": 2}})
+    assert response.status_code == 201
+    assert response.json()["data"] == {"n": 2}
+
+
+async def test_versioned_write_by_name_to_datastore_deleted_meanwhile(
+    client: AsyncClient, monkeypatch
+):
+    await create(client, data={"n": 1})
+    await delete_before_first_write(monkeypatch)
+
+    response = await client.put(
+        "/datastores/by_name/state", json={"data": {"n": 2}, "expected_version": 1}
+    )
+    assert response.status_code == 404
+
+
+async def test_name_rules(client: AsyncClient):
+    response = await client.post("/datastores", json={"name": "a/b", "data": {}})
+    assert response.status_code == 422
+
+    created = await create(client, name="  spaced  ")
+    assert created["name"] == "spaced"
+
+    response = await client.put(f"/datastores/{created['id']}", json={"name": "x/y"})
+    assert response.status_code == 422
+
+
+async def test_document_that_is_not_json_is_rejected(client: AsyncClient):
+    headers = {"Content-Type": "application/json"}
+    for document in ('{"x": NaN}', '{"x": Infinity}', '{"x": "\\ud800"}'):
+        response = await client.post(
+            "/datastores",
+            content=f'{{"name": "s", "data": {document}}}',
+            headers=headers,
+        )
+        assert response.status_code == 422, document
+
+
+async def test_expected_version_by_id_must_be_positive(client: AsyncClient):
+    created = await create(client)
+    response = await client.put(
+        f"/datastores/{created['id']}", json={"data": {}, "expected_version": 0}
+    )
+    assert response.status_code == 422

@@ -80,8 +80,12 @@ class EncryptedStr(TypeDecorator):
 
 
 def dump_json(value) -> str:
-    """Compact JSON, as stored. Its UTF-8 length is a document's size."""
-    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    """Compact JSON, as stored. Its UTF-8 length is a document's size.
+
+    NaN and Infinity are refused (ValueError): they aren't JSON, and would
+    be read back as something other than what was written.
+    """
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
 
 
 class EncryptedJSON(TypeDecorator):

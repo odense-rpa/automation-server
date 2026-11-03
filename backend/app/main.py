@@ -170,23 +170,30 @@ async def encryption_key_error_handler(
     """Turn an unusable encryption key into an explanation, not a traceback.
 
     Without this, a changed or removed ENCRYPTION_KEY makes every credential
-    read fail with a bare 500 that says nothing about the cause.
+    or datastore read fail with a bare 500 that says nothing about the cause.
     """
     logger.error(f"Encryption key error on {request.url.path}: {exc}")
 
+    if "/datastores" in request.url.path:
+        noun = "datastores"
+        recover = "delete the affected datastores and let their processes recreate them"
+    else:
+        noun = "credentials"
+        recover = "delete and re-enter the affected credentials"
+
     if crypto.is_configured():
         detail = (
-            "These credentials are encrypted with a different key than the "
+            f"These {noun} are encrypted with a different key than the "
             "ENCRYPTION_KEY this server is configured with, so they cannot be "
             "read. Restore the previous ENCRYPTION_KEY value and restart the "
-            "server, or delete and re-enter the affected credentials."
+            f"server, or {recover}."
         )
     else:
         detail = (
-            "These credentials are encrypted, but no ENCRYPTION_KEY is "
+            f"These {noun} are encrypted, but no ENCRYPTION_KEY is "
             "configured on the server, so they cannot be read. Restore the "
             "ENCRYPTION_KEY value the server was previously started with, or "
-            "delete and re-enter the affected credentials."
+            f"{recover}."
         )
 
     return JSONResponse(status_code=500, content={"detail": detail})

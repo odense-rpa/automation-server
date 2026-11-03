@@ -35,7 +35,7 @@ The API uses the same `ATS_URL` and `ATS_TOKEN` as the rest of the framework.
 |---|---|
 | `GET /datastores/by_name/{name}` | Read a datastore (`404` if it doesn't exist) |
 | `PUT /datastores/by_name/{name}` | Write the document, **creating the datastore if it doesn't exist** (`201` created, `200` updated) |
-| `GET /datastores/{id}`, `PUT /datastores/{id}` | The same by id |
+| `GET /datastores/{id}`, `PUT /datastores/{id}` | Read or write by id. Writing by id never creates a datastore (`410` if it was deleted) |
 
 A write sends the whole document as `data`:
 
@@ -88,3 +88,5 @@ def update_datastore(name: str, change, attempts: int = 5) -> dict:
 ```
 
 `expected_version: 0` means "the datastore must not exist yet", so two runs creating the same datastore at once can't both succeed. Leaving `expected_version` out writes regardless of what is there (last writer wins), which is fine when only one run at a time can write.
+
+Names cannot contain `/`, since automations address datastores by name in the URL. Surrounding spaces are removed. Documents must be valid JSON: `NaN` and `Infinity` are refused with `422`.

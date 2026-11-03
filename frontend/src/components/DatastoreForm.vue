@@ -3,7 +3,8 @@
     <div class="flex items-center">
       <label for="datastore-name" class="w-1/5 font-semibold">Name</label>
       <div class="w-full">
-        <input id="datastore-name" type="text" class="input input-bordered w-full" v-model="name" required />
+        <input id="datastore-name" type="text" class="input input-bordered w-full" v-model="name" required
+          pattern="[^/]+" title="A name cannot contain /" />
         <p class="text-xs text-base-content/60 mt-1">
           Automations find the datastore by this name, so renaming it breaks those that use it.
         </p>

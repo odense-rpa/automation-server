@@ -6,6 +6,8 @@ from app.database.unit_of_work import AbstractUnitOfWork
 from app.services import DatastoreService
 from app.services.datastore_service import (
     DatastoreConflict,
+    DatastoreGone,
+    DatastoreInvalid,
     DatastoreNameTaken,
     DatastoreNotFound,
     DatastoreTooLarge,
@@ -55,6 +57,10 @@ def write_error(error: Exception) -> HTTPException:
         return HTTPException(status_code=422, detail="Datastore name already exists")
     if isinstance(error, DatastoreNotFound):
         return HTTPException(status_code=404, detail="Datastore not found")
+    if isinstance(error, DatastoreGone):
+        return HTTPException(status_code=410, detail="Datastore is gone")
+    if isinstance(error, DatastoreInvalid):
+        return HTTPException(status_code=422, detail=str(error))
     raise error
 
 
@@ -63,6 +69,8 @@ WRITE_ERRORS = (
     DatastoreTooLarge,
     DatastoreNameTaken,
     DatastoreNotFound,
+    DatastoreGone,
+    DatastoreInvalid,
 )
 
 RESPONSE_STATES = error_descriptions("Datastore", _404=True, _410=True, _403=True)
@@ -77,11 +85,14 @@ async def get_datastores(
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> list[DatastoreSummary]:
-    # No documents in the listing: they can be large and aren't needed here
+    # No documents in the listing: they can be large, aren't needed here,
+    # and leaving them out keeps the listing working when they can't be
+    # decrypted
     async with uow:
-        result = await uow.datastores.get_all(include_deleted)
-        result.sort(key=lambda x: x.name)
-        return [DatastoreSummary(**d.model_dump(exclude={"data"})) for d in result]
+        result = await uow.datastores.get_all_without_data(include_deleted)
+        return [
+            DatastoreSummary.model_validate(d, from_attributes=True) for d in result
+        ]
 
 
 @router.post("", responses=error_descriptions("Datastore", _403=True) | TOO_LARGE)
@@ -134,7 +145,8 @@ async def reencrypt_datastores(
 
     Documents written before an encryption key was configured stay plaintext
     until they are written again. This does that in one pass, without
-    changing their version, so it never conflicts with a writer.
+    changing their version, so it never conflicts with a writer. A document
+    written while this runs is left as that write stored it (encrypted).
     """
     if not crypto.is_configured():
         raise HTTPException(

@@ -1,9 +1,15 @@
 import shlex
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Annotated, Any, Dict, Generic, List, Optional, TypeVar
 
 from cronsim import CronSim, CronSimError
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 from typing_extensions import Self
 
 from app import enums
@@ -194,8 +200,15 @@ class DatastoreRead(DatastoreSummary):
     data: Dict
 
 
+# Automations address datastores as /datastores/by_name/{name}, which can't
+# hold a "/"; surrounding spaces would make names that look alike differ
+DatastoreName = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, pattern=r"^[^/]+$")
+]
+
+
 class DatastoreCreate(BaseModel):
-    name: str = Field(min_length=1)
+    name: DatastoreName
     description: Optional[str] = ""
     data: Dict = {}
 
@@ -204,11 +217,11 @@ class DatastoreUpdate(BaseModel):
     """Update by id (the UI). Fields left out are kept as they are."""
 
     data: Optional[Dict] = None
-    name: Optional[str] = Field(default=None, min_length=1)
+    name: Optional[DatastoreName] = None
     description: Optional[str] = None
     # The version that was read; the write fails with 409 if it changed since.
     # Leave out to overwrite regardless (last writer wins).
-    expected_version: Optional[int] = None
+    expected_version: Optional[int] = Field(default=None, ge=1)
 
 
 class DatastoreWrite(BaseModel):

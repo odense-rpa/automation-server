@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 from sqlmodel import select
 
 from app.database.models import Datastore
@@ -36,6 +37,31 @@ class DatastoreRepository(EncryptedColumnsMixin, DatabaseRepository[Datastore]):
                 )
             )
         ).first()
+
+    async def get_all_without_data(
+        self, include_deleted: bool = False
+    ) -> list[Datastore]:
+        """All datastores by name, without loading their documents.
+
+        For listings: documents can be large, and skipping them means the
+        listing still works when they can't be decrypted. Don't touch
+        ``data`` on the results; it isn't loaded.
+        """
+        query = (
+            select(Datastore).options(defer(Datastore.data)).order_by(Datastore.name)
+        )
+        if not include_deleted:
+            query = query.where(Datastore.deleted == False)  # noqa: E712
+        return list((await self.session.scalars(query)).all())
+
+    async def is_active(self, datastore_id: int) -> bool:
+        """Whether the datastore exists and isn't deleted."""
+        deleted = (
+            await self.session.execute(
+                select(Datastore.deleted).where(Datastore.id == datastore_id)
+            )
+        ).scalar_one_or_none()
+        return deleted is False
 
     async def compare_and_set(
         self, datastore_id: int, expected_version: int | None, values: dict
