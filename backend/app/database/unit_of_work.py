@@ -8,6 +8,7 @@ class AbstractUnitOfWork(AbstractAsyncContextManager):
     processes: repository.AbstractProcessRepository
     triggers: repository.AbstractTriggerRepository
     credentials: repository.AbstractCredentialRepository
+    datastores: repository.AbstractDatastoreRepository
     resources: repository.AbstractResourceRepository
     sessions: repository.AbstractSessionRepository
     auditlogs: repository.AbstractAuditLogRepository
@@ -37,6 +38,7 @@ class UnitOfWork(AbstractUnitOfWork):
         self.processes = repository.ProcessRepository(session)
         self.triggers = repository.TriggerRepository(session)
         self.credentials = repository.CredentialRepository(session)
+        self.datastores = repository.DatastoreRepository(session)
         self.resources = repository.ResourceRepository(session)
         self.sessions = repository.SessionRepository(session)
         self.auditlogs = repository.AuditLogRepository(session)

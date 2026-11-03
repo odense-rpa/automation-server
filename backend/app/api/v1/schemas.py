@@ -177,6 +177,48 @@ class CredentialRead(CredentialSummary):
     password: Optional[str] = None
 
 
+class DatastoreSummary(BaseModel):
+    """A datastore without its document, for listings."""
+
+    id: int
+    name: str
+    description: Optional[str] = ""
+    version: int
+    size_bytes: int
+    deleted: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class DatastoreRead(DatastoreSummary):
+    data: Dict
+
+
+class DatastoreCreate(BaseModel):
+    name: str = Field(min_length=1)
+    description: Optional[str] = ""
+    data: Dict = {}
+
+
+class DatastoreUpdate(BaseModel):
+    """Update by id (the UI). Fields left out are kept as they are."""
+
+    data: Optional[Dict] = None
+    name: Optional[str] = Field(default=None, min_length=1)
+    description: Optional[str] = None
+    # The version that was read; the write fails with 409 if it changed since.
+    # Leave out to overwrite regardless (last writer wins).
+    expected_version: Optional[int] = None
+
+
+class DatastoreWrite(BaseModel):
+    """Write by name (automations): creates the datastore if it doesn't exist."""
+
+    data: Dict
+    # As for DatastoreUpdate; 0 means "must not exist yet"
+    expected_version: Optional[int] = Field(default=None, ge=0)
+
+
 class CredentialEncryptionStatus(BaseModel):
     # True when the server has an ENCRYPTION_KEY configured
     key_configured: bool

@@ -9,11 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import app.api.v1.schemas as schemas
 import app.database.models as models
 import app.database.repository as repositories
+from app.config import settings
 from app.database.session import get_session
 from app.database.unit_of_work import AbstractUnitOfWork, UnitOfWork
 from app.security import oauth2_scheme
 from app.services import (
     AuditLogService,
+    DatastoreService,
     IncidentService,
     ResourceService,
     SessionService,
@@ -54,6 +56,9 @@ def get_repository(model):
         if model == models.Incident:
             return repositories.IncidentRepository(session)
 
+        if model == models.Datastore:
+            return repositories.DatastoreRepository(session)
+
         # Add more repositories here
 
     return get
@@ -65,6 +70,14 @@ async def get_workqueue_service(
     ),
 ) -> WorkqueueService:
     return WorkqueueService(repository)
+
+
+async def get_datastore_service(
+    repository: repositories.DatastoreRepository = Depends(
+        get_repository(models.Datastore)
+    ),
+) -> DatastoreService:
+    return DatastoreService(repository, settings.datastore_max_bytes)
 
 
 async def get_auditlog_service(
