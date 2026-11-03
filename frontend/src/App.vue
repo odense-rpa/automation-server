@@ -62,7 +62,7 @@
       </header>
 
       <!-- Main Content Area -->
-      <main class="p-6 overflow-auto pb-20">
+      <main class="flex-1 min-h-0 p-6 overflow-auto pb-20">
         <!-- Router View and Alert Flasher -->
         <router-view></router-view>
         <alert-flasher />
