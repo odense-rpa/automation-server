@@ -23,6 +23,7 @@ import { useAlertStore } from '../stores/alertStore'
 import ContentCard from '@/components/ContentCard.vue'
 import TriggerCard from '@/components/TriggerCard.vue'
 import ProcessForm from '@/components/ProcessForm.vue'
+import { useNameStore } from '@/stores/nameStore'
 
 const alertStore = useAlertStore()
 
@@ -37,6 +38,7 @@ export default {
     async saveProcess(process) {
       try {
         await processesAPI.updateProcess(this.process.id, process)
+        useNameStore().invalidate('processes')
 
         alertStore.addAlert({
           type: 'success',
@@ -56,6 +58,7 @@ export default {
 
       try {
         await processesAPI.deleteProcess(this.process.id)
+        useNameStore().invalidate('processes')
 
         alertStore.addAlert({
           type: 'success',

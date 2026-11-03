@@ -12,6 +12,7 @@ import { useAlertStore } from '../stores/alertStore'
 import { workqueuesAPI } from '@/services/automationserver.js'
 import ContentCard from '@/components/ContentCard.vue'
 import WorkqueueForm from '@/components/WorkqueueForm.vue'
+import { useNameStore } from '@/stores/nameStore'
 const alertStore = useAlertStore()
 
 export default {
@@ -34,6 +35,7 @@ export default {
     async saveWorkqueue(workqueue) {
       try {
         this.workqueue = await workqueuesAPI.updateWorkqueue(this.workqueue.id, workqueue)
+        useNameStore().invalidate('workqueues')
         alertStore.addAlert({
           type: 'success',
           message: "'" + this.workqueue.name + "' was saved"
@@ -53,6 +55,7 @@ export default {
 
       try {
         await workqueuesAPI.deleteWorkqueue(workqueue.id)
+        useNameStore().invalidate('workqueues')
         alertStore.addAlert({
           type: 'success',
           message: "'" + this.workqueue.name + "' was deleted"
