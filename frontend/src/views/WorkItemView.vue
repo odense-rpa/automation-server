@@ -9,6 +9,11 @@
             </div>
         </content-card>
 
+        <!-- Data in its own card, collapsed to top-level keys so it doesn't dominate the page -->
+        <content-card title="Data" class="mb-3">
+            <json-tree :data="workItem.data" :open-depth="0" />
+        </content-card>
+
         <ContentCard v-for="session in sessions" :key="session.id"
             :title="'Session ' + session.id + ' - ' + $formatDateTime(session.dispatched_at) + ' - ' + session.status"
             class="mb-3">
@@ -37,6 +42,7 @@
 <script>
 import ContentCard from '@/components/ContentCard.vue';
 import WorkitemInfo from '@/components/WorkitemInfo.vue';
+import JsonTree from '@/components/JsonTree.vue';
 
 import { auditLogsAPI, sessionsAPI, workitemsApi } from '@/services/automationserver.js';
 
@@ -44,7 +50,8 @@ export default {
     name: 'WorkItemView',
     components: {
         ContentCard,
-        WorkitemInfo
+        WorkitemInfo,
+        JsonTree
     },
     data() {
         return {

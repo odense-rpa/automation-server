@@ -27,21 +27,13 @@
         </dl>
       </div>
     </div>
-    <div class="p-2">
-      <p class="font-semibold mb-2">Data:</p>
-      <json-tree :data="workitem.data" />
-    </div>
   </div>
 </template>
 
 <script>
-import JsonTree from "./JsonTree.vue";
 
 export default {
   name: 'WorkitemInfo',
-    components: {
-        JsonTree
-    },
   props: {
     workitem: {
       type: Object,
