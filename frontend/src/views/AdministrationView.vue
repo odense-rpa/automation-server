@@ -7,7 +7,7 @@
         </div>
         </template>
         <div v-if="tokens.length === 0" class="text-center mb-4">
-            <p class="secondary-content font-semibold">No tokens found.</p>
+            <p class="text-base-content/60 font-semibold">No tokens found.</p>
         </div>
         <tokens-table :tokens="tokens" @refresh="fetchTokens" v-if="tokens.length !== 0" />
     </content-card>

@@ -31,6 +31,7 @@
       <label for="workqueue_id" class="w-1/5 font-semibold">Workqueue</label>
       <div class="w-full">
         <select
+          id="workqueue_id"
           v-model="editedProcess.workqueue_id"
           class="select select-bordered w-full"
           required
@@ -48,6 +49,7 @@
       <label for="target_type" class="w-1/5 font-semibold">Platform</label>
       <div class="w-full">
         <select
+          id="target_type"
           v-model="editedProcess.target_type"
           class="select select-bordered w-full"
           required
@@ -94,6 +96,7 @@
       <label for="target_credentials_id" class="w-1/5 font-semibold">Git credentials</label>
       <div class="w-full">
         <select
+          id="target_credentials_id"
           v-model="editedProcess.target_credentials_id"
           class="select select-bordered w-full"
         >

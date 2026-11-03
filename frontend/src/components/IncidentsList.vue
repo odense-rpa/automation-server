@@ -12,7 +12,7 @@
             </div>
         </template>
         <div v-if="incidents.length === 0" class="text-center mb-4">
-            <p class="secondary-content font-semibold">{{ searchTerm ? 'No incidents found matching search.' : 'No incidents — all good!' }}</p>
+            <p class="text-base-content/60 font-semibold">{{ searchTerm ? 'No incidents found matching search.' : 'No incidents — all good!' }}</p>
         </div>
         <div v-else>
             <table class="table w-full mb-3">
@@ -290,7 +290,7 @@ export default {
                 this.selectedIds = []
                 await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
             } catch (error) {
-                this.alertStore.addAlert({ type: 'error', message: error })
+                this.alertStore.addAlert({ type: 'error', message: error.message })
             }
         },
         handleDismissAction(action) {
@@ -315,7 +315,7 @@ export default {
                 this.expandedId = null
                 await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
             } catch (error) {
-                this.alertStore.addAlert({ type: 'error', message: error })
+                this.alertStore.addAlert({ type: 'error', message: error.message })
             }
         },
         async resolveIncident(id, status) {
@@ -325,7 +325,7 @@ export default {
                 this.expandedId = null
                 await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
             } catch (error) {
-                this.alertStore.addAlert({ type: 'error', message: error })
+                this.alertStore.addAlert({ type: 'error', message: error.message })
             }
         },
         startAutoRefresh() {

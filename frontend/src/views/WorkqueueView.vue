@@ -2,14 +2,11 @@
   <div>
     <content-card title="Workqueue" class="mb-3">
       <template v-slot:header-right>
-        <button @click="$router.push({ name: 'workqueue.edit', params: { id: workqueue.id } })" class="btn btn-primary btn-sm" v-if="!showClearForm && workqueue">
+        <button @click="$router.push({ name: 'workqueue.edit', params: { id: workqueue.id } })" class="btn btn-primary btn-sm" v-if="workqueue">
           <font-awesome-icon :icon="['fas', 'pencil-alt']" /> Edit
         </button>
       </template>
-      <div class="card-body">
-        <workqueue-info :workqueue="workqueue" :information="information" v-if="workqueue && !showClearForm" />
-        <workqueue-clear-form v-if="showClearForm" :workqueue="workqueue" @clearWorkqueue="clearQueue" @back="showClearForm = false" />
-      </div>
+      <workqueue-info :workqueue="workqueue" :information="information" v-if="workqueue" />
     </content-card>
     <workitems-table :workqueue-id="workqueue.id" ref="workitemsTable" @clearWorkQueueItems="clearQueue" @workitems-refreshed="onWorkitemsRefreshed" :size="50" v-if="workqueue" />
   </div>
@@ -21,28 +18,25 @@ import { workqueuesAPI } from '@/services/automationserver.js'
 import ContentCard from '@/components/ContentCard.vue'
 import WorkitemsTable from '@/components/WorkitemsTable.vue'
 import WorkqueueInfo from '@/components/WorkqueueInfo.vue'
-import WorkqueueClearForm from '@/components/WorkqueueClearForm.vue'
 const alertStore = useAlertStore()
 
 export default {
   name: 'WorkqueueView',
   data: () => ({
     workqueue: null,
-    information: null,
-    showClearForm: false
+    information: null
   }),
   components: {
     ContentCard,
     WorkqueueInfo,
     WorkitemsTable,
-    WorkqueueClearForm
   },
   async created() {
     try {
       this.workqueue = await workqueuesAPI.getWorkqueue(this.$route.params.id)
       await this.fetchInformation()
     } catch (error) {
-      alertStore.addAlert({ type: 'error', message: error })
+      alertStore.addAlert({ type: 'error', message: error.message })
     }
   },
   methods: {
@@ -77,6 +71,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-</style>

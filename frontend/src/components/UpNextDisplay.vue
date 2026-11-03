@@ -20,13 +20,13 @@
 
     <!-- Error state -->
     <div v-else-if="error" class="alert alert-error">
-      <font-awesome-icon :icon="['fas', 'exclamation-triangle']" />
+      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" />
       <span>{{ error }}</span>
     </div>
 
     <!-- Empty state -->
     <div v-else-if="filteredExecutions.length === 0" class="text-center mb-4">
-      <p class="secondary-content font-semibold">
+      <p class="text-base-content/60 font-semibold">
         {{ searchTerm ? 'No executions found matching your search.' : `No executions scheduled for the next ${selectedHours} hours.` }}
       </p>
     </div>
@@ -102,6 +102,7 @@ export default {
     return {
       executions: [],
       isLoading: false,
+      hasLoaded: false,
       error: null,
       searchTerm: '',
       refreshInterval: null
@@ -143,14 +144,15 @@ export default {
   },
   methods: {
     async refreshExecutions() {
-      this.isLoading = true
+      // Spinner only before the first load; refreshes keep the table on screen
+      this.isLoading = !this.hasLoaded
       this.error = null
 
       try {
         this.executions = await triggersAPI.getUpcomingExecutions(this.selectedHours)
-      } catch (err) {
+        this.hasLoaded = true
+      } catch {
         this.error = 'Failed to load upcoming executions'
-        console.error('Error loading upcoming executions:', err)
       } finally {
         this.isLoading = false
       }

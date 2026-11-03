@@ -46,7 +46,7 @@
         <!-- No Workitems Found Message -->
         <tbody v-else>
           <tr>
-            <td colspan="7" class="text-center text-base-content/60">No workitems found</td>
+            <td colspan="8" class="text-center text-base-content/60">No workitems found</td>
           </tr>
         </tbody>
       </table>
@@ -93,8 +93,7 @@
         workitems: [],
         totalPages: 1,
         searchTimeout: null,
-        refreshInterval: null,
-        dropdownOpen: false
+        refreshInterval: null
       };
     },
     setup() {
@@ -166,5 +165,4 @@
   };
   </script>
   
-  <style scoped>
-  </style>
+  

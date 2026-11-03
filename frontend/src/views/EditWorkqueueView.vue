@@ -1,10 +1,8 @@
 <template>
   <div>
     <content-card title="Edit workqueue" class="mb-3">
-      <div class="card-body">
-        <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit" @delete="deleteWorkqueue"
-          v-if="workqueue" />
-      </div>
+      <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit" @delete="deleteWorkqueue"
+        v-if="workqueue" />
     </content-card>
   </div>
 </template>
@@ -29,7 +27,7 @@ export default {
     try {
       this.workqueue = await workqueuesAPI.getWorkqueue(this.$route.params.id)
     } catch (error) {
-      alertStore.addAlert({ type: 'error', message: error })
+      alertStore.addAlert({ type: 'error', message: error.message })
     }
   },
   methods: {
@@ -41,7 +39,8 @@ export default {
           message: "'" + this.workqueue.name + "' was saved"
         })
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
+        return
       }
       this.$router.push({ name: 'workqueue.detail', params: { id: this.workqueue.id } })
     },
@@ -60,12 +59,9 @@ export default {
         })
         this.$router.push({ name: 'workqueues' })
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
       }
     }
   }
 }
 </script>
-
-<style scoped>
-</style>

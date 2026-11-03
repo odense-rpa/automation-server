@@ -1,8 +1,6 @@
 <template>
   <content-card title="Create Credential">
-    <div class="card-body">
-      <credential-form :credential="credential" @save="saveCredential"></credential-form>
-    </div>
+    <credential-form :credential="credential" @save="saveCredential"></credential-form>
   </content-card>
 </template>
 
@@ -39,8 +37,7 @@ export default {
           message: "'" + credential.name + "' was created"
         })
       } catch (error) {
-        console.log(error)
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
         return
       }
       this.$router.push({ name: 'credentials' })
@@ -48,7 +45,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Add custom styles here */
-</style>

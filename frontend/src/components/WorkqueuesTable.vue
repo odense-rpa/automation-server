@@ -39,7 +39,6 @@ export default {
   },
   methods: {
     async clearQueue(workqueue, workitem_status, days_older_than) {
-      console.log(workqueue, workitem_status, days_older_than);
       try {        
         await workqueuesAPI.clearWorkqueue(workqueue.id, workitem_status, days_older_than)
         let message = '';
@@ -60,7 +59,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Add custom styles for the table if needed */
-</style>

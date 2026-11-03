@@ -5,10 +5,10 @@
       <router-link :to="{ name: 'workqueue.create' }" class="btn btn-primary btn-sm">+ Create</router-link>
     </template>
     <div v-if="loading" class="text-center mb-4">
-      <p class="secondary-content font-semibold">Loading workqueues...</p>
+      <p class="text-base-content/60 font-semibold">Loading workqueues...</p>
     </div>
     <div v-else-if="filteredWorkqueues.length === 0" class="text-center mb-4">
-      <p class="secondary-content font-semibold">No workqueues found matching search.</p>
+      <p class="text-base-content/60 font-semibold">No workqueues found matching search.</p>
     </div>
 
     <workqueues-table :workqueues="filteredWorkqueues" @refresh="refreshWorkqueues" v-if="filteredWorkqueues.length !== 0"  />
@@ -66,7 +66,7 @@ export default {
       try {
         this.workqueues = await workqueuesAPI.getWorkqueuesWithInformation(false)
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
       }
       finally {
         this.loading = false;
@@ -75,7 +75,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Your styles here */
-</style>

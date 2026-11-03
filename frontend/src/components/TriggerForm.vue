@@ -2,7 +2,7 @@
   <form @submit.prevent="submitForm" class="space-y-4">
     <!-- Type Selector -->
     <div>
-      <select class="select select-bordered w-full" v-model="editObject.type">
+      <select class="select select-bordered w-full" v-model="editObject.type" aria-label="Trigger type">
         <option value="cron">Cron</option>
         <option value="date">Date</option>
         <option value="workqueue">Workqueue</option>
@@ -11,22 +11,22 @@
 
     <!-- Cron Input Field -->
     <div v-if="editObject.type === 'cron'">
-      <input type="text" class="input input-bordered w-full" id="cron" v-model="editObject.cron" required />
+      <input type="text" class="input input-bordered w-full" v-model="editObject.cron" aria-label="Cron expression" required />
       <small class="text-base-content/60 block mt-1">
-        See <a href="https://crontab.guru/" target="_blank" class="link">crontab.guru</a> for help.
+        See <a href="https://crontab.guru/" target="_blank" rel="noopener" class="link">crontab.guru</a> for help.
       </small>
     </div>
 
     <!-- Date Input Field -->
     <div v-if="editObject.type === 'date'">
-      <input type="datetime-local" class="input input-bordered w-full" v-model="editObject.date" required />
+      <input type="datetime-local" class="input input-bordered w-full" v-model="editObject.date" aria-label="Date and time" required />
     </div>
 
     <!-- Workqueue Fields -->
     <div v-if="editObject.type === 'workqueue'" class="space-y-2">
       <!-- Workqueue Selector -->
       <div>
-        <select class="select select-bordered w-full" v-model="editObject.workqueue_id" required>
+        <select class="select select-bordered w-full" v-model="editObject.workqueue_id" aria-label="Workqueue" required>
           <option v-for="workqueue in workqueues" :key="workqueue.id" :value="workqueue.id">
             {{ workqueue.name }}
           </option>
@@ -37,19 +37,19 @@
       <div>
         <small class="text-base-content/60 block mb-1">How many resources can this workqueue consume</small>
         <input type="number" class="input input-bordered w-full" v-model="editObject.workqueue_resource_limit"
-          placeholder="Set the resource limit" required />
+          placeholder="Set the resource limit" aria-label="Resource limit" required />
       </div>
 
       <!-- Scale-up Threshold Input -->
       <div>
         <small class="text-base-content/60 block mb-1">How many workitems must be present to scale up</small>
         <input type="number" class="input input-bordered w-full" v-model="editObject.workqueue_scale_up_threshold"
-          placeholder="Set the scaling threshold" required />
+          placeholder="Set the scaling threshold" aria-label="Scale-up threshold" required />
       </div>
     </div>
 
     <div>
-      <input type="text" class="input input-bordered w-full" id="cron" v-model="editObject.parameters" />
+      <input type="text" class="input input-bordered w-full" v-model="editObject.parameters" aria-label="Parameters" />
       <small class="text-base-content/60 block mt-1">
         Commandline parameters to pass to the process
       </small>
@@ -58,17 +58,17 @@
     <!-- Enabled Checkbox -->
     <div>
       <label class="flex items-center space-x-2">
-        <input type="checkbox" class="checkbox checkbox-primary" id="enabled" v-model="editObject.enabled" />
+        <input type="checkbox" class="checkbox checkbox-primary" v-model="editObject.enabled" />
         <span>Enabled</span>
       </label>
     </div>
 
     <!-- Action Buttons -->
     <div class="text-right space-x-2">
-      <button type="submit" class="btn btn-primary btn-sm">
+      <button type="submit" class="btn btn-primary btn-sm" aria-label="Save trigger" title="Save">
         <font-awesome-icon :icon="['fas', 'check']" />
       </button>
-      <button class="btn btn-sm" @click.prevent="$emit('cancel')">
+      <button type="button" class="btn btn-sm" aria-label="Cancel" title="Cancel" @click="$emit('cancel')">
         <font-awesome-icon :icon="['fas', 'times']" />
       </button>
     </div>

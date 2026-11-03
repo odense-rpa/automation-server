@@ -1,8 +1,6 @@
 <template>
   <content-card title="Create workqueue" class="mb-4">
-    <div class="card-body">
-      <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancel" start-editable="true" />
-    </div>
+    <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancel" />
   </content-card>
 </template>
 
@@ -40,7 +38,8 @@ export default {
           message: "'" + workqueue.name + "' was created"
         })
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
+        return
       }
       // Redirect to the overview
       this.$router.push({ name: 'workqueues' })
@@ -51,7 +50,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Your component styles here */
-</style>

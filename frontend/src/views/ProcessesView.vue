@@ -7,7 +7,7 @@
       <router-link :to="{ name: 'process.create' }" class="btn btn-primary btn-sm">+ Create</router-link>      
     </template>
     <div v-if="filteredProcesses.length === 0" class="text-center mb-4">
-      <p class="secondary-content font-semibold">No processes found matching search.</p>
+      <p class="text-base-content/60 font-semibold">No processes found matching search.</p>
     </div>
 
     <ProcessesTable :processes="filteredProcesses" v-if="filteredProcesses.length !== 0" />
@@ -60,9 +60,8 @@ export default {
     try {
       this.processes = await processesAPI.getProcesses()
     } catch (error) {
-      alertStore.addAlert({ type: 'error', message: error })
+      alertStore.addAlert({ type: 'error', message: error.message })
     }
   }
 }
 </script>
-<style></style>

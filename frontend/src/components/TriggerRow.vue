@@ -16,15 +16,16 @@
 
         <!-- Enabled Status Icon -->
         <td class="align-middle" v-if="!isEdit">
-            <font-awesome-icon :icon="trigger.enabled ? 'check' : 'xmark-circle'"
-                :class="{ 'text-green-500': trigger.enabled, 'text-yellow-500': !trigger.enabled }" />
+            <font-awesome-icon :icon="['fas', trigger.enabled ? 'check' : 'xmark-circle']"
+                :title="trigger.enabled ? 'Enabled' : 'Disabled'"
+                :class="{ 'text-success': trigger.enabled, 'text-warning': !trigger.enabled }" />
         </td>
 
         <!-- Actions Dropdown -->
         <td class="text-end align-middle" v-if="!isEdit">
             <dropdown-button :label="'Actions'" :items="[
-                { text: 'Edit', icon: 'fas fa-pencil-alt', action: 'edit' },
-                { text: 'Delete', icon: 'fas fa-trash-alt', action: 'delete' }
+                { text: 'Edit', icon: ['fas', 'pencil-alt'], action: 'edit' },
+                { text: 'Delete', icon: ['fas', 'trash-alt'], action: 'delete' }
             ]" @item-clicked="triggerAction" />
         </td>
 
@@ -48,10 +49,10 @@ export default {
             required: true,
         },
     },
+    emits: ['save-trigger', 'delete-trigger', 'cancel-trigger'],
     data() {
         return {
             isEdit: false,
-            workqueues: [],
         }
     },
     methods: {
@@ -59,14 +60,16 @@ export default {
             if (action === 'edit') {
                 this.isEdit = true;
             } else if (action === 'delete') {
-                this.$emit('delete-trigger', this.trigger)
+                if (confirm('Are you sure you want to delete this trigger?')) {
+                    this.$emit('delete-trigger', this.trigger)
+                }
             }
         },
         propagateSave(editedTrigger) {
-            console.log("Row save: ", editedTrigger);
-
-            this.isEdit = false;
-            this.$emit('save-trigger', editedTrigger)
+            // Stay in edit mode until the save succeeds, so a failed save keeps the input
+            this.$emit('save-trigger', editedTrigger, (saved) => {
+                if (saved) this.isEdit = false
+            })
         },
         propagateCancel() {
             this.isEdit = false;

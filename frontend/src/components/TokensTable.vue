@@ -53,8 +53,7 @@ export default {
                     })
                     this.$emit('refresh')
                 } catch (error) {
-                    console.log(error)
-                    alertStore.addAlert({ type: 'error', message: error })
+                    alertStore.addAlert({ type: 'error', message: error.message })
                 }
             }
             
@@ -62,7 +61,3 @@ export default {
     }
 }
 </script>
-
-<style scoped>
-/* Add custom styles for the table if needed */
-</style>

@@ -43,10 +43,10 @@
     </td>
     <td class="text-center">
       <dropdown-button :label="'Actions'" :items="[
-        { text: 'Retry', icon: 'fas fa-redo', action: 'retry' },
-        { text: 'Fail', icon: 'fas fa-trash-alt', action: 'fail' },
-        { text: 'Complete', icon: 'fas fa-check', action: 'complete' },
-        { text: 'Details', icon: 'fas fa-info', action: 'details' }
+        { text: 'Retry', icon: ['fas', 'redo'], action: 'retry' },
+        { text: 'Fail', icon: ['fas', 'trash-alt'], action: 'fail' },
+        { text: 'Complete', icon: ['fas', 'check'], action: 'complete' },
+        { text: 'Details', icon: ['fas', 'info'], action: 'details' }
       ]" @item-clicked="triggerAction" />
     </td>
   </tr>
@@ -83,7 +83,7 @@ export default {
       this.copiedReference = true;
       setTimeout(() => { this.copiedReference = false; }, 1500);
     },
-    triggerAction(action) {
+    async triggerAction(action) {
       let status = '';
       if (action === 'retry') status = 'new';
       if (action === 'fail') status = 'failed';
@@ -96,7 +96,7 @@ export default {
 
 
       try {
-        workitemsApi.updateWorkItemStatus(this.workitem.id, status);
+        await workitemsApi.updateWorkItemStatus(this.workitem.id, status);
         alertStore.addAlert({
           type: 'success',
           message: "Item status was updated"
@@ -106,13 +106,9 @@ export default {
         this.$emit('refresh');
 
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error });
+        alertStore.addAlert({ type: 'error', message: error.message });
       }
     }
   }
 };
 </script>
-
-<style scoped>
-/* Add any required styles here */
-</style>

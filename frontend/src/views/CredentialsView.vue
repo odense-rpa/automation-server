@@ -57,7 +57,7 @@
 
     <!-- An empty list is explained by the banner above when the key is lost -->
     <div v-if="filteredCredentials.length === 0 && !credentialsUnreadable" class="text-center mb-4">
-      <p class="secondary-content font-semibold">No credentials found matching search.</p>
+      <p class="text-base-content/60 font-semibold">No credentials found matching search.</p>
     </div>
 
     <CredentialsTable :credentials="filteredCredentials" v-if="filteredCredentials.length !== 0" />
@@ -103,7 +103,6 @@ export default {
       try {
         this.credentials = await credentialsAPI.getCredentials();
       } catch (error) {
-        console.error(error);
         // The banner already explains an unreadable-key failure in full
         if (this.encryption?.decryptable !== false) {
           alertStore.addAlert({ type: "error", message: error.message });
@@ -131,7 +130,6 @@ export default {
         });
         await this.fetchCredentials();
       } catch (error) {
-        console.error(error);
         alertStore.addAlert({ type: "error", message: error.message });
       } finally {
         this.reencrypting = false;
@@ -163,7 +161,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Add any required styles here */
-</style>

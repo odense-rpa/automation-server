@@ -14,7 +14,7 @@
             </select>
         </template>
         <div v-if="items.length === 0" class="text-center mb-4">
-            <p class="secondary-content font-semibold">No process activity in the selected time window.</p>
+            <p class="text-base-content/60 font-semibold">No process activity in the selected time window.</p>
         </div>
         <table v-else class="table w-full mb-3">
             <thead>

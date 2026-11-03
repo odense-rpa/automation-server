@@ -6,7 +6,7 @@
     <td class="text-center">{{ $formatDateTime(token.created_at) }}</td>
     <td>
       <dropdown-button :label="'Actions'" :items="[
-        { text: 'Delete', icon: 'fas fa-trash-alt', action: 'delete' }
+        { text: 'Delete', icon: ['fas', 'trash-alt'], action: 'delete' }
       ]" @item-clicked="triggerAction" />
     </td>
   </tr>
@@ -33,7 +33,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Add any required styles here */
-</style>

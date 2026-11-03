@@ -6,13 +6,8 @@ export const useSettingsStore = defineStore('settings', {
     token: ''
   }),
   persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'settings', // name for the storage item
-        storage: localStorage // can also use sessionStorage here
-      }
-    ]
+    key: 'settings',
+    storage: localStorage
   },
   actions: {
     setApiUrl(url) {

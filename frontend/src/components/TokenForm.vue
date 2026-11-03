@@ -25,16 +25,12 @@
 <script>
 
 export default {
-  props: {
-  },
+  emits: ['save'],
   data() {
     return {
       identifier: "",
     }
   },
-  async mounted() {
-  },
-
   methods: {
     saveToken() {
       this.$emit('save', this.identifier)

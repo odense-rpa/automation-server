@@ -22,7 +22,3 @@ export default {
   }
 }
 </script>
-
-<style>
-/* Add any additional styling as needed */
-</style>

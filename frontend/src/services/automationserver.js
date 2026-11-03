@@ -395,14 +395,6 @@ const triggersAPI = {
       throw new Error(`Error fetching triggers: ${error}`)
     }
   },
-  /*  getTrigger: async (trigger_id) => {
-    try {
-      const response = await axios.get(`/triggers/${trigger_id}`)
-      return response.data
-    } catch (error) {
-      throw new Error(`Error reading trigger: ${error}`)
-    }
-  },*/
   updateTrigger: async (trigger_id, triggerData) => {
     try {
       const response = await axios.put(`/triggers/${trigger_id}`, triggerData)
