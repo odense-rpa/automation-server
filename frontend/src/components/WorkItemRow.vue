@@ -11,10 +11,8 @@
     <td class="p-0 max-w-xs group/ref relative">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
         class="block px-4 py-3 pr-8 no-underline text-inherit truncate" :title="workitem.reference">{{ workitem.reference }}</router-link>
-      <button class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs opacity-0 group-hover/ref:opacity-100 transition-opacity"
-        @click.stop="copyReference" :title="copiedReference ? 'Copied!' : 'Copy reference'">
-        <font-awesome-icon :icon="['fas', copiedReference ? 'check' : 'copy']" />
-      </button>
+      <copy-button :text="workitem.reference || ''" label="Copy reference"
+        class="absolute right-2 inset-y-0 my-auto opacity-0 group-hover/ref:opacity-100 focus:opacity-100 transition-opacity" />
     </td>
     <!-- max-w-0 lets the cell take the remaining width (w-full on its header) and still truncate -->
     <td class="p-0 max-w-0">
@@ -54,6 +52,7 @@ import DropdownButton from "./DropdownButton.vue";
 import { workitemsApi } from "@/services/automationserver";
 import { useAlertStore } from "@/stores/alertStore";
 import StatusBadge from '@/components/StatusBadge.vue'
+import CopyButton from '@/components/CopyButton.vue'
 
 const alertStore = useAlertStore();
 
@@ -61,7 +60,7 @@ export default {
   name: "WorkItemRow",
   components: {
     JsonPreview,
-    DropdownButton, StatusBadge
+    DropdownButton, StatusBadge, CopyButton
   },
   props: {
     workitem: {
@@ -71,15 +70,9 @@ export default {
   },
   data() {
     return {
-      copiedReference: false
     };
   },
   methods: {
-    copyReference() {
-      navigator.clipboard.writeText(this.workitem.reference);
-      this.copiedReference = true;
-      setTimeout(() => { this.copiedReference = false; }, 1500);
-    },
     async triggerAction(action) {
       let status = '';
       if (action === 'retry') status = 'new';

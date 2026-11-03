@@ -12,9 +12,7 @@
         <div class="flex items-center space-x-2 bg-base-200 rounded p-3">
           <!-- Token Display with wrapping -->
           <pre class="flex-1 whitespace-pre-wrap break-all">{{ token.access_token }}</pre>
-          <button @click="copyToClipboard(token.access_token)" class="btn btn-sm btn-ghost" title="Copy">
-            <font-awesome-icon :icon="['fas', 'copy']" />
-          </button>
+          <copy-button :text="token.access_token" label="Copy token" class="btn-sm" @copied="showCopied" />
         </div>
         <p v-if="copySuccess" class="text-success mt-2">Token copied to clipboard!</p>
       </div>
@@ -27,7 +25,7 @@ import { accessTokensApi } from '@/services/automationserver.js';
 import { useAlertStore } from '../stores/alertStore';
 import ContentCard from '@/components/ContentCard.vue';
 import TokenForm from '@/components/TokenForm.vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import CopyButton from '@/components/CopyButton.vue';
 
 const alertStore = useAlertStore();
 
@@ -41,7 +39,7 @@ export default {
   components: {
     ContentCard,
     TokenForm,
-    FontAwesomeIcon,
+    CopyButton
   },
   methods: {
     async saveToken(identifier) {
@@ -57,13 +55,9 @@ export default {
         alertStore.addAlert({ type: 'error', message: error.message });
       }
     },
-
-    // Copy token value to clipboard
-    copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        this.copySuccess = true;
-        setTimeout(() => (this.copySuccess = false), 2000);
-      });
+    showCopied() {
+      this.copySuccess = true;
+      setTimeout(() => (this.copySuccess = false), 2000);
     },
   },
 };

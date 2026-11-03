@@ -5,14 +5,10 @@
       <font-awesome-icon :icon="['fas', isOpen ? 'caret-down' : 'caret-right']" class="w-3 text-base-content/50" />
       <span v-if="name !== null" class="font-semibold">{{ name }}:</span>
       <span class="text-base-content/50">{{ isOpen ? bracketOpen : summary }}</span>
-      <button
-        type="button"
-        class="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 focus:opacity-100 ml-auto"
-        :title="copied ? 'Copied!' : 'Copy'"
-        @click.stop.prevent="copy"
-      >
-        <font-awesome-icon :icon="['fas', copied ? 'check' : 'copy']" />
-      </button>
+      <copy-button
+        :text="() => JSON.stringify(value, null, 2)"
+        class="opacity-0 group-hover:opacity-100 focus:opacity-100 ml-auto"
+      />
     </summary>
     <!-- Children are only rendered while open, keeping large payloads light -->
     <div v-if="isOpen" class="ml-1.5 pl-3 border-l border-base-300">
@@ -49,12 +45,14 @@
 </template>
 
 <script>
+import CopyButton from './CopyButton.vue'
 import { jsonType, childCount, summarize, formatScalar, typeClass } from '@/utils/json.js'
 
 const PAGE_SIZE = 20
 
 export default {
   name: 'JsonNode',
+  components: { CopyButton },
   props: {
     value: { default: null },
     name: { type: [String, Number], default: null },
@@ -66,7 +64,6 @@ export default {
       isOpen: this.depth < this.openDepth,
       limit: PAGE_SIZE,
       pageSize: PAGE_SIZE,
-      copied: false,
       typeClass
     }
   },
@@ -105,13 +102,6 @@ export default {
       return typeClass[this.type] || 'text-base-content/50'
     }
   },
-  methods: {
-    async copy() {
-      await navigator.clipboard.writeText(JSON.stringify(this.value, null, 2))
-      this.copied = true
-      setTimeout(() => { this.copied = false }, 1500)
-    }
-  }
 }
 </script>
 

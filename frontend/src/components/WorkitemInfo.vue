@@ -8,9 +8,7 @@
           <dt class="col-span-2 font-semibold mb-2">Reference:</dt>
           <dd class="col-span-3 mb-2 flex justify-between items-center">
             <span>{{ workitem.reference }}</span>
-            <button class="btn btn-ghost btn-xs" @click="copyReference" :title="copiedReference ? 'Copied!' : 'Copy reference'">
-              <font-awesome-icon :icon="['fas', copiedReference ? 'check' : 'copy']" />
-            </button>
+            <copy-button :text="workitem.reference || ''" label="Copy reference" />
           </dd>
           <dt class="col-span-2 font-semibold mb-2">Message:</dt>
           <dd class="col-span-3 mb-2">{{ workitem.message }}</dd>
@@ -32,27 +30,16 @@
 
 <script>
 import StatusBadge from '@/components/StatusBadge.vue'
+import CopyButton from '@/components/CopyButton.vue'
 
 export default {
   name: 'WorkitemInfo',
-  components: { StatusBadge },
+  components: { StatusBadge, CopyButton },
   props: {
     workitem: {
       type: Object,
       required: true
     }
   },
-  data() {
-    return {
-      copiedReference: false
-    };
-  },
-  methods: {
-    copyReference() {
-      navigator.clipboard.writeText(this.workitem.reference);
-      this.copiedReference = true;
-      setTimeout(() => { this.copiedReference = false; }, 1500);
-    }
-  }
 }
 </script>
