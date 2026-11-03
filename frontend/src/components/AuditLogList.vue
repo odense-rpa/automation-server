@@ -18,8 +18,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="log in logs" :key="log.id" class="hover:bg-base-300 cursor-pointer">
-                        <!-- Force wrap long messages to prevent page break -->
-                        <td class="whitespace-pre-wrap break-words">{{ log.message }}</td>
+                        <td><log-message :message="log.message" /></td>
                         <td class="text-center whitespace-nowrap">{{ $formatDateTime(log.created_at) }}</td>
                     </tr>
                 </tbody>
@@ -34,6 +33,7 @@
 import ContentCard from "./ContentCard.vue";
 import PageNavigation from "@/components/PageNavigation.vue";
 import SearchInput from "./SearchInput.vue";
+import LogMessage from "./LogMessage.vue";
 import { auditLogsAPI } from "@/services/automationserver";
 import { useTableStateStore } from "@/stores/tableStateStore";
 
@@ -43,6 +43,7 @@ export default {
         PageNavigation,
         ContentCard,
         SearchInput,
+        LogMessage,
     },
     props: {
         session_id: {
