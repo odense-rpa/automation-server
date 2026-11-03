@@ -23,6 +23,7 @@ def to_credential_read(
         **credential.model_dump(), encrypted=credential.id not in unencrypted_ids
     )
 
+
 # Dependency Injection local to this router
 
 
@@ -122,9 +123,7 @@ async def reencrypt_credentials(
         reencrypted = await uow.credentials.reencrypt_unencrypted()
         remaining = len(await uow.credentials.get_unencrypted_ids())
 
-        return CredentialReencryptResult(
-            reencrypted=reencrypted, remaining=remaining
-        )
+        return CredentialReencryptResult(reencrypted=reencrypted, remaining=remaining)
 
 
 @router.get("/{credential_id}", responses=RESPONSE_STATES)

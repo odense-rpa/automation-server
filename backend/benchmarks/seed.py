@@ -53,7 +53,11 @@ def main(host: str) -> None:
 
         # 1. Workqueue
         print(f"Creating workqueue '{WORKQUEUE_NAME}' ...", end=" ", flush=True)
-        q = post(client, "/workqueues", {"name": WORKQUEUE_NAME, "description": "Benchmark queue", "enabled": True})
+        q = post(
+            client,
+            "/workqueues",
+            {"name": WORKQUEUE_NAME, "description": "Benchmark queue", "enabled": True},
+        )
         ids["workqueue"] = q["id"]
         print(f"id={q['id']}")
 

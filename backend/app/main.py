@@ -140,6 +140,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
 @app.exception_handler(EncryptionKeyError)
 async def encryption_key_error_handler(
     request: Request, exc: EncryptionKeyError
