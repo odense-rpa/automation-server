@@ -4,7 +4,7 @@
             <search-input v-model="searchTerm" placeholder="Search sessions..." />
         </template>
         <div v-if="sessions.length === 0" class="text-center mb-4">
-            <p class="secondary-content font-semibold">No sessions found matching search.</p>
+            <p class="text-base-content/60 font-semibold">No sessions found matching search.</p>
         </div>
         <div v-else>
             <!-- Table -->
@@ -165,7 +165,3 @@ export default {
     }
 };
 </script>
-
-<style scoped>
-/* Add any required styles here */
-</style>

@@ -9,6 +9,7 @@
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"
         :placeholder="placeholder"
+        :aria-label="placeholder || 'Search'"
         class="join-item input input-bordered input-sm w-full max-w-xs"
         :class="{ 'pr-8': modelValue }"
       />

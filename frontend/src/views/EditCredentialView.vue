@@ -1,8 +1,6 @@
 <template>
   <content-card title="Credential">
-    <div class="p-4">
-      <credential-form :credential="credential" @save="saveCredential" @delete="deleteCredential" v-if="credential" />
-    </div>
+    <credential-form :credential="credential" @save="saveCredential" @delete="deleteCredential" v-if="credential" />
   </content-card>
 </template>
 
@@ -33,8 +31,7 @@ export default {
           message: "'" + this.credential.name + "' was saved"
         })
       } catch (error) {
-        console.log(error)
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
         return
       }
       this.$router.push({ name: 'credentials' })
@@ -52,7 +49,7 @@ export default {
           message: "'" + this.credential.name + "' was deleted"
         })
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
         return
       }
       this.$router.push({ name: 'credentials' })
@@ -73,7 +70,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Add custom styles here */
-</style>

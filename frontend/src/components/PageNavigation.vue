@@ -1,14 +1,15 @@
 <template>
-  <div class="flex justify-end me-2" v-if="totalPages > 1">
+  <nav class="flex justify-end me-2" v-if="totalPages > 1" aria-label="Pagination">
     <div class="join">
       <!-- Previous Page Button with Icon (Small) -->
       <button class="join-item btn btn-sm" :class="{ 'btn-disabled': currentPage === 1 }"
-        @click.prevent="changePage(currentPage - 1)" :disabled="currentPage === 1">
+        @click.prevent="changePage(currentPage - 1)" :disabled="currentPage === 1" aria-label="Previous page">
         <font-awesome-icon :icon="['fas', 'chevron-left']" />
       </button>
 
       <!-- First Page Button (Small) -->
-      <button class="join-item btn btn-sm" :class="{ 'btn-active': currentPage === 1 }" @click.prevent="changePage(1)">
+      <button class="join-item btn btn-sm" :class="{ 'btn-active': currentPage === 1 }"
+        :aria-current="currentPage === 1 ? 'page' : null" @click.prevent="changePage(1)">
         1
       </button>
 
@@ -17,7 +18,8 @@
 
       <!-- Page Buttons (Small) -->
       <button v-for="page in pages" :key="page" class="join-item btn btn-sm"
-        :class="{ 'btn-active': page === currentPage }" @click.prevent="changePage(page)">
+        :class="{ 'btn-active': page === currentPage }" :aria-current="page === currentPage ? 'page' : null"
+        @click.prevent="changePage(page)">
         {{ page }}
       </button>
 
@@ -26,17 +28,17 @@
 
       <!-- Last Page Button (Small) -->
       <button class="join-item btn btn-sm" :class="{ 'btn-active': currentPage === totalPages }"
-        @click.prevent="changePage(totalPages)">
+        :aria-current="currentPage === totalPages ? 'page' : null" @click.prevent="changePage(totalPages)">
         {{ totalPages }}
       </button>
 
       <!-- Next Page Button with Icon (Small) -->
       <button class="join-item btn btn-sm" :class="{ 'btn-disabled': currentPage === totalPages }"
-        @click.prevent="changePage(currentPage + 1)" :disabled="currentPage === totalPages">
+        @click.prevent="changePage(currentPage + 1)" :disabled="currentPage === totalPages" aria-label="Next page">
         <font-awesome-icon :icon="['fas', 'chevron-right']" />
       </button>
     </div>
-  </div>
+  </nav>
 </template>
 
 <script>

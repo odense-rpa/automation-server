@@ -4,17 +4,22 @@
         <div class="p-4 space-y-4">
           <!-- API URL Input -->
           <div class="flex items-center">
-            <label class="w-1/3 font-semibold">API URL:</label>
+            <label for="settings-api-url" class="w-1/3 font-semibold">API URL:</label>
             <div class="w-full">
-              <input type="text" class="input input-bordered w-full" v-model="apiUrl" />
+              <input id="settings-api-url" type="text" class="input input-bordered w-full" v-model="apiUrl" />
             </div>
           </div>
   
           <!-- Token Textarea -->
           <div class="flex items-center">
-            <label class="w-1/3 font-semibold">Token:</label>
+            <label for="settings-token" class="w-1/3 font-semibold">Token:</label>
             <div class="w-full">
-              <textarea class="textarea textarea-bordered w-full" v-model="token"></textarea>
+              <textarea
+                id="settings-token"
+                class="textarea textarea-bordered w-full"
+                v-model="token"
+                :placeholder="hasToken ? 'A token is saved. Leave empty to keep it.' : ''"
+              ></textarea>
             </div>
           </div>
   
@@ -47,13 +52,21 @@ export default {
             token: ''
         }
     },
+    computed: {
+        hasToken() {
+            return Boolean(settingsStore.token)
+        }
+    },
     async created() {
         this.apiUrl = settingsStore.apiUrl
     },
     methods: {
         async saveSettings() {
             settingsStore.setApiUrl(this.apiUrl)
-            settingsStore.setToken(this.token)
+            // An empty field keeps the saved token, so changing only the URL doesn't sign you out
+            if (this.token.trim()) {
+                settingsStore.setToken(this.token.trim())
+            }
 
             try {
                 await processesAPI.getProcesses()

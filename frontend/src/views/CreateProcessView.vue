@@ -1,8 +1,6 @@
 <template>
         <content-card title="Create process">
-          <div class="card-body">
-            <process-form :process="process" @save="saveProcess"></process-form>
-          </div>
+          <process-form :process="process" @save="saveProcess"></process-form>
         </content-card>
 </template>
 
@@ -44,8 +42,8 @@ export default {
           message: "'" + process.name + "' was created"
         })
       } catch (error) {
-        console.log(error)
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
+        return
       }
       // Redirect to the edit form
       this.$router.push({ name: 'process.edit', params: { id: process.id } })
@@ -53,7 +51,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Add custom styles here */
-</style>

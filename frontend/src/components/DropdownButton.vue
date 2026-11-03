@@ -2,7 +2,7 @@
   <div class="dropdown dropdown-bottom dropdown-end">
     <!-- Dropdown Toggle Button -->
      <slot>
-      <button ref="dropdownButton" tabindex="0" class="btn btn-sm btn-accent-content m-1">
+      <button type="button" tabindex="0" class="btn btn-sm btn-accent-content m-1" :aria-label="label">
         <font-awesome-icon :icon="icon" />
       </button>
     </slot>
@@ -31,27 +31,25 @@ export default {
       type: Array,
       default: () => ['fas', 'ellipsis-v'], // Default icon
     },
+    // Accessible name for the default (icon-only) button
+    label: {
+      type: String,
+      default: 'Actions',
+    },
   },
-  data() {
-    return {
-      dropdownButton: null,
-    };
-  },
+  emits: ['item-clicked'],
   methods: {
     itemClicked(item) {
       if (item.disabled) return;
       this.$emit('item-clicked', item.action, item); // Emit the item clicked event
       
-      // Remove focus from the dropdown button to close the dropdown
-      if (this.dropdownButton) {
-        this.dropdownButton.focus();
-        this.dropdownButton.blur();
+      // Remove focus from the dropdown button (default or slotted) to close the dropdown
+      const button = this.$el.querySelector('button');
+      if (button) {
+        button.focus();
+        button.blur();
       }
     },
-  },
-  mounted() {
-    // Ensure each instance has its own button reference
-    this.dropdownButton = this.$el.querySelector('button');
   },
 };
 </script>

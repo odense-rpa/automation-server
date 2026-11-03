@@ -1,17 +1,25 @@
 <template>
-    <div class="fixed bottom-5 right-5 w-80 z-50 space-y-2">
+    <div class="fixed bottom-5 right-5 w-80 z-50 space-y-2" aria-live="polite">
       <transition-group name="slide-fade">
         <div
-          v-for="(alert, index) in alerts"
-          :key="index"
+          v-for="alert in alerts"
+          :key="alert.id"
+          :role="alert.type === 'error' ? 'alert' : 'status'"
           @click="dismissAlert(alert)"
           :class="['alert', alertClasses(alert.type)]"
-          class="cursor-pointer shadow-lg"
+          class="cursor-pointer shadow-lg flex justify-between"
         >
-          {{ alert.message }}
+          <span>{{ alert.message }}</span>
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs btn-circle"
+            aria-label="Dismiss"
+            @click.stop="dismissAlert(alert)"
+          >
+            <font-awesome-icon :icon="['fas', 'times']" />
+          </button>
         </div>
       </transition-group>
-  
     </div>
   </template>
   

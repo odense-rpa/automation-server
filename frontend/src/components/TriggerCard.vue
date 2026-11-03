@@ -51,10 +51,8 @@ export default {
                 this.isLoading = false;
             }
         },
-        async saveTrigger(trigger) {
+        async saveTrigger(trigger, done) {
             try {
-
-                console.log(trigger)
                 // If the trigger is new, create it
                 if (trigger.id === 0) {
                     await processesAPI.createTrigger(this.processId, trigger);
@@ -72,10 +70,11 @@ export default {
                     });
                 }
                 await this.loadTriggers();
+                done?.(true)
             } catch (error) {
-                console.error('Failed to save trigger:', error);
-                this.newTrigger = null;
-                alertStore.addAlert({ type: 'error', message: error })
+                // Keep the row (and a new trigger) in edit mode with the user's input
+                alertStore.addAlert({ type: 'error', message: error.message })
+                done?.(false)
             }
         },
         async cancelTrigger(trigger) {
@@ -92,8 +91,7 @@ export default {
                 });
                 await this.loadTriggers();
             } catch (error) {
-                console.error('Failed to delete trigger:', error);
-                alertStore.addAlert({ type: 'error', message: error })
+                alertStore.addAlert({ type: 'error', message: error.message })
             }
         },
         async createTrigger() {
@@ -113,5 +111,3 @@ export default {
     },
 };
 </script>
-
-<style scoped></style>

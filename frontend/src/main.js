@@ -1,6 +1,3 @@
-//import './assets/main.css'
-//import 'bootstrap/dist/css/bootstrap.min.css'
-//import 'bootstrap-icons/font/bootstrap-icons.min.css'
 import './assets/base.css'
 
 import { createApp } from 'vue'
@@ -9,7 +6,7 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 
 import App from './App.vue'
 import router from './router'
-import { formatDate, formatDateTime } from './filters/dateFilter';
+import { formatDateTime } from './filters/dateFilter';
 import { capitalizeFirstLetter } from './filters/stringFilter';
 
 import { FontAwesomeIcon } from './fontAwesome';
@@ -22,7 +19,6 @@ app.use(pinia);
 
 app.component('font-awesome-icon', FontAwesomeIcon);
 
-app.config.globalProperties.$formatDate = formatDate;
 app.config.globalProperties.$formatDateTime = formatDateTime;
 app.config.globalProperties.$capitalizeFirstLetter = capitalizeFirstLetter;
 

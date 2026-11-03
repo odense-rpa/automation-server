@@ -3,9 +3,7 @@
     <!-- Left Column: 70% width -->
     <div>
       <content-card title="Process Information">
-        <div class="p-4">
-          <process-form :process="process" @save="saveProcess" @delete="deleteProcess" v-if="process" />
-        </div>
+        <process-form :process="process" @save="saveProcess" @delete="deleteProcess" v-if="process" />
       </content-card>
     </div>
 
@@ -45,8 +43,8 @@ export default {
           message: "'" + this.process.name + "' was saved"
         })
       } catch (error) {
-        console.log(error)
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
+        return
       }
       // Redirect to the overview
       this.$router.push({ name: 'process' })
@@ -64,7 +62,8 @@ export default {
           message: "'" + this.process.name + "' was deleted"
         })
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: error })
+        alertStore.addAlert({ type: 'error', message: error.message })
+        return
       }
       // Redirect to the overview
       this.$router.push({ name: 'process' })
@@ -74,7 +73,7 @@ export default {
       try {
         this.process = await processesAPI.getProcess(id)
       } catch (error) {
-        alertStore.addAlert({ type: 'error', message: 'Error fetching process:', error })
+        alertStore.addAlert({ type: 'error', message: 'Error fetching process: ' + error.message })
       }
     }
   },
@@ -85,7 +84,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-/* Add custom styles here */
-</style>

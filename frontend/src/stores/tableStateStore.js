@@ -1,17 +1,22 @@
 import { defineStore } from 'pinia'
 
+// Older versions persisted this store to localStorage by mistake (the plugin
+// ignored the old config syntax), so filters survived browser restarts.
+// Remove that leftover once; the store now lives in sessionStorage.
+try {
+  localStorage.removeItem('tableState')
+} catch {
+  // storage unavailable (private mode etc.): nothing to clean up
+}
+
 export const useTableStateStore = defineStore('tableState', {
   state: () => ({
     tables: {}
   }),
+  // Per browser tab: search terms and pages reset when the tab is closed
   persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'table-state',
-        storage: sessionStorage
-      }
-    ]
+    key: 'table-state',
+    storage: sessionStorage
   },
   getters: {
     getSearchTerm: (state) => (viewId) => {
