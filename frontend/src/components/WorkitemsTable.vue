@@ -18,6 +18,7 @@
     </template>
 
     <div>
+      <p v-if="error" class="text-error text-sm mb-2">{{ error }}</p>
       <!-- Table -->
       <table class="table w-full mb-3 rounded-b-lg">
         <thead>
@@ -39,14 +40,14 @@
             v-for="workitem in workitems"
             :key="workitem.id"
             :workitem="workitem"
-            @refresh="fetchWorkItems"
+            @refresh="refresh"
           />
         </tbody>
         
         <!-- No Workitems Found Message -->
         <tbody v-else>
           <tr>
-            <td colspan="8" class="text-center text-base-content/60">No workitems found</td>
+            <td colspan="8" class="text-center text-base-content/60">{{ emptyText('No workitems found') }}</td>
           </tr>
         </tbody>
       </table>
@@ -58,111 +59,60 @@
     </div>
   </content-card>
 </template>
-  
-  <script>
-  import ContentCard from "./ContentCard.vue";
-  import PageNavigation from "@/components/PageNavigation.vue";
-  import { workqueuesAPI } from "@/services/automationserver";
-  import WorkItemRow from "./WorkItemRow.vue";
-  import DropdownButton from "./DropdownButton.vue";
-  import SearchInput from "./SearchInput.vue";
-  import { useTableStateStore } from "@/stores/tableStateStore";
+<script>
+import ContentCard from "./ContentCard.vue";
+import PageNavigation from "@/components/PageNavigation.vue";
+import { workqueuesAPI } from "@/services/automationserver";
+import WorkItemRow from "./WorkItemRow.vue";
+import DropdownButton from "./DropdownButton.vue";
+import SearchInput from "./SearchInput.vue";
+import pagedList from "@/mixins/pagedList";
 
-
-  export default {
-    name: "WorkitemsTable",
-    components: {
-      PageNavigation,
-      ContentCard,
-      WorkItemRow,
-      DropdownButton,
-      SearchInput
+export default {
+  name: "WorkitemsTable",
+  components: {
+    PageNavigation,
+    ContentCard,
+    WorkItemRow,
+    DropdownButton,
+    SearchInput
+  },
+  mixins: [pagedList],
+  props: {
+    size: {
+      type: Number,
+      default: 5
     },
-    props: {
-      size: {
-        type: Number,
-        default: 5
-      },
-      workqueueId: {
-        type: Number,
-        required: true
-      }
+    workqueueId: {
+      type: Number,
+      required: true
+    }
+  },
+  emits: ['workitems-refreshed', 'clearWorkQueueItems'],
+  computed: {
+    tableKey() {
+      return 'workitems-' + this.workqueueId;
     },
-    data() {
-      return {
-        workitems: [],
-        totalPages: 1,
-        searchTimeout: null,
-        refreshInterval: null
-      };
+    workitems() {
+      return this.items;
+    }
+  },
+  methods: {
+    fetchPage({ page, size, search }) {
+      return workqueuesAPI.getWorkItems(this.workqueueId, page, size, search);
     },
-    setup() {
-      const tableStateStore = useTableStateStore();
-      return { tableStateStore };
+    onPageLoaded(items) {
+      this.$emit('workitems-refreshed', items);
     },
-    computed: {
-      searchTerm: {
-        get() {
-          return this.tableStateStore.getSearchTerm('workitems-' + this.workqueueId);
-        },
-        set(value) {
-          this.tableStateStore.setSearchTerm('workitems-' + this.workqueueId, value);
-        }
-      },
-      page: {
-        get() {
-          return this.tableStateStore.getPage('workitems-' + this.workqueueId);
-        },
-        set(value) {
-          this.tableStateStore.setPage('workitems-' + this.workqueueId, value);
-        }
-      }
-    },
-    async created() {
-      await this.fetchWorkItems();
-    },
-    watch: {
-      searchTerm() {
-        clearTimeout(this.searchTimeout);
-        this.searchTimeout = setTimeout(async () => {
-          // The store already resets page to 1 when search term changes
-          await this.fetchWorkItems();
-        }, 300); // 300ms delay
-      }
-    },
-    methods: {
-      async fetchWorkItems() {
-        const response = await workqueuesAPI.getWorkItems(
-          this.workqueueId,
-          this.page,
-          this.size,
-          this.searchTerm
-        );
-  
-        this.workitems = response.items || [];
-        this.totalPages = response.total_pages || 1;
-        if (this.page > this.totalPages && this.totalPages > 0) {
-          this.page = this.totalPages;
-          this.fetchWorkItems();
-        }
-
-        this.$emit('workitems-refreshed', this.workitems);
-      },
-      handlePageChange(newPage) {
-        this.page = newPage;
-        this.fetchWorkItems();
-      },
-      clearWorkQueueItems(action) {  
-        if(action === '') {
-          if (confirm(`Are you sure you want to clear all workitems?`)) {
-            this.$emit("clearWorkQueueItems", this.workqueueId, action, 0);
-          }
-        } else if (confirm(`Are you sure you want to clear ${action} workitems?`)) {
+    clearWorkQueueItems(action) {
+      if (action === '') {
+        if (confirm(`Are you sure you want to clear all workitems?`)) {
           this.$emit("clearWorkQueueItems", this.workqueueId, action, 0);
         }
-      },
-    }
-  };
-  </script>
-  
-  
+      } else if (confirm(`Are you sure you want to clear ${action} workitems?`)) {
+        this.$emit("clearWorkQueueItems", this.workqueueId, action, 0);
+      }
+    },
+  }
+};
+</script>
