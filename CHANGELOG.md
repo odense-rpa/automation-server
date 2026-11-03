@@ -5,6 +5,12 @@ All notable changes to the Automation Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-11-03
+
+### Security
+
+- **CVE-2026-111497 (brotli)**: rebuilt images with patched brotli libraries. Backend and worker now ship libbrotli1 `1.1.0-2+deb13u1` (was `1.1.0-2+b7`); frontend ships brotli-libs `1.2.1-r0` (was `1.2.0-r1`). The frontend and backend Dockerfiles now upgrade OS packages at build time (`apk upgrade` / `apt-get upgrade`), as the worker already did, so fixes land even when the upstream base image has not been republished yet.
+
 ## [0.8.0] - 2026-10-21
 
 ### Security

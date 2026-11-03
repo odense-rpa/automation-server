@@ -25,8 +25,9 @@ FROM python:3.13-slim AS runtime
 # Install uv for runtime
 COPY --from=ghcr.io/astral-sh/uv:0.13.4 /uv /uvx /bin/
 
-# Install runtime dependencies
+# Upgrade base packages (security fixes) and install runtime dependencies
 RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
     postgresql-client \
     curl \
@@ -71,7 +72,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="your-email@example.com" \
-      version="0.8.0" \
+      version="0.8.1" \
       description="Automation Server Backend"
 
 # Use exec form for proper signal handling
