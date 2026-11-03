@@ -1,4 +1,5 @@
 <template>
+  <item-load-error v-if="loadError" :message="loadError" @retry="fetchProcess($route.params.id)" />
   <div class="grid grid-cols-1 lg:grid-cols-[60%,40%] gap-4">
     <!-- Left Column: 70% width -->
     <div>
@@ -24,6 +25,8 @@ import ContentCard from '@/components/ContentCard.vue'
 import TriggerCard from '@/components/TriggerCard.vue'
 import ProcessForm from '@/components/ProcessForm.vue'
 import { useNameStore } from '@/stores/nameStore'
+import ItemLoadError from '@/components/ItemLoadError.vue'
+import itemPage from '@/mixins/itemPage'
 
 const alertStore = useAlertStore()
 
@@ -33,7 +36,8 @@ export default {
       process: null
     }
   },
-  components: { ContentCard, ProcessForm, TriggerCard },
+  components: { ContentCard, ProcessForm, TriggerCard, ItemLoadError },
+  mixins: [itemPage],
   methods: {
     async saveProcess(process) {
       try {
@@ -73,11 +77,10 @@ export default {
     },
 
     async fetchProcess(id) {
-      try {
-        this.process = await processesAPI.getProcess(id)
-      } catch (error) {
-        alertStore.addAlert({ type: 'error', message: 'Error fetching process: ' + error.message })
-      }
+      this.process = await this.loadItem(() => processesAPI.getProcess(id), {
+        what: `Process ${id}`,
+        list: { name: 'process', label: 'Processes' }
+      })
     }
   },
   async mounted() {

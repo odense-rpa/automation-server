@@ -1,5 +1,6 @@
 <template>
   <div>
+    <item-load-error v-if="loadError" :message="loadError" @retry="fetchWorkqueue" />
     <content-card title="Edit workqueue" class="mb-3">
       <workqueue-form :workqueue="workqueue" @save="saveWorkqueue" @cancel="cancelEdit" @delete="deleteWorkqueue"
         v-if="workqueue" />
@@ -13,6 +14,8 @@ import { workqueuesAPI } from '@/services/automationserver.js'
 import ContentCard from '@/components/ContentCard.vue'
 import WorkqueueForm from '@/components/WorkqueueForm.vue'
 import { useNameStore } from '@/stores/nameStore'
+import ItemLoadError from '@/components/ItemLoadError.vue'
+import itemPage from '@/mixins/itemPage'
 const alertStore = useAlertStore()
 
 export default {
@@ -22,16 +25,20 @@ export default {
   }),
   components: {
     ContentCard,
-    WorkqueueForm
+    WorkqueueForm,
+    ItemLoadError
   },
-  async created() {
-    try {
-      this.workqueue = await workqueuesAPI.getWorkqueue(this.$route.params.id)
-    } catch (error) {
-      alertStore.addAlert({ type: 'error', message: error.message })
-    }
+  mixins: [itemPage],
+  created() {
+    this.fetchWorkqueue()
   },
   methods: {
+    async fetchWorkqueue() {
+      this.workqueue = await this.loadItem(() => workqueuesAPI.getWorkqueue(this.$route.params.id), {
+        what: `Workqueue ${this.$route.params.id}`,
+        list: { name: 'workqueues', label: 'Workqueues' }
+      })
+    },
     async saveWorkqueue(workqueue) {
       try {
         this.workqueue = await workqueuesAPI.updateWorkqueue(this.workqueue.id, workqueue)
