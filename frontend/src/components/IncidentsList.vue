@@ -4,9 +4,11 @@
             <div class="flex items-center gap-2">
                 <span v-if="openCount > 0" class="badge badge-error">{{ openCount }} open</span>
                 <search-input v-model="searchTerm" placeholder="Search incidents..." />
-                <button v-if="openCount > 0" class="btn btn-sm flex items-center space-x-2" @click="dismissAll">
-                    <font-awesome-icon :icon="['fas', 'broom']" />Dismiss all
-                </button>
+                <dropdown-button v-if="openCount > 0" :items="dismissItems" @item-clicked="handleDismissAction">
+                    <button class="btn btn-sm flex items-center space-x-2">
+                        <font-awesome-icon :icon="['fas', 'broom']" />Dismiss
+                    </button>
+                </dropdown-button>
             </div>
         </template>
         <div v-if="incidents.length === 0" class="text-center mb-4">
@@ -16,7 +18,18 @@
             <table class="table w-full mb-3">
                 <thead>
                     <tr>
-                        <th class="w-6"></th>
+                        <th class="w-px whitespace-nowrap">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    class="checkbox checkbox-sm"
+                                    :checked="allSelected"
+                                    :indeterminate="someSelected"
+                                    @change="toggleSelectAll"
+                                />
+                                <span>Select all</span>
+                            </label>
+                        </th>
                         <th class="text-center">Id</th>
                         <th>Process</th>
                         <th class="text-center">Status</th>
@@ -29,11 +42,20 @@
                             class="hover:bg-base-300 cursor-pointer"
                             @click="toggleExpand(incident.id)"
                         >
-                            <td class="text-center p-2">
-                                <font-awesome-icon
-                                    :icon="['fas', 'caret-right']"
-                                    :class="['transition-transform duration-200', { 'rotate-90': expandedId === incident.id }]"
-                                />
+                            <td class="w-px">
+                                <div class="flex items-center gap-3">
+                                    <input
+                                        v-model="selectedIds"
+                                        type="checkbox"
+                                        class="checkbox checkbox-sm"
+                                        :value="incident.id"
+                                        @click.stop
+                                    />
+                                    <font-awesome-icon
+                                        :icon="['fas', 'caret-right']"
+                                        :class="['transition-transform duration-200', { 'rotate-90': expandedId === incident.id }]"
+                                    />
+                                </div>
                             </td>
                             <td class="text-center">{{ incident.id }}</td>
                             <td>
@@ -111,7 +133,13 @@
                 </tbody>
             </table>
 
-            <div class="pr-4">
+            <div class="flex items-center justify-end gap-2 pr-4">
+                <label class="flex items-center gap-2 text-sm text-base-content/70">
+                    Per page
+                    <select v-model="pageSize" class="select select-sm select-bordered">
+                        <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
+                    </select>
+                </label>
                 <page-navigation :currentPage="page" :totalPages="totalPages"
                     @change-page="handlePageChange"></page-navigation>
             </div>
@@ -121,6 +149,7 @@
 
 <script>
 import ContentCard from './ContentCard.vue'
+import DropdownButton from './DropdownButton.vue'
 import PageNavigation from '@/components/PageNavigation.vue'
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import SearchInput from '@/components/SearchInput.vue'
@@ -132,6 +161,7 @@ export default {
     name: 'IncidentsList',
     components: {
         ContentCard,
+        DropdownButton,
         PageNavigation,
         ProcessLabel,
         SearchInput
@@ -139,7 +169,9 @@ export default {
     setup() {
         const tableStateStore = useTableStateStore()
         const alertStore = useAlertStore()
-        return { tableStateStore, alertStore }
+        // 200 is the backend limit for GET /incidents (incident_router.py: size le=200)
+        const pageSizeOptions = [5, 10, 20, 50, 100, 200]
+        return { tableStateStore, alertStore, pageSizeOptions }
     },
     props: {
         size: {
@@ -153,11 +185,40 @@ export default {
             totalPages: 1,
             openCount: 0,
             expandedId: null,
+            selectedIds: [],
             searchTimeout: null,
             refreshInterval: null
         }
     },
     computed: {
+        allSelected() {
+            return this.incidents.length > 0 && this.selectedIds.length === this.incidents.length
+        },
+        someSelected() {
+            return this.selectedIds.length > 0 && !this.allSelected
+        },
+        dismissItems() {
+            const selected = this.selectedIds.length
+            return [
+                {
+                    text: selected > 0 ? `Dismiss selected (${selected})` : 'Dismiss selected',
+                    action: 'selected',
+                    disabled: selected === 0
+                },
+                { text: 'Dismiss page', action: 'page', disabled: this.incidents.length === 0 },
+                { text: `Dismiss all (${this.openCount})`, action: 'all' }
+            ]
+        },
+        pageSize: {
+            get() {
+                const stored = this.tableStateStore.getOption('incidents', 'pageSize', this.size)
+                // Fall back to the default if the session holds a value that is no longer offered
+                return this.pageSizeOptions.includes(stored) ? stored : this.size
+            },
+            set(value) {
+                this.tableStateStore.setOption('incidents', 'pageSize', value)
+            }
+        },
         searchTerm: {
             get() {
                 return this.tableStateStore.getSearchTerm('incidents')
@@ -188,12 +249,19 @@ export default {
             this.searchTimeout = setTimeout(async () => {
                 await this.fetchIncidents()
             }, 300)
+        },
+        async pageSize() {
+            this.page = 1
+            await this.fetchIncidents()
         }
     },
     methods: {
         async fetchIncidents() {
-            const response = await incidentsAPI.getIncidents(this.page, this.size, this.searchTerm, 'new')
+            const response = await incidentsAPI.getIncidents(this.page, this.pageSize,this.searchTerm, 'new')
             this.incidents = response.items || []
+            // Only keep ticks for rows that are still on screen
+            const visibleIds = new Set(this.incidents.map((incident) => incident.id))
+            this.selectedIds = this.selectedIds.filter((id) => visibleIds.has(id))
             this.totalPages = response.total_pages || 1
             if (this.page > this.totalPages && this.totalPages > 0) {
                 this.page = this.totalPages
@@ -209,6 +277,34 @@ export default {
         handlePageChange(newPage) {
             this.page = newPage
             this.fetchIncidents()
+        },
+        toggleSelectAll() {
+            this.selectedIds = this.allSelected ? [] : this.incidents.map((incident) => incident.id)
+        },
+        async dismissIncidents(ids, confirmMessage) {
+            if (!confirm(confirmMessage)) return
+            try {
+                const count = await incidentsAPI.dismissIncidents(ids)
+                this.alertStore.addAlert({ type: 'success', message: `${count} incidents dismissed.` })
+                this.expandedId = null
+                this.selectedIds = []
+                await Promise.all([this.fetchIncidents(), this.fetchOpenCount()])
+            } catch (error) {
+                this.alertStore.addAlert({ type: 'error', message: error })
+            }
+        },
+        handleDismissAction(action) {
+            if (action === 'selected') this.dismissSelected()
+            else if (action === 'page') this.dismissPage()
+            else if (action === 'all') this.dismissAll()
+        },
+        async dismissPage() {
+            const ids = this.incidents.map((incident) => incident.id)
+            await this.dismissIncidents(ids, `Dismiss the ${ids.length} incidents on this page? This cannot be undone.`)
+        },
+        async dismissSelected() {
+            const ids = [...this.selectedIds]
+            await this.dismissIncidents(ids, `Dismiss the ${ids.length} selected incidents? This cannot be undone.`)
         },
         async dismissAll() {
             const confirmed = confirm(`Dismiss all ${this.openCount} open incidents? This cannot be undone.`)
