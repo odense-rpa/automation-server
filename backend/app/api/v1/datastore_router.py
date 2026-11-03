@@ -22,6 +22,7 @@ from .dependencies import (
 from .schemas import (
     DatastoreCreate,
     DatastoreEncryptionStatus,
+    DatastoreName,
     DatastoreRead,
     DatastoreReencryptResult,
     DatastoreSummary,
@@ -168,7 +169,7 @@ async def reencrypt_datastores(
     responses=error_descriptions("Datastore", _404=True, _403=True),
 )
 async def get_datastore_by_name(
-    datastore_name: str,
+    datastore_name: DatastoreName,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> DatastoreRead:
@@ -189,7 +190,7 @@ async def get_datastore_by_name(
     | TOO_LARGE,
 )
 async def write_datastore_by_name(
-    datastore_name: str,
+    datastore_name: DatastoreName,
     write: DatastoreWrite,
     response: Response,
     service: DatastoreService = Depends(get_datastore_service),
@@ -237,9 +238,22 @@ async def update_datastore(
 
 @router.delete("/{datastore_id}", status_code=204, responses=RESPONSE_STATES)
 async def delete_datastore(
-    datastore: Datastore = Depends(get_datastore),
+    datastore_id: int,
     uow: AbstractUnitOfWork = Depends(get_unit_of_work),
     token: AccessToken = Depends(resolve_access_token),
 ) -> None:
+    """Delete a datastore. Its processes start from an empty document.
+
+    Works without reading the document, so a datastore encrypted with a key
+    the server no longer has can still be deleted.
+    """
     async with uow:
-        await uow.datastores.delete(datastore)
+        deleted = await uow.datastores.is_deleted(datastore_id)
+
+        if deleted is None:
+            raise HTTPException(status_code=404, detail="Datastore not found")
+
+        if deleted:
+            raise HTTPException(status_code=410, detail="Datastore is gone")
+
+        await uow.datastores.soft_delete(datastore_id)

@@ -4,9 +4,9 @@ from typing import Annotated, Any, Dict, Generic, List, Optional, TypeVar
 
 from cronsim import CronSim, CronSimError
 from pydantic import (
+    AfterValidator,
     BaseModel,
     Field,
-    StringConstraints,
     field_validator,
     model_validator,
 )
@@ -200,16 +200,45 @@ class DatastoreRead(DatastoreSummary):
     data: Dict
 
 
-# Automations address datastores as /datastores/by_name/{name}, which can't
-# hold a "/"; surrounding spaces would make names that look alike differ
-DatastoreName = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=1, pattern=r"^[^/]+$")
-]
+def check_no_nul(value: str) -> str:
+    """PostgreSQL text can't hold NUL characters.
+
+    (Lone surrogates can't be stored either, but they are refused by the
+    service: a validation error echoes its input, and FastAPI can't encode
+    a lone surrogate in the error response.)
+    """
+    if "\x00" in value:
+        raise ValueError("cannot contain NUL characters")
+    return value
+
+
+def check_datastore_name(name: str) -> str:
+    """A name automations can use in /datastores/by_name/{name}.
+
+    Refused rather than cleaned up: trimming spaces on some paths and not
+    others would let two names that look the same address different
+    datastores.
+    """
+    check_no_nul(name)
+    if not name:
+        raise ValueError("cannot be empty")
+    if name != name.strip():
+        raise ValueError("cannot start or end with spaces")
+    if "/" in name:
+        raise ValueError("cannot contain /")
+    if name in (".", ".."):
+        raise ValueError("cannot be . or ..")
+    return name
+
+
+# Used for the body field and the by_name path parameter alike
+DatastoreName = Annotated[str, AfterValidator(check_datastore_name)]
+DatastoreDescription = Annotated[str, AfterValidator(check_no_nul)]
 
 
 class DatastoreCreate(BaseModel):
     name: DatastoreName
-    description: Optional[str] = ""
+    description: Optional[DatastoreDescription] = ""
     data: Dict = {}
 
 
@@ -218,7 +247,7 @@ class DatastoreUpdate(BaseModel):
 
     data: Optional[Dict] = None
     name: Optional[DatastoreName] = None
-    description: Optional[str] = None
+    description: Optional[DatastoreDescription] = None
     # The version that was read; the write fails with 409 if it changed since.
     # Leave out to overwrite regardless (last writer wins).
     expected_version: Optional[int] = Field(default=None, ge=1)

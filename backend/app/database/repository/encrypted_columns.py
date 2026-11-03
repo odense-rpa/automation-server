@@ -163,6 +163,8 @@ class EncryptedColumnsMixin:
             }
             if await self._replace_stored(row_id, plaintext, encrypted):
                 rewritten += 1
+            # Row by row: the UPDATE locks the row until commit, and a writer
+            # shouldn't wait for the whole pass
+            await self.session.commit()
 
-        await self.session.commit()
         return rewritten

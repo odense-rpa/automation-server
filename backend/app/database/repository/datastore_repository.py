@@ -54,14 +54,29 @@ class DatastoreRepository(EncryptedColumnsMixin, DatabaseRepository[Datastore]):
             query = query.where(Datastore.deleted == False)  # noqa: E712
         return list((await self.session.scalars(query)).all())
 
-    async def is_active(self, datastore_id: int) -> bool:
-        """Whether the datastore exists and isn't deleted."""
-        deleted = (
+    async def is_deleted(self, datastore_id: int) -> bool | None:
+        """Whether the datastore is deleted; None if it doesn't exist.
+
+        Reads only the flag, not the document.
+        """
+        return (
             await self.session.execute(
                 select(Datastore.deleted).where(Datastore.id == datastore_id)
             )
         ).scalar_one_or_none()
-        return deleted is False
+
+    async def is_active(self, datastore_id: int) -> bool:
+        """Whether the datastore exists and isn't deleted."""
+        return await self.is_deleted(datastore_id) is False
+
+    async def soft_delete(self, datastore_id: int) -> None:
+        """Mark the datastore deleted without loading (or decrypting) it."""
+        await self.session.execute(
+            update(Datastore)
+            .where(Datastore.id == datastore_id)
+            .values(deleted=True, updated_at=datetime.now())
+        )
+        await self.session.commit()
 
     async def compare_and_set(
         self, datastore_id: int, expected_version: int | None, values: dict

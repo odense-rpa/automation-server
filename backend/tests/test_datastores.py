@@ -415,14 +415,48 @@ async def test_versioned_write_by_name_to_datastore_deleted_meanwhile(
 
 
 async def test_name_rules(client: AsyncClient):
-    response = await client.post("/datastores", json={"name": "a/b", "data": {}})
-    assert response.status_code == 422
+    for name in ("a/b", " spaced", "spaced ", "", ".", "..", "a\x00b"):
+        response = await client.post("/datastores", json={"name": name, "data": {}})
+        assert response.status_code == 422, repr(name)
 
-    created = await create(client, name="  spaced  ")
-    assert created["name"] == "spaced"
-
+    created = await create(client, name="ok")
     response = await client.put(f"/datastores/{created['id']}", json={"name": "x/y"})
     assert response.status_code == 422
+
+
+async def test_name_rules_apply_to_write_by_name(client: AsyncClient):
+    response = await client.put("/datastores/by_name/%20spaced%20", json={"data": {}})
+    assert response.status_code == 422
+    response = await client.get("/datastores/by_name/%20spaced%20")
+    assert response.status_code == 422
+
+
+async def test_text_postgres_cannot_store_is_rejected(client: AsyncClient):
+    headers = {"Content-Type": "application/json"}
+    for body in (
+        '{"name": "s", "description": "\\ud800", "data": {}}',
+        '{"name": "\\ud800", "data": {}}',
+        '{"name": "s", "description": "a\\u0000b", "data": {}}',
+    ):
+        response = await client.post("/datastores", content=body, headers=headers)
+        assert response.status_code == 422, body
+
+
+async def test_delete_and_recreate_when_document_cannot_be_decrypted(
+    client: AsyncClient, monkeypatch
+):
+    monkeypatch.setattr(settings, "encryption_key", "original-key")
+    created = await create(client, data={"n": 1})
+
+    monkeypatch.setattr(settings, "encryption_key", "another-key")
+    url = f"/datastores/{created['id']}"
+    assert (await client.delete(url)).status_code == 204
+    assert (await client.delete(url)).status_code == 410
+    assert (await client.delete("/datastores/999")).status_code == 404
+
+    # The process starts over with a fresh document under the current key
+    response = await client.put("/datastores/by_name/state", json={"data": {"n": 2}})
+    assert response.status_code == 201
 
 
 async def test_document_that_is_not_json_is_rejected(client: AsyncClient):

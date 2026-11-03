@@ -72,7 +72,7 @@ The server does not fail silently or return corrupt values in this case:
 
 The fix is to restore the previous `ENCRYPTION_KEY` value and restart. If it is genuinely gone, the affected credentials must be deleted and re-entered.
 
-Datastore documents are encrypted with the same key, so the same applies to them: startup logs how many are unreadable, and datastore requests fail until the key is restored. If it is gone, delete the affected datastores and let their processes recreate them.
+Datastore documents are encrypted with the same key, so the same applies to them: startup logs how many are unreadable, and datastore requests fail until the key is restored. If it is gone, delete the affected datastores (the datastore's page offers **Delete** when it cannot be read, or `DELETE /datastores/{id}`) and let their processes recreate them.
 
 :::warning
 Back up the encryption key somewhere other than the server it runs on. Losing it means re-entering every credential by hand.

@@ -42,6 +42,15 @@ class DatastoreService:
         self.repository = repository
         self.max_bytes = max_bytes
 
+    @staticmethod
+    def _check_text(*values: str | None) -> None:
+        """Refuse names and descriptions PostgreSQL can't store as text."""
+        for value in values:
+            try:
+                (value or "").encode("utf-8")
+            except UnicodeEncodeError:
+                raise DatastoreInvalid("Text is not valid Unicode") from None
+
     def _size(self, data: dict) -> int:
         try:
             size = len(dump_json(data).encode("utf-8"))
@@ -53,6 +62,7 @@ class DatastoreService:
         return size
 
     async def create(self, name: str, description: str | None, data: dict) -> Datastore:
+        self._check_text(name, description)
         size = self._size(data)
         try:
             return await self.repository.create(
@@ -78,6 +88,7 @@ class DatastoreService:
         description: str | None = None,
     ) -> Datastore:
         """Update any of data, name and description; bumps the version."""
+        self._check_text(name, description)
         values = {}
         if data is not None:
             values["data"] = data
@@ -112,10 +123,11 @@ class DatastoreService:
         """Write a datastore by name, creating it if it doesn't exist.
 
         expected_version 0 means "must not exist yet". Without
-        expected_version the write always succeeds (last writer wins), also
-        when another writer creates or deletes the datastore at the same
-        time: it is retried against what is there then. Returns the
-        datastore and whether it was created.
+        expected_version the last writer wins, also when another writer
+        creates or deletes the datastore at the same time: the write is
+        retried against what is there then, a few times before giving up
+        with DatastoreConflict. Returns the datastore and whether it was
+        created.
         """
         for _ in range(3):
             existing = await self.repository.get_by_name(name)

@@ -87,6 +87,6 @@ def update_datastore(name: str, change, attempts: int = 5) -> dict:
     raise RuntimeError(f"Datastore '{name}' kept changing; gave up after {attempts} attempts")
 ```
 
-`expected_version: 0` means "the datastore must not exist yet", so two runs creating the same datastore at once can't both succeed. Leaving `expected_version` out writes regardless of what is there (last writer wins), which is fine when only one run at a time can write.
+`expected_version: 0` means "the datastore must not exist yet", so two runs creating the same datastore at once can't both succeed. Leaving `expected_version` out writes regardless of what is there (last writer wins), which is fine when only one run at a time can write. In the rare case that other runs keep creating and deleting the same datastore during the write, it gives up with `409` after a few attempts.
 
-Names cannot contain `/`, since automations address datastores by name in the URL. Surrounding spaces are removed. Documents must be valid JSON: `NaN` and `Infinity` are refused with `422`.
+Names are used in the URL, so they cannot contain `/`, be `.` or `..`, or start or end with spaces; such names are refused with `422`. Documents must be valid JSON: `NaN` and `Infinity` are refused with `422` too.

@@ -1,6 +1,17 @@
 <template>
   <div>
-    <item-load-error v-if="loadError" :message="loadError" @retry="load" />
+    <template v-if="loadError">
+      <item-load-error :message="loadError" @retry="load" />
+      <!-- Typically a document encrypted with a key the server no longer has:
+           deleting works without reading it, and processes start over -->
+      <div class="alert mb-3 flex justify-between">
+        <span>
+          If the document cannot be read, delete the datastore. Automations that use it will
+          start from an empty document.
+        </span>
+        <button class="btn btn-error btn-sm" @click="remove">Delete</button>
+      </div>
+    </template>
 
     <template v-if="datastore">
       <content-card :title="editing ? `Edit ${datastore.name}` : datastore.name" class="mb-3">
@@ -120,12 +131,14 @@ export default {
       }
     },
     async remove() {
-      if (!confirm(`Delete '${this.datastore.name}'? Automations that use it will start from an empty document.`)) {
+      // No datastore loaded when its document couldn't be read
+      const label = this.datastore ? `'${this.datastore.name}'` : `Datastore ${this.$route.params.id}`
+      if (!confirm(`Delete ${label}? Automations that use it will start from an empty document.`)) {
         return
       }
       try {
-        await datastoresAPI.deleteDatastore(this.datastore.id)
-        useAlertStore().addAlert({ type: 'success', message: `'${this.datastore.name}' was deleted` })
+        await datastoresAPI.deleteDatastore(this.$route.params.id)
+        useAlertStore().addAlert({ type: 'success', message: `${label} was deleted` })
         this.$router.push({ name: 'datastores' })
       } catch (error) {
         useAlertStore().addAlert({ type: 'error', message: error.message })
