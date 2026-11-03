@@ -25,11 +25,7 @@
     <td class="text-center p-0">
       <router-link :to="{ name: 'workqueue.item', params: { id: workitem.workqueue_id, itemId: workitem.id } }"
         class="block px-4 py-3 no-underline text-inherit">
-        <font-awesome-icon v-if="workitem.status === 'new'" :icon="['fas', 'circle']" class="text-info" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'in progress'" :icon="['fas', 'spinner']" spin class="text-warning" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'completed'" :icon="['fas', 'circle-check']" class="text-success" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'failed'" :icon="['fas', 'triangle-exclamation']" class="text-error" :title="workitem.status" />
-        <font-awesome-icon v-else-if="workitem.status === 'pending user action'" :icon="['fas', 'lock']" class="text-warning" :title="workitem.status" />
+        <status-badge kind="workitem" :status="workitem.status" />
         <font-awesome-icon v-if="workitem.locked" :icon="['fas', 'lock']" class="text-base-content/40 ml-1" title="Locked" />
       </router-link>
     </td>
@@ -57,6 +53,7 @@ import JsonPreview from "./JsonPreview.vue";
 import DropdownButton from "./DropdownButton.vue";
 import { workitemsApi } from "@/services/automationserver";
 import { useAlertStore } from "@/stores/alertStore";
+import StatusBadge from '@/components/StatusBadge.vue'
 
 const alertStore = useAlertStore();
 
@@ -64,7 +61,7 @@ export default {
   name: "WorkItemRow",
   components: {
     JsonPreview,
-    DropdownButton
+    DropdownButton, StatusBadge
   },
   props: {
     workitem: {

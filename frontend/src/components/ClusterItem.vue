@@ -21,7 +21,10 @@
       <span v-if="session">{{ $formatDateTime(session?.dispatched_at) }}</span>
     </td>
     
-    <td>{{ session?.status }}</td>
+    <td>
+      <status-badge v-if="session" kind="session" :status="session.status" />
+      <span v-else class="text-base-content/60">Idle</span>
+    </td>
     
     <td>{{ resource.capabilities }}</td>
   </tr>
@@ -30,11 +33,12 @@
 import { sessionsAPI } from '@/services/automationserver'
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import polling from '@/mixins/polling'
+import StatusBadge from '@/components/StatusBadge.vue'
 
 export default {
   name: 'ClusterItem',
   components: {
-    ProcessLabel
+    ProcessLabel, StatusBadge
   },
   mixins: [polling],
   props: {

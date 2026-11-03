@@ -36,10 +36,7 @@
                         <td class="text-center p-0">
                             <router-link :to="{ name: 'session.edit', params: { id: session.id } }"
                                 class="block px-4 py-3 no-underline text-inherit">
-                                <font-awesome-icon v-if="session.status === 'new'" :icon="['fas', 'circle']" class="text-info" :title="session.status" />
-                                <font-awesome-icon v-else-if="session.status === 'in progress'" :icon="['fas', 'spinner']" spin class="text-warning" :title="session.status" />
-                                <font-awesome-icon v-else-if="session.status === 'completed'" :icon="['fas', 'circle-check']" class="text-success" :title="session.status" />
-                                <font-awesome-icon v-else-if="session.status === 'failed'" :icon="['fas', 'triangle-exclamation']" class="text-error" :title="session.status" />
+                                <status-badge kind="session" :status="session.status" />
                             </router-link>
                         </td>
                         <td class="text-center p-0">
@@ -74,6 +71,7 @@ import { sessionsAPI } from "@/services/automationserver";
 import ProcessLabel from '@/components/ProcessLabel.vue'
 import SearchInput from '@/components/SearchInput.vue'
 import pagedList from '@/mixins/pagedList'
+import StatusBadge from '@/components/StatusBadge.vue'
 
 export default {
     name: "SessionsList",
@@ -81,7 +79,7 @@ export default {
         PageNavigation,
         ContentCard,
         ProcessLabel,
-        SearchInput
+        SearchInput, StatusBadge
     },
     mixins: [pagedList],
     props: {
