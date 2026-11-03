@@ -27,7 +27,7 @@ RUN apt-get update && \
 ENV PLAYWRIGHT_BROWSERS_PATH=/playwright
 RUN pip install playwright && \
     playwright install-deps chromium && \
-    pip uninstall -y playwright
+    pip uninstall -y playwright pip
 
 # Create playwright browser cache directory
 RUN mkdir -p /playwright && \

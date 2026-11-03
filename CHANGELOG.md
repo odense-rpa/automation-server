@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **CVE-2026-111497 (brotli)**: rebuilt images with patched brotli libraries. Backend and worker now ship libbrotli1 `1.1.0-2+deb13u1` (was `1.1.0-2+b7`); frontend ships brotli-libs `1.2.1-r0` (was `1.2.0-r1`). The frontend and backend Dockerfiles now upgrade OS packages at build time (`apk upgrade` / `apt-get upgrade`), as the worker already did, so fixes land even when the upstream base image has not been republished yet.
+- **CVE-2026-111497 in the backend Python environment**: the backend image shipped its dev dependency group (locust, pytest, ruff, docker), including the PyPI `brotli` 1.2.0 package affected by the same CVE. The image now installs with `uv sync --no-dev` and sets `UV_NO_DEV=1` so `uv run` does not reinstall them at startup. `brotli` is also bumped to 1.2.1 in the dev lock file.
+- **pip removed from backend and worker images**: the system pip from the Python base image vendored vulnerable copies of urllib3 (CVE-2026-97687, CVE-2026-97689), msgpack (CVE-2026-114613, GHSA-6v7p-g79w-8964) and setuptools (CVE-2025-47273). Neither image uses system pip at runtime; worker automations still get pip inside their own venvs via `ensurepip`.
 
 ## [0.8.0] - 2026-10-21
 
