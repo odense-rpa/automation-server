@@ -1,60 +1,81 @@
+"""Runs a Python automation: clone the repo, prepare its environment, run main.py.
+
+Logging is aimed at the operator: one line per phase, command output only when
+something fails (and then only the tail), exact commands at DEBUG level.
+"""
+
 import fcntl
 import logging
 import os
 import shlex
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 import git
 
+from errors import SessionError
+
 logger = logging.getLogger(__name__)
+
+TAIL_LINES = 20
+TAIL_CHARS = 4000
+
+
+def tail(text: str, workdir: Optional[Path] = None) -> str:
+    """Last lines of command output, bounded in size, with temp paths shortened."""
+    if workdir is not None:
+        text = text.replace(str(workdir), "<repo>")
+    lines = text.strip().splitlines()[-TAIL_LINES:]
+    return "\n".join(lines)[-TAIL_CHARS:]
+
+
+def describe_exit(returncode: int) -> str:
+    """Operator-facing exit description; a negative code means killed by a signal."""
+    if returncode < 0:
+        try:
+            name = signal.Signals(-returncode).name
+        except ValueError:
+            name = "unknown signal"
+        return f"was killed by signal {-returncode} ({name})"
+    return f"failed with exit code {returncode}"
 
 
 def run_command(
-    cmd: str, cwd: Optional[str] = None, env: Optional[dict] = None
-) -> Tuple[str, str, int]:
-    """Runs a shell command with logging and error handling.
-
-    Returns:
-        Tuple containing:
-        - stdout (str): The standard output of the command.
-        - stderr (str): The standard error of the command.
-        - returncode (int): Exit code of the command (0 = success, non-zero = failure).
-    """
-    merged_env = os.environ.copy()
-    if env:
-        merged_env.update(env)
-
-    logging.info(f"Executing: {cmd} (cwd={cwd})")
-
-    result = subprocess.run(
-        cmd,
-        shell=True,
+    args: list, cwd: Path, env: Optional[dict] = None
+) -> subprocess.CompletedProcess:
+    """Run a command without a shell and capture its output."""
+    logger.debug("Executing: %s (cwd=%s)", shlex.join(map(str, args)), cwd)
+    return subprocess.run(
+        [str(a) for a in args],
         cwd=cwd,
+        env={**os.environ, **(env or {})},
+        capture_output=True,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=merged_env,
         encoding="utf-8",
+        errors="replace",
     )
-    # Log outputs
-    if result.stdout:
-        logging.info(f"STDOUT:\n{result.stdout.strip()}")
-    if result.stderr and result.returncode != 0:
-        logging.error(f"STDOUT:\n{result.stdout.strip()}")
-        logging.error(f"STDERR:\n{result.stderr.strip()}")
-
-    return result.stdout, result.stderr, result.returncode
 
 
-def get_python_executable(venv_path) -> str:
-    """Determine the correct Python executable path in the virtual environment."""
-    return venv_path / (
-        "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
-    )
+def run_step(name: str, args: list, cwd: Path) -> None:
+    """Run a preparation step; raise SessionError with the output tail on failure."""
+    result = run_command(args, cwd)
+    if result.returncode != 0:
+        output = tail(result.stderr or result.stdout, cwd)
+        raise SessionError(
+            f"{name} {describe_exit(result.returncode)}"
+            + (f":\n{output}" if output else "")
+        )
+
+
+def venv_bin(venv_path: Path, name: str) -> Path:
+    if sys.platform == "win32":
+        return venv_path / "Scripts" / f"{name}.exe"
+    return venv_path / "bin" / name
 
 
 def run_python(
@@ -62,108 +83,98 @@ def run_python(
     username: Optional[str] = None,
     token: Optional[str] = None,
     script_env: Optional[Dict[str, str]] = None,
-    script_args: Optional[List[str]] = None,
+    parameters: Optional[str] = None,
     git_options: Optional[str] = None,
-) -> Tuple[Optional[str], Optional[str], int]:
-    """Clones repo, sets up env with 'uv', installs deps, and runs main.py.
+) -> None:
+    """Clone the repo, set up its environment with uv and run main.py.
 
     Args:
-        repo_url (str): Git repository URL.
-        username (Optional[str]): Git username for authentication (if needed).
-        token (Optional[str]): Personal Access Token for authentication (if needed).
-        script_env (Optional[Dict[str, str]]): Environment variables to pass when running main.py.
-        script_args (Optional[List[str]]): Command-line arguments to pass to main.py.
-        git_options (Optional[str]): Extra arguments appended to `git clone`,
-            e.g. "--branch=dev --depth=1".
+        repo_url: Git repository URL.
+        username: Git username for authentication (if needed).
+        token: Personal access token for authentication (if needed).
+        script_env: Environment variables passed to main.py.
+        parameters: Command-line parameters for main.py, split like a shell
+            would (quotes respected, no variable expansion).
+        git_options: Extra arguments for `git clone`, e.g. "--branch=dev".
 
-    Returns:
-        Tuple[str | None, str | None, int]: (stdout, stderr, return code).
+    Raises:
+        SessionError: with an operator-facing message if any phase fails.
     """
+    try:
+        clone_options = ["--recurse-submodules"] + shlex.split(git_options or "")
+        script_args = shlex.split(parameters or "")
+    except ValueError as e:
+        raise SessionError(f"Invalid git options or parameters: {e}") from None
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
+        workdir = Path(temp_dir)
+        started = time.monotonic()
 
-        # Inject authentication into the repo URL if credentials are provided
+        clone_url = repo_url
         if username and token:
-            repo_url = repo_url.replace("https://", f"https://{username}:{token}@")
-
-        multi_options = ["--recurse-submodules"]
-        if git_options:
-            try:
-                multi_options += shlex.split(git_options)
-            except ValueError as e:
-                logging.error(f"Invalid git options {git_options!r}: {e}")
-                return None, None, 1
-
-        # Clone the repo
-        logging.info(f"Cloning repository into {temp_path} (options: {multi_options})...")
+            clone_url = repo_url.replace("https://", f"https://{username}:{token}@")
         try:
-            git.Repo.clone_from(repo_url, temp_path, multi_options=multi_options)
+            git.Repo.clone_from(clone_url, workdir, multi_options=clone_options)
         except git.exc.GitCommandError as e:
-            message = str(e)
-            if token:
-                message = message.replace(token, "***")
-            logging.error(f"Git clone failed: {message}")
-            return None, None, 1
+            message = str(e).replace(token, "***") if token else str(e)
+            raise SessionError(f"Cloning {repo_url} failed:\n{tail(message)}") from None
 
-        # Initialize virtual environment using 'uv'
-        venv_path = temp_path / ".venv"
-        logging.info("Setting up virtual environment with 'uv'...")
-        run_command(f"uv venv {venv_path}", cwd=temp_path)
+        venv_path = workdir / ".venv"
+        python = venv_bin(venv_path, "python")
+        prepared = []
 
-        # Get the correct Python executable inside .venv
-        python_executable = get_python_executable(venv_path)
-
-        # Ensure pip is installed in the correct environment
-        logging.info("Ensuring pip is available in the virtual environment...")
-        run_command(f"{python_executable} -m ensurepip", cwd=temp_path)
-
-        # Install dependencies
-        if (temp_path / "requirements.txt").exists():
-            logging.info("Installing dependencies from requirements.txt...")
-            run_command(
-                f"{python_executable} -m pip install -r requirements.txt", cwd=temp_path
+        run_step("Creating virtual environment", ["uv", "venv", venv_path], workdir)
+        if (workdir / "requirements.txt").exists():
+            run_step("Installing pip", [python, "-m", "ensurepip"], workdir)
+            run_step(
+                "Installing dependencies (requirements.txt)",
+                [python, "-m", "pip", "install", "-r", "requirements.txt"],
+                workdir,
             )
-        elif (temp_path / "pyproject.toml").exists():
-            logging.info("Installing dependencies using 'uv sync'...")
-            run_command("uv sync --refresh", cwd=temp_path)
+            prepared.append("requirements.txt")
+        elif (workdir / "pyproject.toml").exists():
+            run_step(
+                "Installing dependencies (uv sync)",
+                ["uv", "sync", "--refresh"],
+                workdir,
+            )
+            prepared.append("uv sync")
         else:
-            logging.warning(
-                "No requirements.txt or pyproject.toml found. Skipping dependency installation."
-            )
+            prepared.append("no dependencies")
 
-        # Install Playwright browsers if playwright is installed in the venv
-        playwright_bin = venv_path / ("Scripts/playwright.exe" if sys.platform == "win32" else "bin/playwright")
-        if playwright_bin.exists():
-            logging.info("Playwright detected — installing browsers...")
-            lock_path = Path(os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/tmp")) / ".install.lock"
-            with open(lock_path, "w") as lock_file:
+        playwright = venv_bin(venv_path, "playwright")
+        if playwright.exists():
+            browsers = Path(os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/tmp"))
+            with open(browsers / ".install.lock", "w") as lock_file:
                 fcntl.flock(lock_file, fcntl.LOCK_EX)
                 try:
-                    run_command(f"{playwright_bin} install chromium", cwd=temp_path)
+                    run_step(
+                        "Installing Playwright browsers",
+                        [playwright, "install", "chromium"],
+                        workdir,
+                    )
                 finally:
                     fcntl.flock(lock_file, fcntl.LOCK_UN)
+            prepared.append("Playwright chromium")
 
-        # Run the main.py script
-        main_script = temp_path / "main.py"
-        if main_script.exists():
-            logging.info("Running main.py...")
+        main_script = workdir / "main.py"
+        if not main_script.exists():
+            raise SessionError("main.py not found in the repository")
 
-            # Convert script_args list to a space-separated string
-            script_args_str = " ".join(script_args) if script_args else ""
+        logger.info(
+            "Environment ready in %.1fs (%s)",
+            time.monotonic() - started,
+            ", ".join(prepared),
+        )
 
-            stdout, stderr, returncode = run_command(
-                f"{python_executable} {main_script} {script_args_str}",
-                cwd=temp_path,
-                env=script_env,
+        started = time.monotonic()
+        result = run_command([python, main_script, *script_args], workdir, script_env)
+        duration = time.monotonic() - started
+
+        if result.returncode != 0:
+            output = tail(result.stderr or result.stdout, workdir)
+            raise SessionError(
+                f"main.py {describe_exit(result.returncode)} after {duration:.1f}s"
+                + (f". Last lines of output:\n{output}" if output else "")
             )
-
-            if returncode == 0:
-                logging.info("Execution completed successfully.")
-            else:
-                logging.error(f"Execution failed with return code {returncode}")
-
-            return stdout, stderr, returncode
-        else:
-            logging.error("Error: main.py not found in the repository.")
-            return None, None, 1
+        logger.info("main.py finished in %.1fs", duration)
