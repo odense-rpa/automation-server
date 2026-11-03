@@ -6,7 +6,7 @@ import socket
 import threading
 import time
 
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, RequestException
 
 from automationclient import (
     automationserver_token,
@@ -14,11 +14,17 @@ from automationclient import (
     resources,
     sessions,
 )
+from errors import SessionError
 from runners import python
 
 HEALTH_FILE = pathlib.Path("/tmp/worker.health")
 
-logging.basicConfig(level=logging.INFO)
+# Container log. ATS_LOG_LEVEL=DEBUG also shows the exact commands being run;
+# the session audit log only ever receives INFO and above.
+logging.basicConfig(
+    level=os.getenv("ATS_LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 capabilities = f"python playwright {platform.system()} {os.getenv('ATS_CAPABILITIES') or ""}".lower().strip()
@@ -34,8 +40,9 @@ def ping_resource(resource_id: int) -> None:
             resources.ping_resource(resource_id)
             HEALTH_FILE.touch()
             time.sleep(120)
-        except ConnectionError:
-            logger.error(f"Failed to ping resource {resource_id}, reconnecting in 5 seconds")
+        except RequestException as e:
+            # Any request error (not only connection errors) must not kill the thread
+            logger.warning("Failed to ping resource %s (%s), retrying in 5 seconds", resource_id, e)
             time.sleep(5)
 
 if __name__ == "__main__":
@@ -67,8 +74,9 @@ if __name__ == "__main__":
                             process = sessions.get_process(session)
 
                             if process is None:
-                                logger.error(f"Process not found for session {session}")
-                                continue
+                                raise SessionError(
+                                    f"Process {session['process_id']} not found"
+                                )
 
                             params_info = f" with parameters: {session['parameters']}" if session.get('parameters') else " with no parameters"
                             logger.info(
@@ -87,7 +95,7 @@ if __name__ == "__main__":
                                 token = credentials["password"]
 
                             if process["target_type"] == "python":
-                                _, _ , returncode = python.run_python(
+                                python.run_python(
                                     repo_url=process["target_source"],
                                     username=username,
                                     token=token,
@@ -99,20 +107,18 @@ if __name__ == "__main__":
                                         "ATS_RESOURCE": f"{resource['id']}",
                                         "ATS_PROCESS": f"{process['id']}",
                                     },
-                                    script_args=[session["parameters"]] if session["parameters"] else [],
+                                    parameters=session["parameters"],
                                 )
-                                
-                                if returncode != 0:
-                                    raise RuntimeError("Failing session")
                             else:
-                                raise RuntimeError(
+                                raise SessionError(
                                     f"target_type '{process['target_type']}' is not supported by this worker"
                                 )
 
                             resources.ping_resource(resource["id"])
             except ConnectionError:
                 logger.error(
-                    f"Failed to connect to automation server: {automationserver_url}, with token: {automationserver_token}, reconnecting in 5 seconds"
+                    "Failed to connect to automation server at %s, reconnecting in 5 seconds",
+                    automationserver_url,
                 )
                 time.sleep(5)
     finally:

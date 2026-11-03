@@ -16,18 +16,18 @@ def acquire_resource(fqdn: str, name: str, capabilities: str):
         resource = register_resource(fqdn=fqdn, name=name, capabilities=capabilities)
         yield resource
     finally:
-        logger.info(f"Release resource: {name}")
+        logger.info("Released resource %s", name)
 
 
 def register_resource(fqdn: str, name: str, capabilities: str) -> dict:
-    logger.info(f"Registering resource on url {base_url} with name={name}, capabilities={capabilities}")
+    logger.info("Registering as %s with capabilities '%s' at %s", name, capabilities, base_url)
     response = requests.post(
         f"{base_url}",
         json={"fqdn": fqdn, "name": name, "capabilities": capabilities},
         headers=headers,
     )
     response.raise_for_status()
-    logger.info(f"#{name} has entered the chat")
+    logger.info("Registered as resource %s", name)
     return response.json()
 
 
@@ -38,11 +38,11 @@ def update_resource(resource_id: int, fqdn: str, name: str, capabilities: str) -
         headers=headers,
     )
     response.raise_for_status()
-    logger.info(f"#{name} was updated")
+    logger.info("Updated resource %s", name)
     return response.json()
 
 
 def ping_resource(resource_id: int):
     response = requests.put(f"{base_url}/{resource_id}/ping", headers=headers)
     response.raise_for_status()
-    logger.debug(f"#{resource_id} has sent a ping")
+    logger.debug("Pinged resource %s", resource_id)

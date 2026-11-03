@@ -1,9 +1,12 @@
 import logging
+import time
 import traceback
 from contextlib import contextmanager
 from datetime import datetime
 
 import requests
+
+from errors import SessionError
 
 from . import automationserver_url, headers
 
@@ -13,8 +16,10 @@ sessions_base_url = f"{automationserver_url}/sessions"
 
 
 class SessionLoggingHandler(logging.Handler):
+    """Sends log records to the session's audit log (INFO and above only)."""
+
     def __init__(self, session_id: int):
-        super().__init__()
+        super().__init__(level=logging.INFO)
         self.session_id = session_id
 
     def emit(self, record):
@@ -25,7 +30,8 @@ class SessionLoggingHandler(logging.Handler):
             # Create structured audit log data
             log_data = {
                 "session_id": self.session_id,
-                "message": self.format(record),
+                # Plain message; the traceback goes in its own field below
+                "message": record.getMessage(),
                 "level": record.levelname,
                 "logger_name": record.name,
                 "event_timestamp": datetime.fromtimestamp(record.created).isoformat()
@@ -61,6 +67,7 @@ def acquire_session(resource_id: int):
     handler = None
 
     session = get_pending_session(resource_id=resource_id)
+    started = time.monotonic()
     try:
         if session is not None:
             update_session_status(session_id=session["id"], status="in progress")
@@ -70,12 +77,16 @@ def acquire_session(resource_id: int):
         yield session
 
         if session is not None:
-            logger.info("Completing session.")
+            logger.info("Session completed in %.1fs", time.monotonic() - started)
             update_session_status(session_id=session["id"], status="completed")
 
-    except Exception as e:
+    except SessionError as e:
+        # Expected failure: the message says what went wrong, no traceback needed
+        logger.error("Session failed: %s", e)
         update_session_status(session_id=session["id"], status="failed")
-        logger.error(e)
+    except Exception:
+        logger.exception("Session failed with an unexpected error")
+        update_session_status(session_id=session["id"], status="failed")
     finally:
         if handler is not None:
             logging.getLogger().removeHandler(handler)
