@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Datastores**: named JSON documents that automations use to keep state between runs (counters, last-seen markers, distribution tables). Read and written over `/datastores` by id or by name; writing by name creates the datastore on first use. Writes can pass `expected_version` and are refused with `409` if another run wrote in the meantime, so concurrent runs cannot silently overwrite each other. Documents are encrypted at rest when `ENCRYPTION_KEY` is set, with the same status, re-encryption and startup checks as credentials. Size limit per document is set with `DATASTORE_MAX_BYTES` (default 1 MB). The web interface lists, creates, edits and deletes datastores. See the new Datastores guide.
 
+## [0.8.2] - 2026-11-14
+
+Security rebuild of v0.8.1: no application code changes, images rebuilt to pick up patched OS packages.
+
+### Security
+
+- **CVE-2026-109518 (apt)**: backend and worker now ship apt and libapt-pkg7.0 `3.0.4` (was `3.0.3`).
+- **CVE-2026-76844, CVE-2026-85091 (zlib)**: backend and worker now ship zlib1g `1:1.3.dfsg+really1.3.1-1+deb13u1` (was `1:1.3.dfsg+really1.3.1-1+b1`).
+- **CVE-2026-125350, CVE-2026-87636, CVE-2026-9947 (libxslt)**: frontend now ships libxslt `1.1.43-r4` (was `1.1.43-r3`).
+
+### Fixed
+
+- **Worker image build**: install `libatomic1`, which the Node driver bundled with current Playwright releases needs. Without it, `playwright install-deps` fails with `libatomic.so.1: cannot open shared object file`.
+
 ## [0.8.1] - 2026-11-03
 
 ### Security
