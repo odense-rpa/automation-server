@@ -21,6 +21,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git \
         ca-certificates \
+        libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Playwright OS-level system dependencies
