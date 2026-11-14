@@ -41,7 +41,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="miwn@odense.dk" \
-      version="0.8.1" \
+      version="0.8.2" \
       description="Automation Server Frontend"
 
 # Start nginx

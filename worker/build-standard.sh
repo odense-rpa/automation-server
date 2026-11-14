@@ -2,6 +2,6 @@
 # Build standard worker image
 
 echo "Building standard worker image..."
-docker build --target worker -t automation-server-worker:0.8.1 .
+docker build --target worker -t automation-server-worker:0.8.2 .
 echo "Standard worker image built successfully!"
-echo "Tagged as: automation-server-worker:0.8.1"
+echo "Tagged as: automation-server-worker:0.8.2"

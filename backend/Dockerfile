@@ -74,7 +74,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Add metadata labels
 LABEL maintainer="your-email@example.com" \
-      version="0.8.1" \
+      version="0.8.2" \
       description="Automation Server Backend"
 
 # Use exec form for proper signal handling
